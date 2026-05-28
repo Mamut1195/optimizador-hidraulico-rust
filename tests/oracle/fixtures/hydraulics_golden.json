@@ -1,0 +1,3442 @@
+{
+  "darcy_weisbach": [
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.04619715145611725
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.04229165058630352
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.040153479372097144
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18795450214100817
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.12089671754841913
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.08568334493867052
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.801480259710349
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1421755972911691
+    },
+    {
+      "reynolds": 5000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.4266742002505168
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.04131761973312677
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.036702523981706175
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.03403385101683399
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18544148054231988
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11839249835147138
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.08288303165009503
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.71849667268975
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1344250297745122
+    },
+    {
+      "reynolds": 10000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.42316019291716495
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.03625266922823529
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.03037347031494364
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.02647545335715187
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18322611819248774
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.1161726725919829
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.08036943308097519
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.646037090447226
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1276202428694526
+    },
+    {
+      "reynolds": 50000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.4200708050297023
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.03544201520801245
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.029268115599044374
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.02500059204095809
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18291074819358982
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11585569048293864
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.0800078873071202
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.635774888458174
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1266536810669627
+    },
+    {
+      "reynolds": 100000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.41963166427877807
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.03470107466399593
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.028222452397750855
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.02352203587465084
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18263222236709073
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11557553291996141
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.07968777191832338
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.626722546530278
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1258004877034267
+    },
+    {
+      "reynolds": 500000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.4192439642097005
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.03459342974500228
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.02806729329040749
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.023293791945308628
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18259253486360727
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11553559693228667
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.07964209586212229
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.625433502014971
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1256789492303603
+    },
+    {
+      "reynolds": 1000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.4191887307799034
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.034497890644467094
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.02792883220918524
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.02308785038184099
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.18255747631679323
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11550031555687587
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.07960173421007542
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.624294978669019
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1255715935030624
+    },
+    {
+      "reynolds": 5000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.4191399416794062
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.2,
+      "friction_factor": 0.034484240877724934
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.4,
+      "friction_factor": 0.027908991253411525
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.0015,
+      "diameter_m": 0.8,
+      "friction_factor": 0.023058157947019122
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.2,
+      "friction_factor": 0.1825524801961717
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.4,
+      "friction_factor": 0.11549528742719115
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.05,
+      "diameter_m": 0.8,
+      "friction_factor": 0.07959598135865621
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.2,
+      "friction_factor": 8.62413274330866
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.4,
+      "friction_factor": 1.1255562950032174
+    },
+    {
+      "reynolds": 10000000.0,
+      "roughness_mm": 0.5,
+      "diameter_m": 0.8,
+      "friction_factor": 0.41913298901201845
+    }
+  ],
+  "head_loss_dw": [
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.22582469268526298
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 55.01922467018646
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 1.1291234634263148
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 275.0961233509323
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.09124970677792689
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 3.58734133155664
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.45624853388963443
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 17.936706657783194
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.05423610289018288
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 1.2673091037602702
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.2711805144509144
+    },
+    {
+      "velocity_m_s": 0.5,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 6.336545518801351
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.891879918854119
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 219.936413494866
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 4.459399594270595
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 1099.68206747433
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.36057193086508943
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 14.345819177814334
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 1.8028596543254471
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 71.72909588907167
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.21436401950441494
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 5.068286703026842
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 1.0718200975220746
+    },
+    {
+      "velocity_m_s": 1.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 25.341433515134202
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 3.542659412867626
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 879.4447098915194
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 17.71329706433813
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 4397.223549457597
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 1.4326242758313827
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 57.37567675706659
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 7.163121379156912
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 286.87838378533297
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 0.8518147240085888
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 20.271111280915324
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 4.259073620042944
+    },
+    {
+      "velocity_m_s": 2.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 101.35555640457662
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 7.951087408030819
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 1978.5116245819734
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 39.7554370401541
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 9892.558122909866
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 3.2156607417866536
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 129.0892364533008
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 16.07830370893327
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 645.4461822665041
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 1.912058998028756
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 45.60838360921232
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 9.560294990143781
+    },
+    {
+      "velocity_m_s": 3.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 228.0419180460616
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 22.039932601485813
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 5495.310180065932
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 110.19966300742907
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 27476.550900329657
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 8.914311809755652
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.4,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 358.56718087203035
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 44.57155904877826
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.4,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 1792.835904360152
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 5.300708924626099
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.6,
+      "length_m": 100.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 126.68619615645014
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.0015,
+      "head_loss_m": 26.50354462313049
+    },
+    {
+      "velocity_m_s": 5.0,
+      "diameter_m": 0.6,
+      "length_m": 500.0,
+      "roughness_mm": 0.5,
+      "head_loss_m": 633.4309807822507
+    }
+  ],
+  "hazen_williams": [
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.15691771355035444,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.0965270164758949,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.07405441569663898,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.7845885677517721,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.48263508237947456,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.3702720784831949,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.0053660645485746825,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.0033009033165957323,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.0025324150202305144,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.02683032274287341,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.016504516582978662,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.01266207510115257,
+      "velocity_m_s": 0.06366197723675814
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.0007448888283888603,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.00045821401920649623,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.0003515365199837022,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.0037244441419443013,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.002291070096032481,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.0017576825999185111,
+      "velocity_m_s": 0.028294212105225838
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 6.18996296023138e-05,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 3.807719620230753e-05,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 2.9212386532555188e-05,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.000309498148011569,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.00019038598101153763,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.002,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.00014606193266277593,
+      "velocity_m_s": 0.010185916357881302
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.8563609740153929,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.5267854595750993,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.4041437395515206,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 4.281804870076964,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 2.633927297875496,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 2.020718697757603,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.02928470062095488,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.01801431282277422,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.01382037339359968,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.14642350310477442,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.0900715641138711,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.0691018669679984,
+      "velocity_m_s": 0.15915494309189532
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.004065147956719182,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.0025006520609877746,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.0019184714704539797,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.02032573978359591,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.012503260304938873,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.009592357352269898,
+      "velocity_m_s": 0.07073553026306459
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.0003378103459328015,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.00020780206446941086,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.00015942335137521254,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.0016890517296640078,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.0010390103223470544,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.005,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.0007971167568760627,
+      "velocity_m_s": 0.025464790894703257
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 3.091465608077309,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 1.9016970419326304,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 1.4589600757785366,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 15.457328040386544,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 9.508485209663151,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 7.294800378892684,
+      "velocity_m_s": 1.2732395447351625
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.10571785445572501,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.06503172170915805,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.04989158816610449,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.5285892722786251,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.3251586085457903,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.24945794083052245,
+      "velocity_m_s": 0.31830988618379064
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.014675195952725891,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.009027361216687565,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.006925687590802538,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.07337597976362946,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.04513680608343783,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.03462843795401269,
+      "velocity_m_s": 0.14147106052612918
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.0012194963317947542,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.0007501660574073522,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.0005755187623625117,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.006097481658973771,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.0037508302870367612,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.01,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.002877593811812558,
+      "velocity_m_s": 0.050929581789406514
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 11.160199840859422,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 6.865131855029402,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 5.2668501189150865,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 55.800999204297106,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 34.32565927514701,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 26.33425059457543,
+      "velocity_m_s": 2.546479089470325
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.3816417622082366,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.23476470460259782,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.1801087784566611,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 1.908208811041183,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 1.1738235230129892,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.9005438922833054,
+      "velocity_m_s": 0.6366197723675813
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.05297750009195531,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.032588800260506624,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.02500175235550726,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.26488750045977655,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.16294400130253314,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.1250087617775363,
+      "velocity_m_s": 0.28294212105225836
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.004402385306330123,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.002708101650111034,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.002077624406801777,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.022011926531650614,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.01354050825055517,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.02,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.010388122034008884,
+      "velocity_m_s": 0.10185916357881303
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 60.9055497285075,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 37.46569376458902,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 28.743248902743296,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 304.5277486425375,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 187.3284688229451,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 143.71624451371648,
+      "velocity_m_s": 6.366197723675813
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 2.0827674824915157,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 1.2812022718735476,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.9829236321263014,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 10.413837412457577,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 6.406011359367739,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 4.914618160631507,
+      "velocity_m_s": 1.5915494309189533
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.28911881618189017,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.17784975387195545,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.13644428353452442,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 1.4455940809094507,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.8892487693597773,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.6822214176726221,
+      "velocity_m_s": 0.7073553026306459
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.024025528307931445,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.014779163641570532,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.011338404188995423,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.12012764153965723,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.07389581820785267,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.05,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.05669202094497711,
+      "velocity_m_s": 0.25464790894703254
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 219.8692117459089,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 135.25126350970487,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 103.76321217743806,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 1099.3460587295444,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 676.2563175485243,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.1,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 518.8160608871904,
+      "velocity_m_s": 12.732395447351626
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 7.518796672334747,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 4.625143929569579,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 3.548357172136004,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 37.593983361673736,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 23.125719647847895,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.2,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 17.741785860680018,
+      "velocity_m_s": 3.1830988618379066
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 1.0437197677089298,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.6420381289938157,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.49256426059199343,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 5.218598838544649,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 3.2101906449690785,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.3,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 2.462821302959967,
+      "velocity_m_s": 1.4147106052612919
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 100.0,
+      "head_loss_m": 0.08673222710230934,
+      "velocity_m_s": 0.5092958178940651
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 130.0,
+      "head_loss_m": 0.053352823751214806,
+      "velocity_m_s": 0.5092958178940651
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 100.0,
+      "c": 150.0,
+      "head_loss_m": 0.04093167211532574,
+      "velocity_m_s": 0.5092958178940651
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 100.0,
+      "head_loss_m": 0.43366113551154667,
+      "velocity_m_s": 0.5092958178940651
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 130.0,
+      "head_loss_m": 0.26676411875607403,
+      "velocity_m_s": 0.5092958178940651
+    },
+    {
+      "flow_m3s": 0.1,
+      "diameter_m": 0.5,
+      "length_m": 500.0,
+      "c": 150.0,
+      "head_loss_m": 0.20465836057662867,
+      "velocity_m_s": 0.5092958178940651
+    }
+  ],
+  "manning_full_pipe": [
+    {
+      "diameter_m": 0.2,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 0.6744024788921303,
+      "capacity_m3s": 0.021186978732502623
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 0.5517838463662885,
+      "capacity_m3s": 0.017334800781138512
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.4668940238483979,
+      "capacity_m3s": 0.014667908353271046
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.0663239464813805,
+      "capacity_m3s": 0.03349955476612781
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 0.8724468653029477,
+      "capacity_m3s": 0.027408726626831845
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.7382242706409556,
+      "capacity_m3s": 0.023191999453473097
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.5080097869971707,
+      "capacity_m3s": 0.04737552468371821
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.2338261893613216,
+      "capacity_m3s": 0.038761792923042174
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.0440067756134257,
+      "capacity_m3s": 0.03279844016565106
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.132647892962761,
+      "capacity_m3s": 0.06699910953225562
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.7448937306058954,
+      "capacity_m3s": 0.05481745325366369
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.4764485412819113,
+      "capacity_m3s": 0.046383998906946194
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 3.372012394460652,
+      "capacity_m3s": 0.10593489366251313
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.7589192318314426,
+      "capacity_m3s": 0.08667400390569256
+    },
+    {
+      "diameter_m": 0.2,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.334470119241989,
+      "capacity_m3s": 0.07333954176635522
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 0.8837172463948488,
+      "capacity_m3s": 0.06246629120530481
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 0.7230413834139673,
+      "capacity_m3s": 0.051108783713431215
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.611804247504126,
+      "capacity_m3s": 0.04324589391136486
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.397279653089973,
+      "capacity_m3s": 0.09876787859605396
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.1432288070736143,
+      "capacity_m3s": 0.08081008248768051
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.9673474521392118,
+      "capacity_m3s": 0.06837776210496042
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.9760518358278132,
+      "capacity_m3s": 0.13967887343735885
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.61676968385912,
+      "capacity_m3s": 0.11428271463056633
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.3680358863423319,
+      "capacity_m3s": 0.0967007585335561
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.794559306179946,
+      "capacity_m3s": 0.19753575719210792
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.2864576141472286,
+      "capacity_m3s": 0.16162016497536102
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.9346949042784236,
+      "capacity_m3s": 0.13675552420992085
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 4.418586231974245,
+      "capacity_m3s": 0.31233145602652407
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 3.615206917069836,
+      "capacity_m3s": 0.255543918567156
+    },
+    {
+      "diameter_m": 0.3,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.0590212375206303,
+      "capacity_m3s": 0.21622946955682432
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.1579971842016414,
+      "capacity_m3s": 0.18417149449250564
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 0.9474522416195251,
+      "capacity_m3s": 0.15068576822114102
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.801690358293444,
+      "capacity_m3s": 0.12750334234096544
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.8309543130693693,
+      "capacity_m3s": 0.29120070133673714
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.498053528874939,
+      "capacity_m3s": 0.2382551192755123
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.267583755201871,
+      "capacity_m3s": 0.20160048554081803
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.589360421628216,
+      "capacity_m3s": 0.4118199812029708
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.1185676176958137,
+      "capacity_m3s": 0.3369436209842489
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.7926341380503032,
+      "capacity_m3s": 0.2851061408328259
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 3.6619086261387386,
+      "capacity_m3s": 0.5824014026734743
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.996107057749878,
+      "capacity_m3s": 0.4765102385510246
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.535167510403742,
+      "capacity_m3s": 0.40320097108163605
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 5.789985921008207,
+      "capacity_m3s": 0.9208574724625282
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 4.7372612080976255,
+      "capacity_m3s": 0.7534288411057052
+    },
+    {
+      "diameter_m": 0.45,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 4.008451791467221,
+      "capacity_m3s": 0.6375167117048273
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.4183575262231567,
+      "capacity_m3s": 0.41451024490243454
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.1604743396371282,
+      "capacity_m3s": 0.3391447458292646
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.9819398258468006,
+      "capacity_m3s": 0.28696863108630083
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.2426201596535873,
+      "capacity_m3s": 0.6553982436829463
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.8348710397165715,
+      "capacity_m3s": 0.5362349266496834
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.5525831874524831,
+      "capacity_m3s": 0.453737245626655
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 3.171543845033419,
+      "capacity_m3s": 0.9268730849719294
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.5948995095727976,
+      "capacity_m3s": 0.7583507058861241
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.1956842004077513,
+      "capacity_m3s": 0.641681366519028
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 4.485240319307175,
+      "capacity_m3s": 1.3107964873658926
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 3.669742079433143,
+      "capacity_m3s": 1.0724698532993668
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.1051663749049663,
+      "capacity_m3s": 0.90747449125331
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 7.091787631115783,
+      "capacity_m3s": 2.0725512245121727
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 5.802371698185641,
+      "capacity_m3s": 1.6957237291463232
+    },
+    {
+      "diameter_m": 0.61,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 4.909699129234003,
+      "capacity_m3s": 1.434843155431504
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.6422586411534736,
+      "capacity_m3s": 0.7450040293302006
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.3436661609437515,
+      "capacity_m3s": 0.6095487512701643
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.136948290029328,
+      "capacity_m3s": 0.5157720203055235
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.5966389065690545,
+      "capacity_m3s": 1.1779547993431607
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.1245227417383177,
+      "capacity_m3s": 0.9637811994625862
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.7976730891631914,
+      "capacity_m3s": 0.8155071687760342
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 3.672201958255601,
+      "capacity_m3s": 1.6658796530935758
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 3.004528874936401,
+      "capacity_m3s": 1.3629924434401985
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.542293663407724,
+      "capacity_m3s": 1.1533012982955524
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 5.193277813138109,
+      "capacity_m3s": 2.3559095986863214
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 4.249045483476635,
+      "capacity_m3s": 1.9275623989251724
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.5953461783263827,
+      "capacity_m3s": 1.6310143375520685
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 8.211293205767369,
+      "capacity_m3s": 3.725020146651003
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 6.718330804718757,
+      "capacity_m3s": 3.047743756350821
+    },
+    {
+      "diameter_m": 0.76,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 5.684741450146639,
+      "capacity_m3s": 2.578860101527617
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.002,
+      "roughness_n": 0.009,
+      "velocity_m_s": 1.8517971970107139,
+      "capacity_m3s": 1.204387081115627
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.002,
+      "roughness_n": 0.011,
+      "velocity_m_s": 1.5151067975542205,
+      "capacity_m3s": 0.9854076118218766
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.002,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.2820134440843403,
+      "capacity_m3s": 0.833806440772357
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.005,
+      "roughness_n": 0.009,
+      "velocity_m_s": 2.927948453634702,
+      "capacity_m3s": 1.9043031804036745
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.005,
+      "roughness_n": 0.011,
+      "velocity_m_s": 2.3955941893374835,
+      "capacity_m3s": 1.5580662385120974
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.0270412371317166,
+      "capacity_m3s": 1.3183637402794668
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.01,
+      "roughness_n": 0.009,
+      "velocity_m_s": 4.140744413059527,
+      "capacity_m3s": 2.6930913845970954
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.01,
+      "roughness_n": 0.011,
+      "velocity_m_s": 3.3878817925032494,
+      "capacity_m3s": 2.203438405579442
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.866669209041211,
+      "capacity_m3s": 1.864447881644143
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.02,
+      "roughness_n": 0.009,
+      "velocity_m_s": 5.855896907269404,
+      "capacity_m3s": 3.808606360807349
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.02,
+      "roughness_n": 0.011,
+      "velocity_m_s": 4.791188378674967,
+      "capacity_m3s": 3.1161324770241947
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.02,
+      "roughness_n": 0.013,
+      "velocity_m_s": 4.054082474263433,
+      "capacity_m3s": 2.6367274805589336
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.05,
+      "roughness_n": 0.009,
+      "velocity_m_s": 9.258985985053569,
+      "capacity_m3s": 6.021935405578134
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.05,
+      "roughness_n": 0.011,
+      "velocity_m_s": 7.575533987771102,
+      "capacity_m3s": 4.927038059109383
+    },
+    {
+      "diameter_m": 0.91,
+      "slope": 0.05,
+      "roughness_n": 0.013,
+      "velocity_m_s": 6.410067220421701,
+      "capacity_m3s": 4.169032203861785
+    }
+  ],
+  "manning_partial_flow": [
+    {
+      "y_over_d": 0.1,
+      "area_ratio": 0.0520440193309139,
+      "radius_ratio": 0.2540805393480786,
+      "flow_ratio": 0.020877817547358013
+    },
+    {
+      "y_over_d": 0.2,
+      "area_ratio": 0.14237848993264707,
+      "radius_ratio": 0.4823654962500137,
+      "flow_ratio": 0.08757131525123545
+    },
+    {
+      "y_over_d": 0.25,
+      "area_ratio": 0.19550110947788538,
+      "radius_ratio": 0.586503328433656,
+      "flow_ratio": 0.13698180369615023
+    },
+    {
+      "y_over_d": 0.3,
+      "area_ratio": 0.25231578773434543,
+      "radius_ratio": 0.6837638708429185,
+      "flow_ratio": 0.19583118810179856
+    },
+    {
+      "y_over_d": 0.4,
+      "area_ratio": 0.37353003905233106,
+      "radius_ratio": 0.8569054449156431,
+      "flow_ratio": 0.33698776625009674
+    },
+    {
+      "y_over_d": 0.5,
+      "area_ratio": 0.5,
+      "radius_ratio": 1.0,
+      "flow_ratio": 0.5
+    },
+    {
+      "y_over_d": 0.6,
+      "area_ratio": 0.626469960947669,
+      "radius_ratio": 1.1105768189702854,
+      "flow_ratio": 0.6718402017045828
+    },
+    {
+      "y_over_d": 0.7,
+      "area_ratio": 0.7476842122656545,
+      "radius_ratio": 1.184938515576276,
+      "flow_ratio": 0.8372376585885263
+    },
+    {
+      "y_over_d": 0.75,
+      "area_ratio": 0.8044988905221149,
+      "radius_ratio": 1.206748335783172,
+      "flow_ratio": 0.9118776861227951
+    },
+    {
+      "y_over_d": 0.8,
+      "area_ratio": 0.8576215100673531,
+      "radius_ratio": 1.216773046062124,
+      "flow_ratio": 0.9774668828543854
+    },
+    {
+      "y_over_d": 0.9,
+      "area_ratio": 0.9479559806690862,
+      "radius_ratio": 1.19214668133353,
+      "flow_ratio": 1.065797344039565
+    }
+  ],
+  "rectangular_channel": [
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.644,
+      "flow_m3s": 0.096667
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.335,
+      "flow_m3s": 0.050267
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.441,
+      "flow_m3s": 0.216155
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.749,
+      "flow_m3s": 0.112401
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.038,
+      "flow_m3s": 0.305689
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.06,
+      "flow_m3s": 0.158958
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.737,
+      "flow_m3s": 0.184174
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.383,
+      "flow_m3s": 0.095771
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.647,
+      "flow_m3s": 0.411826
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.857,
+      "flow_m3s": 0.21415
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.33,
+      "flow_m3s": 0.58241
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.211,
+      "flow_m3s": 0.302853
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.832,
+      "flow_m3s": 0.415955
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.433,
+      "flow_m3s": 0.216297
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.86,
+      "flow_m3s": 0.930104
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.967,
+      "flow_m3s": 0.483654
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.631,
+      "flow_m3s": 1.315366
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.368,
+      "flow_m3s": 0.68399
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.871,
+      "flow_m3s": 0.653301
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.453,
+      "flow_m3s": 0.339717
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.948,
+      "flow_m3s": 1.460826
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.013,
+      "flow_m3s": 0.759629
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.755,
+      "flow_m3s": 2.065919
+    },
+    {
+      "width_m": 0.5,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.432,
+      "flow_m3s": 1.074278
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.797,
+      "flow_m3s": 0.239063
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.414,
+      "flow_m3s": 0.124313
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.782,
+      "flow_m3s": 0.534561
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.927,
+      "flow_m3s": 0.277972
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.52,
+      "flow_m3s": 0.755983
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.31,
+      "flow_m3s": 0.393111
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.965,
+      "flow_m3s": 0.482673
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.502,
+      "flow_m3s": 0.25099
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.159,
+      "flow_m3s": 1.07929
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.122,
+      "flow_m3s": 0.561231
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.053,
+      "flow_m3s": 1.526347
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.587,
+      "flow_m3s": 0.793701
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.169,
+      "flow_m3s": 1.169434
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.608,
+      "flow_m3s": 0.608106
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.615,
+      "flow_m3s": 2.614934
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.36,
+      "flow_m3s": 1.359766
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.698,
+      "flow_m3s": 3.698076
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.923,
+      "flow_m3s": 1.922999
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.265,
+      "flow_m3s": 1.897443
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.658,
+      "flow_m3s": 0.98667
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.829,
+      "flow_m3s": 4.242812
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.471,
+      "flow_m3s": 2.206262
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 4.0,
+      "flow_m3s": 6.000242
+    },
+    {
+      "width_m": 1.0,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 2.08,
+      "flow_m3s": 3.120126
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 0.915,
+      "flow_m3s": 0.549111
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.476,
+      "flow_m3s": 0.285538
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.046,
+      "flow_m3s": 1.227849
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.064,
+      "flow_m3s": 0.638481
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.894,
+      "flow_m3s": 1.73644
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.3,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.505,
+      "flow_m3s": 0.902949
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.169,
+      "flow_m3s": 1.169434
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.608,
+      "flow_m3s": 0.608106
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 2.615,
+      "flow_m3s": 2.614934
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.36,
+      "flow_m3s": 1.359766
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.698,
+      "flow_m3s": 3.698076
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 0.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.923,
+      "flow_m3s": 1.922999
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.532,
+      "flow_m3s": 3.064785
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.797,
+      "flow_m3s": 1.593688
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.427,
+      "flow_m3s": 6.853067
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 1.782,
+      "flow_m3s": 3.563595
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 4.846,
+      "flow_m3s": 9.6917
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.0,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 2.52,
+      "flow_m3s": 5.039684
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.013,
+      "velocity_m_s": 1.73,
+      "flow_m3s": 5.191331
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.001,
+      "roughness_n": 0.025,
+      "velocity_m_s": 0.9,
+      "flow_m3s": 2.699492
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.013,
+      "velocity_m_s": 3.869,
+      "flow_m3s": 11.608169
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.005,
+      "roughness_n": 0.025,
+      "velocity_m_s": 2.012,
+      "flow_m3s": 6.036248
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.013,
+      "velocity_m_s": 5.472,
+      "flow_m3s": 16.416431
+    },
+    {
+      "width_m": 2.0,
+      "depth_m": 1.5,
+      "slope": 0.01,
+      "roughness_n": 0.025,
+      "velocity_m_s": 2.846,
+      "flow_m3s": 8.536544
+    }
+  ],
+  "pump_curves": [
+    {
+      "shutoff_head_m": 10.0,
+      "q_bep_m3s": 0.005,
+      "query_flow_m3s": 0.0,
+      "expected_head_m": 10.0
+    },
+    {
+      "shutoff_head_m": 10.0,
+      "q_bep_m3s": 0.005,
+      "query_flow_m3s": 0.00225,
+      "expected_head_m": 11.8825
+    },
+    {
+      "shutoff_head_m": 10.0,
+      "q_bep_m3s": 0.005,
+      "query_flow_m3s": 0.0045,
+      "expected_head_m": 9.580000000000002
+    },
+    {
+      "shutoff_head_m": 10.0,
+      "q_bep_m3s": 0.005,
+      "query_flow_m3s": 0.00675,
+      "expected_head_m": 3.092500000000001
+    },
+    {
+      "shutoff_head_m": 10.0,
+      "q_bep_m3s": 0.005,
+      "query_flow_m3s": 0.00825,
+      "expected_head_m": 0.0
+    },
+    {
+      "shutoff_head_m": 25.0,
+      "q_bep_m3s": 0.02,
+      "query_flow_m3s": 0.0,
+      "expected_head_m": 25.0
+    },
+    {
+      "shutoff_head_m": 25.0,
+      "q_bep_m3s": 0.02,
+      "query_flow_m3s": 0.009,
+      "expected_head_m": 29.70625
+    },
+    {
+      "shutoff_head_m": 25.0,
+      "q_bep_m3s": 0.02,
+      "query_flow_m3s": 0.018,
+      "expected_head_m": 23.950000000000003
+    },
+    {
+      "shutoff_head_m": 25.0,
+      "q_bep_m3s": 0.02,
+      "query_flow_m3s": 0.027,
+      "expected_head_m": 7.731250000000003
+    },
+    {
+      "shutoff_head_m": 25.0,
+      "q_bep_m3s": 0.02,
+      "query_flow_m3s": 0.033,
+      "expected_head_m": 0.0
+    },
+    {
+      "shutoff_head_m": 40.0,
+      "q_bep_m3s": 0.08,
+      "query_flow_m3s": 0.0,
+      "expected_head_m": 40.0
+    },
+    {
+      "shutoff_head_m": 40.0,
+      "q_bep_m3s": 0.08,
+      "query_flow_m3s": 0.036,
+      "expected_head_m": 47.53
+    },
+    {
+      "shutoff_head_m": 40.0,
+      "q_bep_m3s": 0.08,
+      "query_flow_m3s": 0.072,
+      "expected_head_m": 38.32000000000001
+    },
+    {
+      "shutoff_head_m": 40.0,
+      "q_bep_m3s": 0.08,
+      "query_flow_m3s": 0.108,
+      "expected_head_m": 12.370000000000005
+    },
+    {
+      "shutoff_head_m": 40.0,
+      "q_bep_m3s": 0.08,
+      "query_flow_m3s": 0.132,
+      "expected_head_m": 0.0
+    },
+    {
+      "shutoff_head_m": 65.0,
+      "q_bep_m3s": 0.25,
+      "query_flow_m3s": 0.0,
+      "expected_head_m": 65.0
+    },
+    {
+      "shutoff_head_m": 65.0,
+      "q_bep_m3s": 0.25,
+      "query_flow_m3s": 0.11249999999999999,
+      "expected_head_m": 77.23625
+    },
+    {
+      "shutoff_head_m": 65.0,
+      "q_bep_m3s": 0.25,
+      "query_flow_m3s": 0.22499999999999998,
+      "expected_head_m": 62.269999999999996
+    },
+    {
+      "shutoff_head_m": 65.0,
+      "q_bep_m3s": 0.25,
+      "query_flow_m3s": 0.3375,
+      "expected_head_m": 20.10124999999998
+    },
+    {
+      "shutoff_head_m": 65.0,
+      "q_bep_m3s": 0.25,
+      "query_flow_m3s": 0.41250000000000003,
+      "expected_head_m": 0.0
+    },
+    {
+      "shutoff_head_m": 80.0,
+      "q_bep_m3s": 0.45,
+      "query_flow_m3s": 0.0,
+      "expected_head_m": 80.0
+    },
+    {
+      "shutoff_head_m": 80.0,
+      "q_bep_m3s": 0.45,
+      "query_flow_m3s": 0.2025,
+      "expected_head_m": 95.06
+    },
+    {
+      "shutoff_head_m": 80.0,
+      "q_bep_m3s": 0.45,
+      "query_flow_m3s": 0.405,
+      "expected_head_m": 76.64000000000001
+    },
+    {
+      "shutoff_head_m": 80.0,
+      "q_bep_m3s": 0.45,
+      "query_flow_m3s": 0.6075,
+      "expected_head_m": 24.740000000000038
+    },
+    {
+      "shutoff_head_m": 80.0,
+      "q_bep_m3s": 0.45,
+      "query_flow_m3s": 0.7425000000000002,
+      "expected_head_m": 0.0
+    }
+  ]
+}

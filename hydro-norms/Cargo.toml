@@ -1,0 +1,17 @@
+[package]
+name = "hydro-norms"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+hydro-types = { path = "../hydro-types" }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
+insta = { workspace = true }
+oracle = { path = "../tests/oracle" }
