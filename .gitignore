@@ -1,0 +1,17 @@
+# Rust build artifacts
+/target
+**/target
+**/*.rs.bk
+*.pdb
+
+# Coverage
+*.profraw
+/coverage
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Oracle scratch (golden fixtures ARE committed under tests/oracle/fixtures)
+/tmp_oracle
