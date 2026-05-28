@@ -1,0 +1,17 @@
+[package]
+name = "oracle"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+# This crate is a dev-only fixture loader — not published.
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
