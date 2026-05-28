@@ -1,0 +1,22 @@
+[package]
+name = "hydro-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "hydro-cli"
+path = "src/main.rs"
+
+[dependencies]
+hydro-types = { path = "../hydro-types" }
+hydro-optimizer = { path = "../hydro-optimizer" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
+oracle = { path = "../tests/oracle" }

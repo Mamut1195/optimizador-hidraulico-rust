@@ -1,0 +1,49 @@
+[workspace]
+members = [
+    "hydro-types",
+    "hydro-hydraulics",
+    "hydro-terrain",
+    "hydro-norms",
+    "hydro-solvers",
+    "hydro-optimizer",
+    "hydro-cli",
+    "tests/oracle",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Mamut Systems"]
+license = "MIT"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Geometry and spatial
+kiddo = "4"
+petgraph = "0.6"
+geo = "0.28"
+
+# Random and parallel
+rand = "0.8"
+rayon = "1"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Dev / test only
+approx = "0.5"
+insta = { version = "1", features = ["json"] }
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
