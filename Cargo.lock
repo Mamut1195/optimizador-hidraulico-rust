@@ -569,6 +569,7 @@ dependencies = [
  "oracle",
  "petgraph",
  "proptest",
+ "rand 0.8.6",
  "thiserror",
 ]
 
