@@ -582,6 +582,35 @@ impl DesignRequest {
             }
         }
 
+        // Validate existing network constraints (R-01: depth 0..30, setback 0..200)
+        for net in &self.existing_networks {
+            if net.coords.len() < 2 {
+                return Err(HydroTypesError::TooFewCoords {
+                    got: net.coords.len(),
+                });
+            }
+            if let Some(d) = net.depth {
+                if !(0.0..=30.0).contains(&d) {
+                    return Err(HydroTypesError::OutOfRange {
+                        field: "existing_networks.depth",
+                        value: d,
+                        min: 0.0,
+                        max: 30.0,
+                    });
+                }
+            }
+            if let Some(s) = net.setback {
+                if !(0.0..=200.0).contains(&s) {
+                    return Err(HydroTypesError::OutOfRange {
+                        field: "existing_networks.setback",
+                        value: s,
+                        min: 0.0,
+                        max: 200.0,
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -615,9 +644,9 @@ mod tests {
         })
     }
 
-    // S-01: terrain_points required
+    // S-01: terrain_points required (too-few-points path)
     #[test]
-    fn missing_terrain_points_fails_validation() {
+    fn too_few_terrain_points_fails_validation() {
         let req: DesignRequest = serde_json::from_value(json!({
             "project_type": "sewer",
             "terrain_points": [
@@ -642,6 +671,52 @@ mod tests {
             "project_type": "sewer"
         }));
         assert!(result.is_err(), "should fail when terrain_points is absent");
+    }
+
+    // W-01 / R-01: existing_networks depth out of range is rejected
+    #[test]
+    fn existing_network_depth_out_of_range_is_rejected() {
+        let req: DesignRequest = serde_json::from_value(json!({
+            "project_type": "sewer",
+            "terrain_points": [
+                {"x": 0.0, "y": 0.0, "z": 10.0},
+                {"x": 10.0, "y": 0.0, "z": 9.0},
+                {"x": 10.0, "y": 10.0, "z": 8.5}
+            ],
+            "existing_networks": [
+                {"coords": [{"x": 0.0, "y": 0.0}, {"x": 1.0, "y": 1.0}], "depth": 50.0}
+            ]
+        }))
+        .unwrap();
+        match req.validate().unwrap_err() {
+            HydroTypesError::OutOfRange { field, .. } => {
+                assert_eq!(field, "existing_networks.depth");
+            }
+            other => panic!("expected OutOfRange, got {other:?}"),
+        }
+    }
+
+    // W-01 / R-01: existing_networks setback out of range is rejected
+    #[test]
+    fn existing_network_setback_out_of_range_is_rejected() {
+        let req: DesignRequest = serde_json::from_value(json!({
+            "project_type": "sewer",
+            "terrain_points": [
+                {"x": 0.0, "y": 0.0, "z": 10.0},
+                {"x": 10.0, "y": 0.0, "z": 9.0},
+                {"x": 10.0, "y": 10.0, "z": 8.5}
+            ],
+            "existing_networks": [
+                {"coords": [{"x": 0.0, "y": 0.0}, {"x": 1.0, "y": 1.0}], "setback": 999.0}
+            ]
+        }))
+        .unwrap();
+        match req.validate().unwrap_err() {
+            HydroTypesError::OutOfRange { field, .. } => {
+                assert_eq!(field, "existing_networks.setback");
+            }
+            other => panic!("expected OutOfRange, got {other:?}"),
+        }
     }
 
     // S-02: unknown project_type rejected
