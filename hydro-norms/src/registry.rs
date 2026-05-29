@@ -114,53 +114,22 @@ fn resolve_alias(code: &str) -> Option<&'static str> {
         // ETAPA_EC
         "ETAPA" | "ETAPA_EC" | "ETAPA_EP" | "CUENCA" => Some("ETAPA_EC"),
         // INTERAGUA_EC
-        "INTERAGUA" | "INTERAGUA_EC" | "EMAPAG" | "EMAPAG_EP" | "GUAYAQUIL" => {
-            Some("INTERAGUA_EC")
-        }
+        "INTERAGUA" | "INTERAGUA_EC" | "EMAPAG" | "EMAPAG_EP" | "GUAYAQUIL" => Some("INTERAGUA_EC"),
         // CHILE_NCH
-        "CHILE"
-        | "CHILE_NCH"
-        | "NCH"
-        | "NCH_691"
-        | "NCH_1105"
-        | "INN"
-        | "INN_CHILE"
-        | "SISS"
-        | "AGUAS_ANDINAS"
-        | "ESVAL"
-        | "ESSBIO"
-        | "ESSAL" => Some("CHILE_NCH"),
+        "CHILE" | "CHILE_NCH" | "NCH" | "NCH_691" | "NCH_1105" | "INN" | "INN_CHILE" | "SISS"
+        | "AGUAS_ANDINAS" | "ESVAL" | "ESSBIO" | "ESSAL" => Some("CHILE_NCH"),
         // BOLIVIA_NB
         "BOLIVIA" | "BOLIVIA_NB" | "NB_688" | "NB_689" | "MMAYA" | "AAPS" | "IBNORCA" => {
             Some("BOLIVIA_NB")
         }
         // CENTROAMERICA_OPS
-        "CENTROAMERICA"
-        | "CENTROAMERICA_OPS"
-        | "OPS_CEPIS"
-        | "CEPIS"
-        | "UNATSABAR"
-        | "OPS"
-        | "PAHO"
-        | "COSTA_RICA"
-        | "AYA"
-        | "GUATEMALA"
-        | "INFOM"
-        | "EL_SALVADOR"
-        | "ANDA"
-        | "HONDURAS"
-        | "SANAA"
-        | "NICARAGUA"
-        | "ENACAL"
-        | "PANAMA"
-        | "IDAAN" => Some("CENTROAMERICA_OPS"),
+        "CENTROAMERICA" | "CENTROAMERICA_OPS" | "OPS_CEPIS" | "CEPIS" | "UNATSABAR" | "OPS"
+        | "PAHO" | "COSTA_RICA" | "AYA" | "GUATEMALA" | "INFOM" | "EL_SALVADOR" | "ANDA"
+        | "HONDURAS" | "SANAA" | "NICARAGUA" | "ENACAL" | "PANAMA" | "IDAAN" => {
+            Some("CENTROAMERICA_OPS")
+        }
         // VENEZUELA_INOS
-        "VENEZUELA"
-        | "VENEZUELA_INOS"
-        | "INOS"
-        | "GACETA_4044"
-        | "HIDROVEN"
-        | "HIDROCAPITAL"
+        "VENEZUELA" | "VENEZUELA_INOS" | "INOS" | "GACETA_4044" | "HIDROVEN" | "HIDROCAPITAL"
         | "COVENIN" => Some("VENEZUELA_INOS"),
         // DOMINICANA_INAPA
         "DOMINICANA"
@@ -235,25 +204,24 @@ fn load_profile_data(canonical: &str) -> Result<NormProfile, NormError> {
         let pt = project_type_from_str(project_key);
 
         // Handle copy_from
-        let effective_rules_value = if rules_value.is_object()
-            && rules_value.get("copy_from").is_some()
-        {
-            let source_key = rules_value["copy_from"]
-                .as_str()
-                .expect("copy_from must be a string");
-            let source_value = raw_project_rules
-                .get(source_key)
-                .expect("copy_from references a missing project key");
-            // Python raises ValueError for copy_from chains
-            if source_value.is_object() && source_value.get("copy_from").is_some() {
-                return Err(NormError::CopyFromChain {
-                    profile: format!("{canonical}:{project_key}"),
-                });
-            }
-            source_value
-        } else {
-            rules_value
-        };
+        let effective_rules_value =
+            if rules_value.is_object() && rules_value.get("copy_from").is_some() {
+                let source_key = rules_value["copy_from"]
+                    .as_str()
+                    .expect("copy_from must be a string");
+                let source_value = raw_project_rules
+                    .get(source_key)
+                    .expect("copy_from references a missing project key");
+                // Python raises ValueError for copy_from chains
+                if source_value.is_object() && source_value.get("copy_from").is_some() {
+                    return Err(NormError::CopyFromChain {
+                        profile: format!("{canonical}:{project_key}"),
+                    });
+                }
+                source_value
+            } else {
+                rules_value
+            };
 
         let rule_array = effective_rules_value
             .as_array()
@@ -278,12 +246,10 @@ fn load_profile_data(canonical: &str) -> Result<NormProfile, NormError> {
                 }
             }
 
-            let rule: NormRule =
-                serde_json::from_value(serde_json::Value::Object(rule_obj)).map_err(|e| {
-                    NormError::ProfileLoadError {
-                        file: canonical.to_string(),
-                        source: e,
-                    }
+            let rule: NormRule = serde_json::from_value(serde_json::Value::Object(rule_obj))
+                .map_err(|e| NormError::ProfileLoadError {
+                    file: canonical.to_string(),
+                    source: e,
                 })?;
             rules.push(rule);
         }

@@ -10,8 +10,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, Serialize};
 
-pub use hydro_types::Severity;
 use hydro_types::ProjectType;
+pub use hydro_types::Severity;
 
 // ── ElementType ───────────────────────────────────────────────────────────────
 
@@ -32,18 +32,13 @@ pub enum ElementType {
 /// Basis for the numeric value of a rule.
 ///
 /// Serializes as snake_case strings mirroring Python `NormValueBasis`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ValueBasis {
+    #[default]
     PublishedStandard,
     EngineeringDefault,
     UserDefined,
-}
-
-impl Default for ValueBasis {
-    fn default() -> Self {
-        ValueBasis::PublishedStandard
-    }
 }
 
 // ── NormSource ────────────────────────────────────────────────────────────────
@@ -168,9 +163,7 @@ pub struct NormValidationResult {
 
 /// Deserialize a `ProjectType` from SCREAMING_SNAKE_CASE strings as used in
 /// the JSON profile files ("SEWER", "WATER_SUPPLY", "PUMP_STATION", …).
-pub fn deserialize_project_type_screaming<'de, D>(
-    deserializer: D,
-) -> Result<ProjectType, D::Error>
+pub fn deserialize_project_type_screaming<'de, D>(deserializer: D) -> Result<ProjectType, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -247,8 +240,14 @@ mod tests {
     // T-3.1: ElementType all 3 variants serialize to lowercase string
     #[test]
     fn element_type_all_variants_serialize_lowercase() {
-        assert_eq!(serde_json::to_string(&ElementType::Pipe).unwrap(), "\"pipe\"");
-        assert_eq!(serde_json::to_string(&ElementType::Node).unwrap(), "\"node\"");
+        assert_eq!(
+            serde_json::to_string(&ElementType::Pipe).unwrap(),
+            "\"pipe\""
+        );
+        assert_eq!(
+            serde_json::to_string(&ElementType::Node).unwrap(),
+            "\"node\""
+        );
         assert_eq!(
             serde_json::to_string(&ElementType::Network).unwrap(),
             "\"network\""

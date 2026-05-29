@@ -1,0 +1,202 @@
+{
+  "cases": [
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "all_passing",
+      "network": {
+        "name": "network_A",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {}
+          },
+          {
+            "id": "p2",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {}
+          },
+          {
+            "id": "p3",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 0,
+      "expected_compliant": true
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "slope_violations_with_bypass",
+      "network": {
+        "name": "network_B",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.0009999999999999966,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {}
+          },
+          {
+            "id": "p2",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.0009999999999999966,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {}
+          },
+          {
+            "id": "p3",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.0009999999999999966,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {
+              "bypassed_by_pump": true
+            }
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "EPA_US",
+      "project_type": "WATER_SUPPLY",
+      "label": "pressure_violations",
+      "network": {
+        "name": "network_C",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {
+              "pressure_mca": 8.0
+            }
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {
+              "pressure_mca": 8.0
+            }
+          },
+          {
+            "id": "n3",
+            "x": 20,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "RESERVOIR",
+            "metadata": {
+              "pressure_mca": 8.0
+            }
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.01,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {
+              "flow_m3s": 0.035342917352885174
+            }
+          },
+          {
+            "id": "p2",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.01,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "metadata": {
+              "flow_m3s": 0.035342917352885174
+            }
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    }
+  ]
+}

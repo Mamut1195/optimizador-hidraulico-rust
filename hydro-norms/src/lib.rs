@@ -12,7 +12,6 @@ pub mod validator;
 pub use error::NormError;
 pub use registry::NormRegistry;
 pub use types::{
-    ElementType, NormProfile, NormRule, NormSource, NormValidationResult, NormViolation,
-    ValueBasis,
+    ElementType, NormProfile, NormRule, NormSource, NormValidationResult, NormViolation, ValueBasis,
 };
 pub use validator::NormValidator;
