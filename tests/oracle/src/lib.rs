@@ -27,6 +27,7 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 pub mod hydraulics;
+pub mod norms;
 
 /// Errors produced by the fixture loader.
 #[derive(Debug, Error)]

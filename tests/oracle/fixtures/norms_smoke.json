@@ -1,0 +1,169 @@
+{
+  "profiles": [
+    {
+      "code": "CONAGUA_MX",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "EPA_US",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "ABNT_BR",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "RAS_CO",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "EU_EN",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "RNE_PE",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "ENOHSA_AR",
+      "rule_counts": {
+        "SEWER": 8,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "EPMAPS_EC",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "ETAPA_EC",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "INTERAGUA_EC",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "CHILE_NCH",
+      "rule_counts": {
+        "SEWER": 10,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "BOLIVIA_NB",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "CENTROAMERICA_OPS",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "VENEZUELA_INOS",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    },
+    {
+      "code": "DOMINICANA_INAPA",
+      "rule_counts": {
+        "SEWER": 9,
+        "WATER_SUPPLY": 8,
+        "CONVEYANCE": 8,
+        "DISTRIBUTION": 8,
+        "PUMP_STATION": 8,
+        "INTAKE": 8
+      }
+    }
+  ]
+}

@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::enums::{NodeType, PipeMaterial};
 
@@ -111,6 +112,12 @@ pub struct NetworkNode {
     /// Water demand at this node in L/s (0.0 default).
     #[serde(default)]
     pub demand: f64,
+    /// Free-form metadata (Python: dict[str, Any]).
+    ///
+    /// Known keys used by the validator:
+    /// - `"pressure_mca"`: f64 — static pressure at the node (m.c.a.)
+    #[serde(default)]
+    pub metadata: HashMap<String, Value>,
 }
 
 impl NetworkNode {
@@ -126,6 +133,7 @@ impl NetworkNode {
             rim_elevation: z,
             sump_elevation: z - 1.5,
             demand: 0.0,
+            metadata: HashMap::new(),
         }
     }
 
@@ -165,6 +173,13 @@ pub struct NetworkPipe {
     /// Intermediate waypoint coordinates [[x, y], ...].
     #[serde(default)]
     pub waypoints: Vec<[f64; 2]>,
+    /// Free-form metadata (Python: dict[str, Any]).
+    ///
+    /// Known keys used by the validator:
+    /// - `"bypassed_by_pump"`: bool — when true, slope rules are skipped
+    /// - `"flow_m3s"`: f64 — design flow for pressure velocity computation
+    #[serde(default)]
+    pub metadata: HashMap<String, Value>,
 }
 
 // ── PipeNetwork ───────────────────────────────────────────────────────────────
@@ -215,6 +230,15 @@ impl PipeNetwork {
 
     pub fn pipe_count(&self) -> usize {
         self.pipes.len()
+    }
+
+    /// Look up a node by its string id.
+    ///
+    /// Returns `None` when no node with the given id exists. Performs a linear
+    /// scan — suitable for network sizes encountered in hydraulic design
+    /// (typically ≤ a few thousand nodes).
+    pub fn get_node(&self, id: &NodeId) -> Option<&NetworkNode> {
+        self.nodes.iter().find(|n| &n.id == id)
     }
 }
 
@@ -294,6 +318,7 @@ mod tests {
             slope: 0.1,
             design_flow: 0.001,
             waypoints: vec![],
+            metadata: Default::default(),
         };
         let net = PipeNetwork::new("test", nodes, vec![pipe]);
         assert_eq!(net.node_count(), 2);
