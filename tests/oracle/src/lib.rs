@@ -28,6 +28,7 @@ use thiserror::Error;
 
 pub mod hydraulics;
 pub mod norms;
+pub mod terrain;
 
 /// Errors produced by the fixture loader.
 #[derive(Debug, Error)]
