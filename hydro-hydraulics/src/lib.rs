@@ -6,10 +6,11 @@
 //! Every public function in this crate is EXACT-match tested against the Python
 //! oracle (absolute tolerance ≤ 1e-9) via the `tests/oracle` integration harness.
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn workspace_member_compiles() {
-        // The test passing confirms compilation succeeded.
-    }
-}
+pub mod darcy_weisbach;
+pub mod error;
+pub mod hazen_williams;
+pub mod manning;
+pub mod open_channel;
+pub mod pump_curves;
+
+pub use error::HydraulicsError;
