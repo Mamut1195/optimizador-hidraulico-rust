@@ -51,7 +51,9 @@ try:
         full_flow_velocity,
         partial_flow_ratio,
     )
-    from hydro_engine.hydraulics.open_channel import rectangular_channel_flow
+    from hydro_engine.hydraulics.open_channel import (
+        rectangular_channel_flow as _rectangular_channel_flow_dict,
+    )
     from hydro_engine.hydraulics.pump_curves import PumpCurve, head_at_flow, make_curve
 except ImportError as exc:
     sys.exit(
@@ -208,21 +210,31 @@ RECT_SLOPES = [0.001, 0.005, 0.01]
 RECT_ROUGHNESS = [0.013, 0.025]
 
 
+def _rect_channel_raw(width: float, depth: float, slope: float, roughness: float) -> tuple[float, float]:
+    """Compute rectangular channel velocity and flow WITHOUT rounding (raw f64)."""
+    area = width * depth
+    wetted_perimeter = width + 2 * depth
+    hydraulic_radius = area / wetted_perimeter if wetted_perimeter > 0 else 0.0
+    vel = (1.0 / roughness) * (hydraulic_radius ** (2.0 / 3.0)) * (abs(slope) ** 0.5)
+    flow = vel * area
+    return vel, flow
+
+
 def generate_rectangular_channel_rows() -> list[dict]:
     rows: list[dict] = []
     for w in RECT_WIDTHS:
         for depth in RECT_DEPTHS:
             for s in RECT_SLOPES:
                 for n in RECT_ROUGHNESS:
-                    result = rectangular_channel_flow(w, depth, s, roughness=n)
+                    vel, flow = _rect_channel_raw(w, depth, s, n)
                     rows.append(
                         {
                             "width_m": float(w),
                             "depth_m": float(depth),
                             "slope": float(s),
                             "roughness_n": float(n),
-                            "velocity_m_s": float(result["velocity_m_s"]),
-                            "flow_m3s": float(result["flow_m3_s"]),
+                            "velocity_m_s": float(vel),
+                            "flow_m3s": float(flow),
                         }
                     )
     return rows
