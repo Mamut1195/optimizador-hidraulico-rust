@@ -514,6 +514,7 @@ name = "hydro-norms"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "hydro-hydraulics",
  "hydro-types",
  "insta",
  "oracle",

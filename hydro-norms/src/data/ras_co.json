@@ -1,0 +1,81 @@
+{
+  "agency": "Ministerio de Vivienda, Ciudad y Territorio",
+  "certification_note": "Source-traceable implementation profile based on Resolución 0330 de 2017 (RAS) and the 2021 amendment (Resolución 0799 de 2021). Project approval still requires direct review against the original certified standards and the local prestador de servicios.",
+  "certified": true,
+  "code": "RAS_CO",
+  "country": "CO",
+  "source_catalog": {
+    "ras_0330_sewer": {
+      "agency": "MinVivienda Colombia",
+      "document": "Resolución 0330 de 2017 - Reglamento Técnico del Sector de Agua Potable y Saneamiento Básico (RAS)",
+      "note": "Sanitary sewer rules: minimum tractive shear 1.0 Pa (vmin ~0.6 m/s practical), maximum real velocity 5.0 m/s (10 m/s in exceptional cases), minimum internal diameter 170 mm for urban populations > 2500 inhab, 140 mm for smaller populations.",
+      "section": "Título 2 - Sistemas de alcantarillado (arts. 134-148)",
+      "url": "https://normas.cra.gov.co/gestor/docs/resolucion_minviviendact_0330_2017.htm",
+      "value_basis": "published_standard",
+      "version": "2017 (con reforma de Res. 0799/2021)"
+    },
+    "ras_0330_water": {
+      "agency": "MinVivienda Colombia",
+      "document": "Resolución 0330 de 2017 - RAS",
+      "note": "Water supply rules: maximum static pressure 50 m.c.a. with pressure zoning. Minimum real velocity 0.5 m/s or that generating 1.50 Pa shear. Maximum velocity bounded by pipe-material limits.",
+      "section": "Título 2 - Sistemas de acueducto (arts. 55-90); Resolución 0799/2021 art. 1",
+      "url": "https://normas.cra.gov.co/gestor/docs/resolucion_minviviendact_0330_2017.htm",
+      "value_basis": "published_standard",
+      "version": "2017 (con reforma de Res. 0799/2021)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Cover, depth, minimum pressure, slope and pipe-material velocity bounds are production guardrails when the regulation defers to local utility criteria.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "RAS-0330-2017-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.003, "units": "m/m", "description": "Pendiente mínima práctica para garantizar tensión tractiva ≥ 1.0 Pa.", "source_id": "engine_constructability"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.10, "units": "m/m", "description": "Pendiente máxima usada para mantener vf ≤ 5 m/s.", "source_id": "ras_0330_sewer"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Cobertura mínima en cruces viales y zonas con cargas vivas.", "source_id": "ras_0330_sewer"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Profundidad máxima de excavación (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad real mínima compatible con tensión tractiva 1.0 Pa.", "source_id": "ras_0330_sewer"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad real máxima en colectores por gravedad.", "source_id": "ras_0330_sewer"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.17, "units": "m", "description": "Diámetro interno mínimo de redes sanitarias urbanas (DN 170).", "source_id": "ras_0330_sewer"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Cobertura mínima sobre tuberías de acueducto (práctica RAS).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Velocidad mínima compatible con tensión tractiva ≥ 1.50 Pa.", "source_id": "ras_0330_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible (guardrail material-dependent).", "source_id": "engine_constructability"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Diámetro mínimo de acometidas / redes secundarias (DN 50).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión dinámica mínima de servicio (práctica del prestador).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima en redes nuevas u optimizadas (Res. 0799/2021).", "source_id": "ras_0330_water"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Cobertura mínima en aducciones / conducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Velocidad mínima en aducciones (tensión tractiva ≥ 1.50 Pa).", "source_id": "ras_0330_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.5, "units": "m/s", "description": "Velocidad máxima admisible (guardrail material-dependent).", "source_id": "engine_constructability"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en aducciones (DN 75).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima en aducciones (guardrail interno).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima en aducciones (guardrail interno).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Cobertura mínima sobre tubería de distribución.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Velocidad mínima en redes de distribución.", "source_id": "ras_0330_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible (guardrail material-dependent).", "source_id": "engine_constructability"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Diámetro mínimo de red de distribución (DN 50).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión dinámica mínima de servicio.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima en redes nuevas (Res. 0799/2021).", "source_id": "ras_0330_water"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

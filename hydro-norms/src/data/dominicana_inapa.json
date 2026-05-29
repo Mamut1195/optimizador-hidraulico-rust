@@ -1,0 +1,73 @@
+{
+  "agency": "INAPA (Instituto Nacional de Aguas Potables y Alcantarillados) — República Dominicana",
+  "certification_note": "Source-traceable implementation profile for República Dominicana, built on the INAPA Reglamento Técnico para Diseño de Obras e Instalaciones Hidro-Sanitarias (edición 2018, actualizado 2024). INAPA es el ente nacional rector excepto en Santo Domingo (CAASD) y Santiago (CORAASAN); estos operadores aplican criterios consistentes con INAPA. Project approval requires direct review against the latest INAPA bulletin + the local operador.",
+  "certified": true,
+  "code": "DOMINICANA_INAPA",
+  "country": "DO",
+  "source_catalog": {
+    "inapa_reglamento": {
+      "agency": "INAPA — República Dominicana",
+      "document": "Reglamento Técnico para Diseño de Obras e Instalaciones Hidro-Sanitarias",
+      "note": "Documento técnico oficial de INAPA, edición Julio 2018 con actualizaciones 2024. Cubre diseño de redes de agua potable, alcantarillado sanitario y pluvial, plantas de tratamiento, criterios hidráulicos y materiales. Aplica al ámbito INAPA (todo el país excepto Santo Domingo y Santiago).",
+      "section": "Capítulos II (Agua Potable), III (Alcantarillado), IV (Materiales)",
+      "url": "https://wp.inapa.gob.do/wp-content/uploads/2024/07/REGLAMENTOS-TECNICOS-PARA-DISENO-E-INSTALACIONES-HIDRO-SANITARIO-DEL-INAPA.pdf",
+      "value_basis": "published_standard",
+      "version": "Edición 2018, actualización 2024 (vigente)"
+    },
+    "inapa_especificaciones": {
+      "agency": "INAPA — República Dominicana",
+      "document": "Especificaciones Técnicas para Proyectos de Agua Potable y Alcantarillado",
+      "note": "Documentos de especificaciones técnicas particulares para contratos de obras de INAPA. Complementan el Reglamento Técnico con criterios de materiales, ensayos y construcción.",
+      "section": "Especificaciones particulares por proyecto",
+      "url": "https://inapa.gob.do/wp-content/uploads/2024/07/ESPECIFICACIONES-TECNICAS-23.pdf",
+      "value_basis": "published_standard",
+      "version": "2023-2024"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "INAPA-Reglamento-2018-2024-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.004, "units": "m/m", "description": "Pendiente mínima derivada de criterio tensión tractiva (INAPA + práctica regional caribeña).", "source_id": "engine_constructability"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima compatible con velocidad < 5 m/s.", "source_id": "inapa_reglamento"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Colchón mínimo sobre clave (INAPA).", "source_id": "inapa_reglamento"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima sin sistemas especiales.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima a tubo lleno (INAPA).", "source_id": "inapa_reglamento"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima en PVC; 3.0 m/s en hormigón.", "source_id": "inapa_reglamento"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Diámetro mínimo de colector cloacal DN 200 (INAPA).", "source_id": "inapa_reglamento"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.010, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.010 PVC, 0.013 hormigón.", "source_id": "inapa_reglamento"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Tapada mínima sobre red de agua potable (INAPA).", "source_id": "inapa_reglamento"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en red.", "source_id": "inapa_reglamento"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima en red de distribución.", "source_id": "inapa_reglamento"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria DN 75.", "source_id": "inapa_reglamento"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión dinámica mínima de servicio (INAPA).", "source_id": "inapa_reglamento"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima.", "source_id": "inapa_reglamento"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima.", "source_id": "inapa_reglamento"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima.", "source_id": "inapa_reglamento"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción.", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

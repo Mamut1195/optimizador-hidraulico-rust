@@ -1,0 +1,82 @@
+{
+  "agency": "MMAyA (Ministerio de Medio Ambiente y Agua) — VAPSB / IBNORCA — AAPS",
+  "certification_note": "Source-traceable implementation profile for Bolivia, built on the two national norms NB 688:2007 (Diseño de sistemas de alcantarillado sanitario y pluvial; cuarta revisión NB 688:2023 vigente) y NB 689:2004 (Diseño para sistemas de agua potable). Publicadas por IBNORCA bajo el VAPSB del MMAyA. Project approval still requires direct review against the certified IBNORCA bulletin plus AAPS (Autoridad de Fiscalización y Control Social de Agua Potable y Saneamiento Básico) rules.",
+  "certified": true,
+  "code": "BOLIVIA_NB",
+  "country": "BO",
+  "source_catalog": {
+    "nb_688": {
+      "agency": "IBNORCA — VAPSB (MMAyA)",
+      "document": "NB 688: Diseño de sistemas de recolección y evacuación de aguas residuales y pluviales (Cuarta revisión 2023, anula NB 688:2007)",
+      "note": "Norma boliviana vigente. Velocidad mínima criterio histórico v = 0.6 m/s a sección llena; recomienda diseño por tensión tractiva con τ ≥ 1.0 Pa (alcantarillado sanitario) y τ ≥ 1.5 Pa (pluvial). Diámetros mínimos: 100-150 mm para colectores secundarios. Tirante máximo 75% del diámetro. Manning n: 0.010 PVC, 0.013 hormigón.",
+      "section": "Capítulos 4 (Criterios hidráulicos), 5 (Pendientes), 6 (Diámetros), 7 (Tensión tractiva)",
+      "url": "https://www.anesapa.org/data/files/NB688.pdf",
+      "value_basis": "published_standard",
+      "version": "NB 688:2023 (cuarta revisión, vigente; reemplaza NB 688:2007)"
+    },
+    "nb_689": {
+      "agency": "IBNORCA — VAPSB (MMAyA)",
+      "document": "NB 689: Diseño para sistemas de agua potable",
+      "note": "Norma boliviana actualizada en 2004 con criterios de presión, velocidad, diámetro y materiales para distribución urbana, peri-urbana y rural. Incluye tablas de Hazen-Williams (CH) por material y Manning (n) por conducto. Presión dinámica mínima de servicio 10-15 mca; presión estática máxima 50-70 mca según zona.",
+      "section": "Capítulos 1 (Bases de diseño), 5 (Distribución), Anexos (coeficientes)",
+      "url": "https://www.anesapa.org/data/files/NB689AguaPotableNORMA.pdf",
+      "value_basis": "published_standard",
+      "version": "NB 689:2004 (vigente)"
+    },
+    "aaps_reglamento": {
+      "agency": "AAPS — Autoridad de Fiscalización y Control Social de Agua Potable y Saneamiento Básico",
+      "document": "Reglamentos de Presentación de Proyectos de Agua Potable y Saneamiento (RM 232)",
+      "note": "Marco regulatorio que las EPSA (Entidades Prestadoras de Servicios de Agua y Saneamiento) deben cumplir para presentar proyectos. Complementa NB 688 y NB 689.",
+      "section": "Anexos técnicos",
+      "url": "https://www.aaps.gob.bo/wordpress/wp-content/uploads/Documentacion/ResolucionesMinisteriales/RM-232.pdf",
+      "value_basis": "published_standard",
+      "version": "RM 232 (vigente)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "NB-688-2023-and-NB-689-2004-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.003, "units": "m/m", "description": "Pendiente mínima derivada de τ ≥ 1.0 Pa con DN 200 (criterio tensión tractiva NB 688).", "source_id": "nb_688"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima compatible con velocidad < 5 m/s en PVC.", "source_id": "nb_688"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Colchón mínimo sobre clave de colector (criterio NB 688).", "source_id": "nb_688"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima sin sistemas especiales (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima a sección llena (criterio histórico NB 688; el método actual prefiere tensión tractiva).", "source_id": "nb_688"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima en PVC; 3.0 m/s recomendado en hormigón.", "source_id": "nb_688"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en colectores secundarios DN 100 (urbano DN 150-200).", "source_id": "nb_688"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.010, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.010 PVC, 0.013 hormigón (NB 688).", "source_id": "nb_688"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento (criterio NB 689).", "source_id": "nb_689"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima en red de distribución.", "source_id": "nb_689"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria (DN 75).", "source_id": "nb_689"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.0, "units": "mca", "description": "Presión dinámica mínima de servicio (NB 689).", "source_id": "nb_689"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio (NB 689).", "source_id": "nb_689"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "nb_689"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "nb_689"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción (guardrail).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción (criterio NB 689).", "source_id": "nb_689"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

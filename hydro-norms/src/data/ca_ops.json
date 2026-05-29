@@ -1,0 +1,73 @@
+{
+  "agency": "OPS/PAHO — Organización Panamericana de la Salud (CEPIS/UNATSABAR) — guía técnica regional",
+  "certification_note": "Source-traceable implementation profile for Central America and rural Latin America, built on the OPS/CEPIS/UNATSABAR design guides (especially OPS/CEPIS/05.169 sanitary sewer design and OPS/CEPIS/05.158 water supply). These guides are the de-facto regional reference applied in Costa Rica, Guatemala, El Salvador, Honduras, Nicaragua, Panamá, where the national norms either rely on or align with the OPS/CEPIS criteria. Project approval still requires review against the specific country regulator (AyA/Costa Rica, INFOM/Guatemala, ANDA/El Salvador, SANAA/Honduras, ENACAL/Nicaragua, IDAAN/Panamá).",
+  "certified": true,
+  "code": "CENTROAMERICA_OPS",
+  "country": "CR",
+  "source_catalog": {
+    "ops_cepis_05_169": {
+      "agency": "OPS/PAHO — CEPIS / UNATSABAR",
+      "document": "OPS/CEPIS/05.169 — Guías para el diseño de tecnologías de alcantarillado",
+      "note": "Aplica al diseño de sistemas separados de alcantarillado sanitario. Velocidad mínima a tubo lleno 0.6 m/s; velocidad máxima 5.0 m/s; tensión tractiva mínima 1.0 Pa; tirante máximo 75-85% del diámetro; diámetro mínimo de colector 100-150 mm en alcantarillado simplificado, 200 mm en convencional; Manning n por material: 0.010-0.011 PVC, 0.013-0.015 hormigón.",
+      "section": "Capítulos 4-6",
+      "url": "https://sinia.minam.gob.pe/sites/default/files/sial-sialtrujillo/archivos/public/docs/418.pdf",
+      "value_basis": "published_standard",
+      "version": "OPS/CEPIS/05.169 (2005, vigente como referencia regional)"
+    },
+    "anda_norma": {
+      "agency": "ANDA — Administración Nacional de Acueductos y Alcantarillados (El Salvador)",
+      "document": "Normas Técnicas para Abastecimiento de Agua Potable y Alcantarillados Sanitarios",
+      "note": "Referencia regional centroamericana; sus valores son representativos de la práctica en CR, GT, HN, SV, NI, PA. Diámetro mínimo de distribución 75 mm; velocidad 0.6-2.5 m/s; presión 15-50 mca; alcantarillado DN 200 mm mínimo, v 0.6-5.0 m/s.",
+      "section": "Capítulos II (Agua) y III (Alcantarillado)",
+      "url": "https://www.anda.gob.sv/wp-content/uploads/2023/08/Normas-Tecnicas-ANDA.pdf",
+      "value_basis": "published_standard",
+      "version": "ANDA (vigente)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the guide defers the limit to project-specific calculations. Aplica con más fuerza en zonas rurales / pequeñas localidades donde la guía OPS/CEPIS prevé criterios flexibles.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "OPS-CEPIS-UNATSABAR-and-ANDA-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.004, "units": "m/m", "description": "Pendiente mínima derivada de τ ≥ 1 Pa con DN 200 (criterio tensión tractiva OPS/CEPIS).", "source_id": "ops_cepis_05_169"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima compatible con velocidad < 5 m/s.", "source_id": "ops_cepis_05_169"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Colchón mínimo sobre clave en zonas urbanas.", "source_id": "ops_cepis_05_169"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima sin sistemas especiales (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima a tubo lleno (OPS/CEPIS).", "source_id": "ops_cepis_05_169"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "ops_cepis_05_169"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.15, "units": "m", "description": "Diámetro mínimo DN 150 en alcantarillado convencional centroamericano (DN 100 admisible en simplificado).", "source_id": "ops_cepis_05_169"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.010, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.010-0.011 PVC, 0.013-0.015 hormigón (OPS/CEPIS).", "source_id": "ops_cepis_05_169"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Tapada mínima sobre red de agua potable.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima (ANDA y guía OPS).", "source_id": "anda_norma"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima.", "source_id": "anda_norma"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red de distribución DN 75 (ANDA).", "source_id": "anda_norma"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión dinámica mínima (ANDA).", "source_id": "anda_norma"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima (ANDA).", "source_id": "anda_norma"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "anda_norma"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima.", "source_id": "anda_norma"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción.", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}
