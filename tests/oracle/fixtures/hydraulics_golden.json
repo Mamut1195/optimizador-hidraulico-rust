@@ -2715,576 +2715,576 @@
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.644,
-      "flow_m3s": 0.096667
+      "velocity_m_s": 0.6444497065824605,
+      "flow_m3s": 0.09666745598736907
     },
     {
       "width_m": 0.5,
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.335,
-      "flow_m3s": 0.050267
+      "velocity_m_s": 0.3351138474228795,
+      "flow_m3s": 0.05026707711343192
     },
     {
       "width_m": 0.5,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.441,
-      "flow_m3s": 0.216155
+      "velocity_m_s": 1.4410333519981755,
+      "flow_m3s": 0.21615500279972633
     },
     {
       "width_m": 0.5,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.749,
-      "flow_m3s": 0.112401
+      "velocity_m_s": 0.7493373430390513,
+      "flow_m3s": 0.11240060145585769
     },
     {
       "width_m": 0.5,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.038,
-      "flow_m3s": 0.305689
+      "velocity_m_s": 2.037928910227782,
+      "flow_m3s": 0.3056893365341673
     },
     {
       "width_m": 0.5,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.06,
-      "flow_m3s": 0.158958
+      "velocity_m_s": 1.0597230333184466,
+      "flow_m3s": 0.15895845499776698
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.737,
-      "flow_m3s": 0.184174
+      "velocity_m_s": 0.7366974175057688,
+      "flow_m3s": 0.1841743543764422
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.383,
-      "flow_m3s": 0.095771
+      "velocity_m_s": 0.38308265710299977,
+      "flow_m3s": 0.09577066427574994
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.647,
-      "flow_m3s": 0.411826
+      "velocity_m_s": 1.6473055043914426,
+      "flow_m3s": 0.41182637609786066
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.857,
-      "flow_m3s": 0.21415
+      "velocity_m_s": 0.8565988622835502,
+      "flow_m3s": 0.21414971557088755
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.33,
-      "flow_m3s": 0.58241
+      "velocity_m_s": 2.3296417856822305,
+      "flow_m3s": 0.5824104464205576
     },
     {
       "width_m": 0.5,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.211,
-      "flow_m3s": 0.302853
+      "velocity_m_s": 1.21141372855476,
+      "flow_m3s": 0.30285343213869
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.832,
-      "flow_m3s": 0.415955
+      "velocity_m_s": 0.8319105747078454,
+      "flow_m3s": 0.4159552873539227
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.433,
-      "flow_m3s": 0.216297
+      "velocity_m_s": 0.4325934988480796,
+      "flow_m3s": 0.2162967494240398
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.86,
-      "flow_m3s": 0.930104
+      "velocity_m_s": 1.8602085962476596,
+      "flow_m3s": 0.9301042981238298
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.967,
-      "flow_m3s": 0.483654
+      "velocity_m_s": 0.9673084700487831,
+      "flow_m3s": 0.48365423502439153
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.631,
-      "flow_m3s": 1.315366
+      "velocity_m_s": 2.630732225656457,
+      "flow_m3s": 1.3153661128282286
     },
     {
       "width_m": 0.5,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.368,
-      "flow_m3s": 0.68399
+      "velocity_m_s": 1.3679807573413578,
+      "flow_m3s": 0.6839903786706789
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.871,
-      "flow_m3s": 0.653301
+      "velocity_m_s": 0.871068135357515,
+      "flow_m3s": 0.6533011015181363
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.453,
-      "flow_m3s": 0.339717
+      "velocity_m_s": 0.4529554303859078,
+      "flow_m3s": 0.33971657278943085
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.948,
-      "flow_m3s": 1.460826
+      "velocity_m_s": 1.9477675636933918,
+      "flow_m3s": 1.460825672770044
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.013,
-      "flow_m3s": 0.759629
+      "velocity_m_s": 1.0128391331205637,
+      "flow_m3s": 0.7596293498404227
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.755,
-      "flow_m3s": 2.065919
+      "velocity_m_s": 2.7545593049255963,
+      "flow_m3s": 2.0659194786941972
     },
     {
       "width_m": 0.5,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.432,
-      "flow_m3s": 1.074278
+      "velocity_m_s": 1.4323708385613099,
+      "flow_m3s": 1.0742781289209824
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.797,
-      "flow_m3s": 0.239063
+      "velocity_m_s": 0.7968761503832043,
+      "flow_m3s": 0.23906284511496126
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.414,
-      "flow_m3s": 0.124313
+      "velocity_m_s": 0.4143755981992662,
+      "flow_m3s": 0.12431267945977986
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.782,
-      "flow_m3s": 0.534561
+      "velocity_m_s": 1.7818692419051898,
+      "flow_m3s": 0.5345607725715569
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.927,
-      "flow_m3s": 0.277972
+      "velocity_m_s": 0.9265720057906988,
+      "flow_m3s": 0.27797160173720964
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.52,
-      "flow_m3s": 0.755983
+      "velocity_m_s": 2.519943648277785,
+      "flow_m3s": 0.7559830944833354
     },
     {
       "width_m": 1.0,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.31,
-      "flow_m3s": 0.393111
+      "velocity_m_s": 1.3103706971044482,
+      "flow_m3s": 0.39311120913133446
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.965,
-      "flow_m3s": 0.482673
+      "velocity_m_s": 0.965346708532081,
+      "flow_m3s": 0.4826733542660405
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.502,
-      "flow_m3s": 0.25099
+      "velocity_m_s": 0.5019802884366822,
+      "flow_m3s": 0.2509901442183411
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.159,
-      "flow_m3s": 1.07929
+      "velocity_m_s": 2.1585808621334097,
+      "flow_m3s": 1.0792904310667049
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.122,
-      "flow_m3s": 0.561231
+      "velocity_m_s": 1.122462048309373,
+      "flow_m3s": 0.5612310241546865
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 3.053,
-      "flow_m3s": 1.526347
+      "velocity_m_s": 3.0526943307080763,
+      "flow_m3s": 1.5263471653540381
     },
     {
       "width_m": 1.0,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.587,
-      "flow_m3s": 0.793701
+      "velocity_m_s": 1.5874010519681996,
+      "flow_m3s": 0.7937005259840998
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.169,
-      "flow_m3s": 1.169434
+      "velocity_m_s": 1.1694342555309132,
+      "flow_m3s": 1.1694342555309132
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.608,
-      "flow_m3s": 0.608106
+      "velocity_m_s": 0.6081058128760749,
+      "flow_m3s": 0.6081058128760749
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.615,
-      "flow_m3s": 2.614934
+      "velocity_m_s": 2.6149344905839813,
+      "flow_m3s": 2.6149344905839813
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.36,
-      "flow_m3s": 1.359766
+      "velocity_m_s": 1.3597659351036704,
+      "flow_m3s": 1.3597659351036704
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 3.698,
-      "flow_m3s": 3.698076
+      "velocity_m_s": 3.698075821301047,
+      "flow_m3s": 3.698075821301047
     },
     {
       "width_m": 1.0,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.923,
-      "flow_m3s": 1.922999
+      "velocity_m_s": 1.9229994270765447,
+      "flow_m3s": 1.9229994270765447
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.265,
-      "flow_m3s": 1.897443
+      "velocity_m_s": 1.2649620394066676,
+      "flow_m3s": 1.8974430591100013
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.658,
-      "flow_m3s": 0.98667
+      "velocity_m_s": 0.6577802604914672,
+      "flow_m3s": 0.9866703907372008
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.829,
-      "flow_m3s": 4.242812
+      "velocity_m_s": 2.8285411090700765,
+      "flow_m3s": 4.2428116636051145
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.471,
-      "flow_m3s": 2.206262
+      "velocity_m_s": 1.4708413767164399,
+      "flow_m3s": 2.20626206507466
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 4.0,
-      "flow_m3s": 6.000242
+      "velocity_m_s": 4.000161198176738,
+      "flow_m3s": 6.000241797265108
     },
     {
       "width_m": 1.0,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 2.08,
-      "flow_m3s": 3.120126
+      "velocity_m_s": 2.080083823051904,
+      "flow_m3s": 3.120125734577856
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 0.915,
-      "flow_m3s": 0.549111
+      "velocity_m_s": 0.9151843452021198,
+      "flow_m3s": 0.5491106071212718
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.476,
-      "flow_m3s": 0.285538
+      "velocity_m_s": 0.47589585950510227,
+      "flow_m3s": 0.28553751570306135
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.046,
-      "flow_m3s": 1.227849
+      "velocity_m_s": 2.0464144078155733,
+      "flow_m3s": 1.227848644689344
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.064,
-      "flow_m3s": 0.638481
+      "velocity_m_s": 1.0641354920640982,
+      "flow_m3s": 0.6384812952384589
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.894,
-      "flow_m3s": 1.73644
+      "velocity_m_s": 2.8940670097684897,
+      "flow_m3s": 1.7364402058610937
     },
     {
       "width_m": 2.0,
       "depth_m": 0.3,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.505,
-      "flow_m3s": 0.902949
+      "velocity_m_s": 1.5049148450796148,
+      "flow_m3s": 0.9029489070477689
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.169,
-      "flow_m3s": 1.169434
+      "velocity_m_s": 1.1694342555309132,
+      "flow_m3s": 1.1694342555309132
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.608,
-      "flow_m3s": 0.608106
+      "velocity_m_s": 0.6081058128760749,
+      "flow_m3s": 0.6081058128760749
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 2.615,
-      "flow_m3s": 2.614934
+      "velocity_m_s": 2.6149344905839813,
+      "flow_m3s": 2.6149344905839813
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.36,
-      "flow_m3s": 1.359766
+      "velocity_m_s": 1.3597659351036704,
+      "flow_m3s": 1.3597659351036704
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 3.698,
-      "flow_m3s": 3.698076
+      "velocity_m_s": 3.698075821301047,
+      "flow_m3s": 3.698075821301047
     },
     {
       "width_m": 2.0,
       "depth_m": 0.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.923,
-      "flow_m3s": 1.922999
+      "velocity_m_s": 1.9229994270765447,
+      "flow_m3s": 1.9229994270765447
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.532,
-      "flow_m3s": 3.064785
+      "velocity_m_s": 1.532392380637864,
+      "flow_m3s": 3.064784761275728
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.797,
-      "flow_m3s": 1.593688
+      "velocity_m_s": 0.7968440379316895,
+      "flow_m3s": 1.593688075863379
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 3.427,
-      "flow_m3s": 6.853067
+      "velocity_m_s": 3.426533531308997,
+      "flow_m3s": 6.853067062617994
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 1.782,
-      "flow_m3s": 3.563595
+      "velocity_m_s": 1.7817974362806788,
+      "flow_m3s": 3.5635948725613575
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 4.846,
-      "flow_m3s": 9.6917
+      "velocity_m_s": 4.8458501919033585,
+      "flow_m3s": 9.691700383806717
     },
     {
       "width_m": 2.0,
       "depth_m": 1.0,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 2.52,
-      "flow_m3s": 5.039684
+      "velocity_m_s": 2.519842099789747,
+      "flow_m3s": 5.039684199579494
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.013,
-      "velocity_m_s": 1.73,
-      "flow_m3s": 5.191331
+      "velocity_m_s": 1.7304437286756016,
+      "flow_m3s": 5.1913311860268045
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.001,
       "roughness_n": 0.025,
-      "velocity_m_s": 0.9,
-      "flow_m3s": 2.699492
+      "velocity_m_s": 0.8998307389113128,
+      "flow_m3s": 2.6994922167339386
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.013,
-      "velocity_m_s": 3.869,
-      "flow_m3s": 11.608169
+      "velocity_m_s": 3.869389808556847,
+      "flow_m3s": 11.608169425670543
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.005,
       "roughness_n": 0.025,
-      "velocity_m_s": 2.012,
-      "flow_m3s": 6.036248
+      "velocity_m_s": 2.012082700449561,
+      "flow_m3s": 6.036248101348683
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.013,
-      "velocity_m_s": 5.472,
-      "flow_m3s": 16.416431
+      "velocity_m_s": 5.4721435453693275,
+      "flow_m3s": 16.416430636107982
     },
     {
       "width_m": 2.0,
       "depth_m": 1.5,
       "slope": 0.01,
       "roughness_n": 0.025,
-      "velocity_m_s": 2.846,
-      "flow_m3s": 8.536544
+      "velocity_m_s": 2.8455146435920504,
+      "flow_m3s": 8.536543930776151
     }
   ],
   "pump_curves": [
