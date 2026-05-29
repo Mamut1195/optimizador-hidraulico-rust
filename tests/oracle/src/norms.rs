@@ -94,6 +94,11 @@ pub struct NormsViolationsPipe {
     pub slope: f64,
     pub roughness: f64,
     pub design_flow: f64,
+    /// Explicit start invert elevation (m). When present, the Rust test uses
+    /// this value directly. When absent, the test falls back to the historic
+    /// default of 8.5 m (gives 1.5 m cover when node z = 10.0).
+    #[serde(default)]
+    pub start_invert: Option<f64>,
     #[serde(default)]
     pub metadata: HashMap<String, serde_json::Value>,
 }

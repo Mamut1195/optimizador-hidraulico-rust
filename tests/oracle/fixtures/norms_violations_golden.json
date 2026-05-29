@@ -34,6 +34,7 @@
             "slope": 0.02,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {}
           },
           {
@@ -45,6 +46,7 @@
             "slope": 0.02,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {}
           },
           {
@@ -56,6 +58,7 @@
             "slope": 0.02,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {}
           }
         ]
@@ -97,6 +100,7 @@
             "slope": 0.0009999999999999966,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {}
           },
           {
@@ -108,6 +112,7 @@
             "slope": 0.0009999999999999966,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {}
           },
           {
@@ -119,6 +124,7 @@
             "slope": 0.0009999999999999966,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {
               "bypassed_by_pump": true
             }
@@ -176,6 +182,7 @@
             "slope": 0.01,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {
               "flow_m3s": 0.035342917352885174
             }
@@ -189,9 +196,392 @@
             "slope": 0.01,
             "roughness": 0.009,
             "design_flow": 0.001,
+            "start_invert": 8.5,
             "metadata": {
               "flow_m3s": 0.035342917352885174
             }
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "max_slope_violation",
+      "network": {
+        "name": "network_D",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.08,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "min_cover_violation",
+      "network": {
+        "name": "network_E",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 9.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 1,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "max_depth_violation",
+      "network": {
+        "name": "network_F",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 4.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 1,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "gravity_velocity_too_low",
+      "network": {
+        "name": "network_G",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.2,
+            "slope": 0.0009999999999999966,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "gravity_velocity_too_high",
+      "network": {
+        "name": "network_H",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.08,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 2,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "EPA_US",
+      "project_type": "WATER_SUPPLY",
+      "label": "pressure_velocity_too_low",
+      "network": {
+        "name": "network_I",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.3,
+            "slope": 0.01,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {
+              "flow_m3s": 0.001
+            }
+          }
+        ]
+      },
+      "expected_hard_count": 1,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "EPA_US",
+      "project_type": "WATER_SUPPLY",
+      "label": "pressure_velocity_too_high",
+      "network": {
+        "name": "network_J",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "JUNCTION",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.12,
+            "slope": 0.01,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {
+              "flow_m3s": 0.05
+            }
+          }
+        ]
+      },
+      "expected_hard_count": 1,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "diameter_too_small",
+      "network": {
+        "name": "network_K",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 0.15,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {}
+          }
+        ]
+      },
+      "expected_hard_count": 1,
+      "expected_compliant": false
+    },
+    {
+      "norm_code": "CONAGUA_MX",
+      "project_type": "SEWER",
+      "label": "diameter_too_large",
+      "network": {
+        "name": "network_L",
+        "nodes": [
+          {
+            "id": "n1",
+            "x": 0,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          },
+          {
+            "id": "n2",
+            "x": 10,
+            "y": 0,
+            "z": 10.0,
+            "node_type": "MANHOLE",
+            "metadata": {}
+          }
+        ],
+        "pipes": [
+          {
+            "id": "p1",
+            "start_node_id": "n1",
+            "end_node_id": "n2",
+            "length": 100.0,
+            "diameter": 1.5,
+            "slope": 0.02,
+            "roughness": 0.009,
+            "design_flow": 0.001,
+            "start_invert": 8.5,
+            "metadata": {}
           }
         ]
       },
