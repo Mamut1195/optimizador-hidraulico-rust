@@ -565,6 +565,7 @@ dependencies = [
  "approx",
  "geo",
  "hydro-types",
+ "insta",
  "kiddo",
  "oracle",
  "petgraph",
