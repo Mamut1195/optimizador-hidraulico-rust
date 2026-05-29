@@ -105,6 +105,160 @@ fn steiner_weight_within_10pct_of_oracle() {
     );
 }
 
+// ── Strict-parity tests (non-vacuous suboptimal fixture) ─────────────────
+
+/// Build the suboptimal Steiner fixture graph (3×3 grid, 3 terminals).
+fn build_suboptimal_graph() -> (hydro_terrain::TerrainGraph, Vec<String>) {
+    use hydro_terrain::{CostFunction, TerrainGraph, TerrainModel};
+
+    let fixture = oracle::terrain::load_steiner_suboptimal_golden();
+
+    let mut terrain = TerrainModel::from_xyz_list(&fixture.points).unwrap();
+    terrain.build_grid(fixture.build_grid_res).unwrap();
+
+    let mut graph = TerrainGraph::new(CostFunction::default());
+    graph.from_grid(fixture.graph_resolution, &terrain);
+
+    (graph, fixture.terminals.clone())
+}
+
+/// T-4.3-SP AC-0: Fixture sanity — suboptimality is proven (approximation_gap > 1.0).
+///
+/// This assertion documents that the fixture is genuinely non-vacuous: the Python
+/// oracle (Mehlhorn) weight exceeds the exact optimal weight, so a test of Rust
+/// parity with the oracle cannot be satisfied by any arbitrary correct Steiner heuristic.
+#[test]
+fn steiner_suboptimal_fixture_is_genuinely_suboptimal() {
+    let fixture = oracle::terrain::load_steiner_suboptimal_golden();
+    assert!(
+        fixture.approximation_gap > 1.0 + 1e-6,
+        "FIXTURE IS VACUOUS: approximation_gap={} must be > 1.0 + 1e-6. \
+         The geometry does not demonstrate Mehlhorn suboptimality. \
+         Regenerate with generate_steiner_suboptimal.py.",
+        fixture.approximation_gap
+    );
+    assert!(
+        fixture.oracle_steiner_weight > fixture.exact_optimal_weight * (1.0 + 1e-6),
+        "FIXTURE IS VACUOUS: oracle_steiner_weight={} must exceed exact_optimal_weight={} * (1+1e-6). \
+         Mehlhorn is not provably suboptimal on this fixture.",
+        fixture.oracle_steiner_weight,
+        fixture.exact_optimal_weight
+    );
+    println!(
+        "Suboptimality confirmed: Mehlhorn={:.6}, Exact={:.6}, gap={:.6}",
+        fixture.oracle_steiner_weight, fixture.exact_optimal_weight, fixture.approximation_gap
+    );
+}
+
+/// T-4.3-SP AC-1: STRICT PARITY — Rust Steiner edge-set equals the Python oracle exactly.
+///
+/// This is the primary parity contract. The Rust Mehlhorn port must reproduce the
+/// Python networkx Mehlhorn result EXACTLY on this fixture, including its suboptimal
+/// choices. A passing ratio of 1.0 proves faithful algorithmic parity, not just
+/// that some correct Steiner heuristic was used.
+#[test]
+fn steiner_strict_parity_edge_set() {
+    use hydro_terrain::steiner_tree;
+    use std::collections::HashSet;
+
+    let fixture = oracle::terrain::load_steiner_suboptimal_golden();
+    let (graph, terminals) = build_suboptimal_graph();
+    let tree = steiner_tree(&graph, &terminals).expect("steiner_tree must succeed");
+
+    // Build oracle edge-set as unordered pairs
+    let oracle_edge_set: HashSet<(String, String)> = fixture
+        .oracle_edges
+        .iter()
+        .map(|[a, b]| {
+            let mut pair = [a.as_str(), b.as_str()];
+            pair.sort_unstable();
+            (pair[0].to_string(), pair[1].to_string())
+        })
+        .collect();
+
+    // Build Rust edge-set as unordered pairs
+    let rust_edge_set: HashSet<(String, String)> = tree.sorted_edges().into_iter().collect();
+
+    let missing_from_rust: Vec<_> = oracle_edge_set
+        .iter()
+        .filter(|e| !rust_edge_set.contains(e))
+        .collect();
+    let extra_in_rust: Vec<_> = rust_edge_set
+        .iter()
+        .filter(|e| !oracle_edge_set.contains(e))
+        .collect();
+
+    println!("Oracle edge-set ({} edges): {:?}", oracle_edge_set.len(), {
+        let mut v: Vec<_> = oracle_edge_set.iter().collect();
+        v.sort();
+        v
+    });
+    println!("Rust edge-set ({} edges): {:?}", rust_edge_set.len(), {
+        let mut v: Vec<_> = rust_edge_set.iter().collect();
+        v.sort();
+        v
+    });
+
+    assert!(
+        missing_from_rust.is_empty() && extra_in_rust.is_empty(),
+        "STRICT PARITY FAILED: Rust Steiner edge-set does not match Python oracle.\n\
+         Missing from Rust: {:?}\n\
+         Extra in Rust:     {:?}\n\
+         This means the Rust Mehlhorn port makes DIFFERENT choices than Python networkx.\n\
+         Do NOT relax this gate — diagnose the divergence in the Mehlhorn implementation.",
+        missing_from_rust,
+        extra_in_rust
+    );
+    println!(
+        "Edge-set parity: PASS ({} edges match)",
+        oracle_edge_set.len()
+    );
+}
+
+/// T-4.3-SP AC-2: STRICT PARITY — Rust total weight matches oracle weight to fp tolerance.
+///
+/// Primary parity gate (ratio == 1.0 within 1e-6). This is stronger than the
+/// old 1.10 bound in steiner_weight_within_10pct_of_oracle.
+#[test]
+fn steiner_strict_parity_weight() {
+    use hydro_terrain::steiner_tree;
+
+    let fixture = oracle::terrain::load_steiner_suboptimal_golden();
+    let (graph, terminals) = build_suboptimal_graph();
+    let tree = steiner_tree(&graph, &terminals).expect("steiner_tree must succeed");
+
+    let rust_weight = tree.total_weight();
+    let oracle_weight = fixture.oracle_steiner_weight;
+    let abs_diff = (rust_weight - oracle_weight).abs();
+
+    println!(
+        "Strict parity: Rust={:.6}, Oracle={:.6}, |diff|={:.2e}",
+        rust_weight, oracle_weight, abs_diff
+    );
+
+    assert!(
+        abs_diff < 1e-6,
+        "STRICT PARITY FAILED: |Rust_weight - Oracle_weight| = {:.2e} >= 1e-6.\n\
+         Rust={:.6}, Oracle={:.6}\n\
+         The Rust Mehlhorn port does not reproduce the Python oracle weight exactly.\n\
+         Do NOT relax this gate — report the discrepancy and diagnose.",
+        abs_diff,
+        rust_weight,
+        oracle_weight
+    );
+    println!("Weight parity: PASS (|diff|={:.2e} < 1e-6)", abs_diff);
+
+    // Secondary: old 1.10 bound still holds (sanity check, not primary gate)
+    let ratio = rust_weight / oracle_weight;
+    assert!(
+        ratio <= 1.10,
+        "SECONDARY GATE FAILED: ratio={:.6} > 1.10 (Rust={:.6}, Oracle={:.6})",
+        ratio,
+        rust_weight,
+        oracle_weight
+    );
+}
+
 /// T-4.3 AC-4: InsufficientTerminals error when fewer than 2 terminals given.
 #[test]
 fn steiner_insufficient_terminals_error() {
