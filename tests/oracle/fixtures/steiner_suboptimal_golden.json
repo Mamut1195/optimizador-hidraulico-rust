@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "fixture_name": "steiner_3x3_suboptimal",
+  "points": [
+    [
+      0.0,
+      0.0,
+      100.0
+    ],
+    [
+      0.0,
+      20.0,
+      97.0
+    ],
+    [
+      0.0,
+      40.0,
+      100.0
+    ],
+    [
+      20.0,
+      0.0,
+      97.0
+    ],
+    [
+      20.0,
+      20.0,
+      97.0
+    ],
+    [
+      20.0,
+      40.0,
+      97.0
+    ],
+    [
+      40.0,
+      0.0,
+      100.0
+    ],
+    [
+      40.0,
+      20.0,
+      97.0
+    ],
+    [
+      40.0,
+      40.0,
+      97.0
+    ]
+  ],
+  "build_grid_res": 20.0,
+  "graph_resolution": 20.0,
+  "terminals": [
+    "g0",
+    "g2",
+    "g6"
+  ],
+  "oracle_steiner_weight": 608.0,
+  "oracle_edges": [
+    [
+      "g0",
+      "g1"
+    ],
+    [
+      "g0",
+      "g3"
+    ],
+    [
+      "g1",
+      "g2"
+    ],
+    [
+      "g3",
+      "g6"
+    ]
+  ],
+  "oracle_node_count": 5,
+  "oracle_edge_count": 4,
+  "exact_optimal_weight": 463.5,
+  "approximation_gap": 1.3117583603020497
+}

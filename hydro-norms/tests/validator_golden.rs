@@ -64,9 +64,10 @@ fn build_network(case: &oracle::norms::NormsViolationsCase) -> PipeNetwork {
         .pipes
         .iter()
         .map(|p| {
-            // Reconstruct start/end inverts from slope and a base elevation.
-            // z=10.0 for all nodes, base cover=1.5m → start_invert=8.5
-            let start_invert = 8.5_f64;
+            // Use explicit start_invert from fixture when present (needed for
+            // cover/depth cases where the invert differs from the 8.5 m default).
+            // Fall back to 8.5 m for all legacy cases (z=10.0 → cover=1.5 m).
+            let start_invert = p.start_invert.unwrap_or(8.5_f64);
             let end_invert = start_invert - p.slope * p.length;
             NetworkPipe {
                 id: PipeId::new(&p.id),
