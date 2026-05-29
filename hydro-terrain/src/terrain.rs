@@ -110,25 +110,6 @@ pub struct TerrainModel {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Replicate `np.arange(start, stop + res * 0.5, res)` without float drift.
-///
-/// Returns values `start + i * res` while `<= stop + res * 0.5`.
-/// This matches the Python oracle's `np.arange(x_min, x_max + resolution, resolution)`.
-fn arange(start: f64, stop: f64, step: f64) -> Vec<f64> {
-    let mut result = Vec::new();
-    let max_val = stop + step * 0.5;
-    let mut i = 0usize;
-    loop {
-        let v = start + (i as f64) * step;
-        if v > max_val {
-            break;
-        }
-        result.push(v);
-        i += 1;
-    }
-    result
-}
-
 /// Barycentric linear interpolation of z at query point `p` inside triangle
 /// `(v0, v1, v2)` where each vertex is `[x, y, z]`.
 ///
@@ -225,8 +206,8 @@ impl TerrainModel {
     /// Grid axes replicate `np.arange(x_min, x_max + resolution, resolution)`.
     pub fn build_grid(&mut self, resolution: f64) -> Result<(), TerrainError> {
         let (x_min, x_max, y_min, y_max) = self.bounds;
-        let xs = arange(x_min, x_max, resolution);
-        let ys = arange(y_min, y_max, resolution);
+        let xs = crate::arange(x_min, x_max, resolution);
+        let ys = crate::arange(y_min, y_max, resolution);
 
         let nx = xs.len();
         let ny = ys.len();
@@ -406,7 +387,7 @@ mod tests {
     #[test]
     fn arange_matches_numpy() {
         // np.arange(0, 1000, 10) → 0, 10, ..., 990 (100 values)
-        let result = arange(0.0, 990.0, 10.0);
+        let result = crate::arange(0.0, 990.0, 10.0);
         assert_eq!(result.len(), 100);
         assert_eq!(result[0], 0.0);
         assert_eq!(result[99], 990.0);
@@ -415,7 +396,7 @@ mod tests {
     #[test]
     fn arange_with_step_boundary() {
         // np.arange(0, 990+20, 20) → 0,20,...,1000 (51 values)
-        let result = arange(0.0, 990.0, 20.0);
+        let result = crate::arange(0.0, 990.0, 20.0);
         assert_eq!(result.len(), 51, "expected 51 values, got {}", result.len());
         assert_eq!(result[0], 0.0);
         assert_eq!(result[50], 1000.0);
@@ -491,7 +472,7 @@ mod tests {
         for pt in &pts {
             let z = model.elevation_at(pt[0], pt[1]);
             assert!(
-                (z - pt[2]).abs() < 1e-6,
+                (z - pt[2]).abs() < 1e-9,
                 "on-sample elevation mismatch at ({},{}): got {z}, expected {}",
                 pt[0],
                 pt[1],

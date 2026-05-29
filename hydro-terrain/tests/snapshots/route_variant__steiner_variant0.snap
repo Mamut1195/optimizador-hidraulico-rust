@@ -1,0 +1,29 @@
+---
+source: hydro-terrain/tests/route_variant.rs
+expression: "(edge_str, weight_rounded)"
+---
+(
+    [
+        "g0--g1",
+        "g0--g11",
+        "g1--g2",
+        "g10--g9",
+        "g11--g22",
+        "g110--g99",
+        "g2--g3",
+        "g22--g33",
+        "g3--g4",
+        "g33--g44",
+        "g4--g5",
+        "g44--g55",
+        "g5--g6",
+        "g55--g66",
+        "g6--g7",
+        "g66--g77",
+        "g7--g8",
+        "g77--g88",
+        "g8--g9",
+        "g88--g99",
+    ],
+    "3548.677",
+)

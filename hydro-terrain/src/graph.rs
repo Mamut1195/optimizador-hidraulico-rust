@@ -128,8 +128,8 @@ impl TerrainGraph {
     /// - Edges: only `(di, dj)` in `[(0,1), (1,0)]` (4-neighbor, forward only).
     pub fn from_grid(&mut self, resolution: f64, terrain: &TerrainModel) {
         let (x_min, x_max, y_min, y_max) = terrain.bounds();
-        let xs = arange(x_min, x_max, resolution);
-        let ys = arange(y_min, y_max, resolution);
+        let xs = crate::arange(x_min, x_max, resolution);
+        let ys = crate::arange(y_min, y_max, resolution);
 
         let nx = xs.len();
         let ny = ys.len();
@@ -282,8 +282,11 @@ impl TerrainGraph {
         let strength = (variant as f64) * 0.05;
 
         for edge in self.graph.edge_weights_mut() {
+            // Match the Python oracle exactly: noise = 1 + uniform(-s, s), then
+            // weight *= max(0.1, noise). The clamp applies to the MULTIPLIER, not
+            // the product (Python: `weight *= max(0.1, noise)`).
             let noise: f64 = rng.gen_range(-strength..=strength);
-            edge.weight = f64::max(0.1, edge.weight * (1.0 + noise));
+            edge.weight *= f64::max(0.1, 1.0 + noise);
         }
     }
 
@@ -296,6 +299,11 @@ impl TerrainGraph {
     pub fn edge_count(&self) -> usize {
         self.graph.edge_count()
     }
+
+    /// Expose the inner petgraph `UnGraph` for algorithm access (e.g., Steiner).
+    pub(crate) fn inner_graph(&self) -> &UnGraph<NodeData, EdgeData, u32> {
+        &self.graph
+    }
 }
 
 impl std::fmt::Debug for TerrainGraph {
@@ -305,24 +313,6 @@ impl std::fmt::Debug for TerrainGraph {
             .field("edge_count", &self.edge_count())
             .finish()
     }
-}
-
-/// Replicate `np.arange(start, stop + step * 0.5, step)` without float drift.
-///
-/// Returns values `start + i * step` while `<= stop + step * 0.5`.
-fn arange(start: f64, stop: f64, step: f64) -> Vec<f64> {
-    let mut result = Vec::new();
-    let max_val = stop + step * 0.5;
-    let mut i = 0usize;
-    loop {
-        let v = start + (i as f64) * step;
-        if v > max_val {
-            break;
-        }
-        result.push(v);
-        i += 1;
-    }
-    result
 }
 
 #[cfg(test)]

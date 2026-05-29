@@ -16,5 +16,6 @@ spade = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
+insta = { workspace = true }
 proptest = { workspace = true }
 oracle = { path = "../tests/oracle" }
