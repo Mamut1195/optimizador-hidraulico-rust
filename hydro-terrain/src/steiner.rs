@@ -422,10 +422,15 @@ impl UnionFind {
 /// Node indices must be in `0..n_nodes`.
 fn kruskal_mst_with_n(edges: &[ClosureEdge], n_nodes: usize) -> Vec<ClosureEdge> {
     let mut sorted = edges.to_vec();
+    // Sort by weight, then by node-pair as a deterministic tie-breaker. Without
+    // the secondary key, equal-weight edges would order by HashMap iteration
+    // order, which is non-deterministic across runs/compiler versions and would
+    // break reproducibility (this port's core invariant).
     sorted.sort_by(|a, b| {
         a.weight
             .partial_cmp(&b.weight)
             .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| (a.u.min(a.v), a.u.max(a.v)).cmp(&(b.u.min(b.v), b.u.max(b.v))))
     });
 
     let mut uf = UnionFind::new(n_nodes);

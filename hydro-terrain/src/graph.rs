@@ -282,8 +282,11 @@ impl TerrainGraph {
         let strength = (variant as f64) * 0.05;
 
         for edge in self.graph.edge_weights_mut() {
+            // Match the Python oracle exactly: noise = 1 + uniform(-s, s), then
+            // weight *= max(0.1, noise). The clamp applies to the MULTIPLIER, not
+            // the product (Python: `weight *= max(0.1, noise)`).
             let noise: f64 = rng.gen_range(-strength..=strength);
-            edge.weight = f64::max(0.1, edge.weight * (1.0 + noise));
+            edge.weight *= f64::max(0.1, 1.0 + noise);
         }
     }
 
