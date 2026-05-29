@@ -115,7 +115,7 @@ fn from_xyz_list_empty_returns_error() {
 
 /// W-01 fix — ADR-5 validation on IRREGULAR scatter (spec R-04, p95 abs < 0.1 m).
 ///
-/// This test is the genuine exercise of the IDW-bilinear vs scipy Delaunay-linear
+/// This test validates Delaunay-linear (spade) vs scipy.griddata Delaunay-linear
 /// divergence on realistic irregular terrain-survey scatter (design §6 / ADR-5).
 ///
 /// The regular-grid fixture measured p95 = 0.0 m vacuously (both methods agree
@@ -123,8 +123,8 @@ fn from_xyz_list_empty_returns_error() {
 /// points — the actual divergence path where the two approximations differ.
 ///
 /// Both the Rust TerrainModel and the Python oracle are built from the SAME
-/// scatter points (stored in terrain_irregular_golden.json). Rust uses IDW
-/// k=4 nearest + bilinear; Python uses scipy.griddata Delaunay-linear.
+/// scatter points (stored in terrain_irregular_golden.json). Rust uses spade
+/// Delaunay-linear + bilinear; Python uses scipy.griddata Delaunay-linear.
 /// The gate: p95 absolute error < 0.1 m. The gate is NON-NEGOTIABLE.
 #[test]
 fn off_grid_elevation_irregular_scatter_p95() {
@@ -156,7 +156,7 @@ fn off_grid_elevation_irregular_scatter_p95() {
         p95 < 0.1,
         "ADR-5 gate FAILED on irregular scatter: p95={p95:.6} m >= 0.1 m \
          (max={max_err:.6} m, n={n} queries). \
-         IDW-bilinear approximation is insufficient for this fixture. \
-         See design §6 ADR-5: consider tuning k/power or escalating to spade Delaunay post-v1."
+         Delaunay-linear (spade) approximation diverges more than expected. \
+         See design §6 ADR-5 revised: spade Delaunay-linear replaced IDW in PR-4."
     );
 }
