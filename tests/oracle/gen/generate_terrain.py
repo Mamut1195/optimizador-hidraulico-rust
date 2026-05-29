@@ -2,13 +2,20 @@
 
 Emits:
   tests/oracle/fixtures/terrain_golden.json
+  tests/oracle/fixtures/terrain_irregular_golden.json
 
-Fixture contains:
+terrain_golden.json contains:
   - 10000 on-sample grid points (100x100 at 10m spacing)
   - 50 on-sample queries with expected_z and nearest_idx
   - 200 off-grid queries with oracle_z (from Python elevation_at)
   - measured off-grid p95 abs error (oracle vs oracle = 0; documents Rust tolerance gate)
   - graph_fixture: TerrainGraph built at resolution=20m, Dijkstra cases, nearest_node cases
+
+terrain_irregular_golden.json contains (W-01 fix — genuine ADR-5 validation):
+  - ~1000 scatter points at random (x, y) positions (not on a regular grid)
+  - z from the same sin/cos analytical surface (ground truth)
+  - ~300 off-grid query points with oracle_z from Python scipy Delaunay-linear
+  - This fixture exercises the real IDW (Rust) vs Delaunay (Python) divergence path
 """
 
 from __future__ import annotations
@@ -49,9 +56,8 @@ def elevation(x: float, y: float) -> float:
     return np.sin(x / 200.0) * np.cos(y / 200.0) * 50.0 + 100.0
 
 
-def main() -> None:
-    out_dir = Path(__file__).resolve().parents[1] / "fixtures"
-    out_dir.mkdir(parents=True, exist_ok=True)
+def _generate_regular_grid_fixture(out_dir: Path) -> None:
+    """Original regular-grid fixture generation (terrain_golden.json)."""
     out_path = out_dir / "terrain_golden.json"
 
     # -----------------------------------------------------------------------
@@ -257,6 +263,124 @@ def main() -> None:
     print(f"  graph nodes: {node_count}, edges: {edge_count}")
     print(f"  dijkstra_cases: {len(dijkstra_cases)}")
     print(f"  nearest_node_cases: {len(nearest_node_cases)}")
+
+
+def generate_irregular_scatter_fixture(out_dir: Path) -> None:
+    """Generate terrain_irregular_golden.json — genuine ADR-5 / W-01 validation.
+
+    Uses ~1000 randomly scattered survey points (NOT a regular grid) so that
+    scipy.griddata Delaunay-linear and Rust IDW-bilinear genuinely diverge.
+    Records oracle_z (Python side) for ~300 off-grid query points.
+
+    Fixed parameters (locked — changing breaks golden vectors):
+      - Domain: 0..990 x 0..990 (same as regular fixture)
+      - Scatter seed: 7777
+      - n_scatter: 1000
+      - n_off_grid_queries: 300
+      - Query seed: 8888
+      - build_grid_res: 10.0 m
+      - Surface: same sin(x/200)*cos(y/200)*50 + 100
+    """
+    # Locked parameters
+    SCATTER_SEED = 7777
+    QUERY_SEED = 8888
+    N_SCATTER = 1000
+    N_QUERIES = 300
+    BUILD_GRID_RES = 10.0
+    DOMAIN_MIN = 0.0
+    DOMAIN_MAX = 990.0
+    INTERIOR_MARGIN = 15.0  # query points stay away from boundary
+
+    out_path = out_dir / "terrain_irregular_golden.json"
+
+    # -----------------------------------------------------------------------
+    # Generate ~1000 random scatter points (uniform x,y, NOT on a grid)
+    # -----------------------------------------------------------------------
+    rng_scatter = np.random.RandomState(seed=SCATTER_SEED)
+    xs = rng_scatter.uniform(DOMAIN_MIN, DOMAIN_MAX, N_SCATTER)
+    ys = rng_scatter.uniform(DOMAIN_MIN, DOMAIN_MAX, N_SCATTER)
+    zs = np.array([elevation(float(x), float(y)) for x, y in zip(xs, ys)])
+
+    xyz_list = [
+        [float(x), float(y), float(z)] for x, y, z in zip(xs, ys, zs)
+    ]
+
+    print(f"\n=== Irregular scatter fixture ===")
+    print(f"  Scatter points: {len(xyz_list)}")
+    print(f"  x range: [{xs.min():.2f}, {xs.max():.2f}]")
+    print(f"  y range: [{ys.min():.2f}, {ys.max():.2f}]")
+    print(f"  z range: [{zs.min():.2f}, {zs.max():.2f}]")
+
+    # -----------------------------------------------------------------------
+    # Build Python TerrainModel from IRREGULAR scatter points
+    # This triggers scipy.griddata Delaunay-linear for the scatter->grid step.
+    # -----------------------------------------------------------------------
+    terrain = TerrainModel.from_xyz_list(xyz_list)
+    terrain.build_grid(resolution=BUILD_GRID_RES)
+
+    # -----------------------------------------------------------------------
+    # Generate ~300 off-grid query points (interior of domain)
+    # -----------------------------------------------------------------------
+    rng_query = np.random.RandomState(seed=QUERY_SEED)
+    qxs = rng_query.uniform(DOMAIN_MIN + INTERIOR_MARGIN, DOMAIN_MAX - INTERIOR_MARGIN, N_QUERIES)
+    qys = rng_query.uniform(DOMAIN_MIN + INTERIOR_MARGIN, DOMAIN_MAX - INTERIOR_MARGIN, N_QUERIES)
+
+    off_grid_queries = []
+    oracle_errors = []  # oracle vs analytical ground truth (to sanity-check oracle quality)
+    for qx, qy in zip(qxs, qys):
+        oracle_z = terrain.elevation_at(float(qx), float(qy))
+        analytical_z = elevation(float(qx), float(qy))
+        off_grid_queries.append({
+            "x": float(qx),
+            "y": float(qy),
+            "oracle_z": float(oracle_z),
+        })
+        oracle_errors.append(abs(oracle_z - analytical_z))
+
+    oracle_errors_arr = np.array(oracle_errors)
+    oracle_errors_arr.sort()
+    p95_idx = int(len(oracle_errors_arr) * 0.95)
+    oracle_p95 = float(oracle_errors_arr[p95_idx])
+    oracle_max = float(oracle_errors_arr[-1])
+    print(f"  Python oracle vs analytical ground truth:")
+    print(f"    p95 abs error: {oracle_p95:.6f} m (oracle fidelity check — NOT the Rust gate)")
+    print(f"    max abs error: {oracle_max:.6f} m")
+
+    # -----------------------------------------------------------------------
+    # Assemble and write fixture
+    # -----------------------------------------------------------------------
+    fixture = {
+        "schema_version": 1,
+        "fixture_name": "irregular_scatter_1000pts",
+        "build_grid_res": float(BUILD_GRID_RES),
+        "x_min": float(DOMAIN_MIN),
+        "x_max": float(DOMAIN_MAX),
+        "y_min": float(DOMAIN_MIN),
+        "y_max": float(DOMAIN_MAX),
+        "scatter_seed": int(SCATTER_SEED),
+        "n_scatter": len(xyz_list),
+        "scatter_points": xyz_list,
+        "off_grid_queries": off_grid_queries,
+        "off_grid_p95_oracle_vs_oracle": 0.0,
+    }
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(fixture, f, indent=2)
+
+    print(f"  Written: {out_path}")
+    print(f"  off_grid_queries: {len(off_grid_queries)}")
+
+
+def main() -> None:
+    out_dir = Path(__file__).resolve().parents[1] / "fixtures"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate the regular-grid fixture (terrain_golden.json)
+    _generate_regular_grid_fixture(out_dir)
+
+    # Generate the irregular-scatter fixture (terrain_irregular_golden.json)
+    # This is the W-01 fix — genuine ADR-5 / R-04 validation on irregular terrain.
+    generate_irregular_scatter_fixture(out_dir)
 
 
 if __name__ == "__main__":

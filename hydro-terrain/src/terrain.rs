@@ -1,17 +1,42 @@
 //! TerrainModel — digital elevation model with KDTree nearest-point and bilinear
 //! interpolation on a regular grid.
 //!
-//! Approximation note: the scatter→grid build uses inverse-distance weighting (IDW)
-//! over the k=4 nearest sample points instead of scipy's Delaunay-linear `griddata`.
-//! On-sample and on-grid-node queries are EXACT; off-grid queries are STATISTICAL
-//! (p95 abs error ≤ 0.1 m per spec R-04). Uses kiddo 4.x KDTree.
+//! Grid seeding (scatter→grid): Delaunay-linear barycentric interpolation via the
+//! `spade` crate, matching scipy.griddata(method="linear"). Points outside the
+//! convex hull are filled with kiddo nearest-neighbor z, matching scipy's
+//! griddata(method="nearest") NaN-fill pass. On-sample and on-grid-node queries
+//! are EXACT; off-grid queries are STATISTICAL (p95 abs error ≤ 0.1 m per spec R-04).
+//! Uses kiddo 4.x KDTree for NN queries.
 
 use kiddo::float::kdtree::KdTree;
 use kiddo::SquaredEuclidean;
+use spade::{DelaunayTriangulation, Point2, PositionInTriangulation, Triangulation};
 
 use crate::error::TerrainError;
 
-/// A regular grid built from scatter data via IDW.
+// ---------------------------------------------------------------------------
+// Spade vertex type carrying elevation payload
+// ---------------------------------------------------------------------------
+
+/// A triangulation vertex carrying an XY position and Z elevation.
+#[derive(Debug, Clone)]
+struct SpadeVertex {
+    position: Point2<f64>,
+    z: f64,
+}
+
+impl spade::HasPosition for SpadeVertex {
+    type Scalar = f64;
+    fn position(&self) -> Point2<f64> {
+        self.position
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Regular grid (bilinear query layer — unchanged)
+// ---------------------------------------------------------------------------
+
+/// A regular grid built from scatter data via Delaunay-linear interpolation.
 #[derive(Debug, Clone)]
 struct RegularGrid {
     /// Sorted X grid coordinates.
@@ -59,6 +84,10 @@ impl RegularGrid {
     }
 }
 
+// ---------------------------------------------------------------------------
+// TerrainModel
+// ---------------------------------------------------------------------------
+
 /// Digital elevation model built from survey points.
 ///
 /// Uses kiddo KDTree for O(log n) nearest-point queries and a regular grid
@@ -76,6 +105,10 @@ pub struct TerrainModel {
     /// Optional regular grid for bilinear queries.
     grid: Option<RegularGrid>,
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 /// Replicate `np.arange(start, stop + res * 0.5, res)` without float drift.
 ///
@@ -95,6 +128,34 @@ fn arange(start: f64, stop: f64, step: f64) -> Vec<f64> {
     }
     result
 }
+
+/// Barycentric linear interpolation of z at query point `p` inside triangle
+/// `(v0, v1, v2)` where each vertex is `[x, y, z]`.
+///
+/// Matches scipy's griddata(method="linear") Delaunay-linear formula.
+#[inline]
+fn barycentric_z(p: [f64; 2], v0: [f64; 3], v1: [f64; 3], v2: [f64; 3]) -> f64 {
+    let (x, y) = (p[0], p[1]);
+    let (x0, y0, z0) = (v0[0], v0[1], v0[2]);
+    let (x1, y1, z1) = (v1[0], v1[1], v1[2]);
+    let (x2, y2, z2) = (v2[0], v2[1], v2[2]);
+
+    // Barycentric coordinate denominator: area of the triangle (signed)
+    let denom = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
+    if denom.abs() < f64::EPSILON {
+        // Degenerate triangle — fall back to centroid average
+        return (z0 + z1 + z2) / 3.0;
+    }
+    let w0 = ((y1 - y2) * (x - x2) + (x2 - x1) * (y - y2)) / denom;
+    let w1 = ((y2 - y0) * (x - x2) + (x0 - x2) * (y - y2)) / denom;
+    let w2 = 1.0 - w0 - w1;
+
+    w0 * z0 + w1 * z1 + w2 * z2
+}
+
+// ---------------------------------------------------------------------------
+// impl TerrainModel
+// ---------------------------------------------------------------------------
 
 impl TerrainModel {
     /// Create a `TerrainModel` from a list of `[x, y, z]` triples.
@@ -151,7 +212,12 @@ impl TerrainModel {
         })
     }
 
-    /// Build a regular interpolation grid using IDW over k=4 nearest neighbors.
+    /// Build a regular interpolation grid using Delaunay-linear barycentric
+    /// interpolation (via the `spade` crate), matching scipy.griddata(method="linear").
+    ///
+    /// Grid nodes outside the convex hull of the scatter (which would be NaN in
+    /// scipy's griddata) are filled with nearest-neighbor z via kiddo, matching
+    /// scipy's griddata(method="nearest") NaN-fill pass.
     ///
     /// After this call, `elevation_at` uses bilinear interpolation for points
     /// within bounds (faster, smoother), falling back to NN for out-of-bounds.
@@ -165,41 +231,27 @@ impl TerrainModel {
         let nx = xs.len();
         let ny = ys.len();
 
-        // zs[i][j] = elevation at (xs[i], ys[j])
-        let mut zs: Vec<Vec<f64>> = Vec::with_capacity(nx);
+        // Build Delaunay triangulation of scatter points
+        let mut tri: DelaunayTriangulation<SpadeVertex> = DelaunayTriangulation::new();
+        for (pt, &z) in self.points.iter().zip(self.elevations.iter()) {
+            // insert() returns Err only on duplicate positions; duplicates are
+            // accepted by spade (the second insert replaces the first). We
+            // intentionally ignore the error — duplicate survey points will
+            // adopt whichever z spade retains, which is acceptable.
+            let _ = tri.insert(SpadeVertex {
+                position: Point2::new(pt[0], pt[1]),
+                z,
+            });
+        }
 
-        let k = 4usize.min(self.points.len());
-        const EPSILON: f64 = 1e-10;
+        // Seed each grid node via Delaunay-linear barycentric interpolation.
+        // Nodes outside the convex hull use kiddo NN (matching scipy's NaN fill).
+        let mut zs: Vec<Vec<f64>> = Vec::with_capacity(nx);
 
         for &gx in &xs {
             let mut row = Vec::with_capacity(ny);
             for &gy in &ys {
-                // IDW over k nearest neighbors
-                let neighbors = self.kdtree.nearest_n::<SquaredEuclidean>(&[gx, gy], k);
-
-                // If exactly on a sample point, use exact elevation
-                let mut z = 0.0f64;
-                let mut w_sum = 0.0f64;
-                let mut exact: Option<f64> = None;
-
-                for nn in &neighbors {
-                    let sq_dist = nn.distance; // SquaredEuclidean returns d²
-                    let item_idx = nn.item as usize;
-                    if sq_dist < EPSILON {
-                        exact = Some(self.elevations[item_idx]);
-                        break;
-                    }
-                    let w = 1.0 / (sq_dist + EPSILON);
-                    z += w * self.elevations[item_idx];
-                    w_sum += w;
-                }
-
-                let cell_z = if let Some(exact_z) = exact {
-                    exact_z
-                } else {
-                    z / w_sum
-                };
-
+                let cell_z = self.delaunay_z_or_nn(&tri, gx, gy);
                 row.push(cell_z);
             }
             zs.push(row);
@@ -207,6 +259,60 @@ impl TerrainModel {
 
         self.grid = Some(RegularGrid { xs, ys, zs });
         Ok(())
+    }
+
+    /// Query the Delaunay triangulation for z at (gx, gy).
+    ///
+    /// - `OnFace`: barycentric linear interpolation (Delaunay-linear = scipy default).
+    /// - `OnEdge`: linear interpolation between the two endpoints.
+    /// - `OnVertex`: exact vertex elevation.
+    /// - `OutsideOfConvexHull` / `NoTriangulation`: kiddo NN fallback (matches
+    ///   scipy griddata(nearest) NaN-fill pass).
+    fn delaunay_z_or_nn(&self, tri: &DelaunayTriangulation<SpadeVertex>, gx: f64, gy: f64) -> f64 {
+        let loc = tri.locate(Point2::new(gx, gy));
+        match loc {
+            PositionInTriangulation::OnFace(fh) => {
+                let face = tri.face(fh);
+                let [vh0, vh1, vh2] = face.vertices();
+                let d0 = vh0.data();
+                let d1 = vh1.data();
+                let d2 = vh2.data();
+                barycentric_z(
+                    [gx, gy],
+                    [d0.position.x, d0.position.y, d0.z],
+                    [d1.position.x, d1.position.y, d1.z],
+                    [d2.position.x, d2.position.y, d2.z],
+                )
+            }
+            PositionInTriangulation::OnEdge(eh) => {
+                // Linear interpolation along the edge
+                let edge = tri.directed_edge(eh);
+                let from = edge.from();
+                let to = edge.to();
+                let (x0, y0, z0) = (
+                    from.data().position.x,
+                    from.data().position.y,
+                    from.data().z,
+                );
+                let (x1, y1, z1) = (to.data().position.x, to.data().position.y, to.data().z);
+                let dx = x1 - x0;
+                let dy = y1 - y0;
+                let len_sq = dx * dx + dy * dy;
+                if len_sq < f64::EPSILON {
+                    return z0;
+                }
+                let t = ((gx - x0) * dx + (gy - y0) * dy) / len_sq;
+                z0 + t * (z1 - z0)
+            }
+            PositionInTriangulation::OnVertex(vh) => tri.vertex(vh).data().z,
+            // Outside convex hull or degenerate: nearest-neighbor z (matches
+            // scipy griddata(method="nearest") NaN-cell fill in build_grid)
+            PositionInTriangulation::OutsideOfConvexHull(_)
+            | PositionInTriangulation::NoTriangulation => {
+                let nn = self.kdtree.nearest_one::<SquaredEuclidean>(&[gx, gy]);
+                self.elevations[nn.item as usize]
+            }
+        }
     }
 
     /// Return the index of the nearest sample point to (x, y).
@@ -367,5 +473,30 @@ mod tests {
         assert!((x1 - 1.0).abs() < 1e-9);
         assert!((y0 - 0.0).abs() < 1e-9);
         assert!((y1 - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn delaunay_grid_on_sample_exact() {
+        // With Delaunay-linear grid seeding, on-sample points must still be exact.
+        let pts = vec![
+            [0.0, 0.0, 10.0],
+            [10.0, 0.0, 20.0],
+            [0.0, 10.0, 30.0],
+            [10.0, 10.0, 40.0],
+            [5.0, 5.0, 25.0],
+        ];
+        let mut model = TerrainModel::from_xyz_list(&pts).unwrap();
+        model.build_grid(5.0).unwrap();
+        // Sample points that are also grid nodes
+        for pt in &pts {
+            let z = model.elevation_at(pt[0], pt[1]);
+            assert!(
+                (z - pt[2]).abs() < 1e-6,
+                "on-sample elevation mismatch at ({},{}): got {z}, expected {}",
+                pt[0],
+                pt[1],
+                pt[2]
+            );
+        }
     }
 }

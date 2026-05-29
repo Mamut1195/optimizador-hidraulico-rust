@@ -112,3 +112,51 @@ fn from_xyz_list_empty_returns_error() {
     let result = TerrainModel::from_xyz_list(&[]);
     assert!(result.is_err(), "empty points must return Err");
 }
+
+/// W-01 fix — ADR-5 validation on IRREGULAR scatter (spec R-04, p95 abs < 0.1 m).
+///
+/// This test is the genuine exercise of the IDW-bilinear vs scipy Delaunay-linear
+/// divergence on realistic irregular terrain-survey scatter (design §6 / ADR-5).
+///
+/// The regular-grid fixture measured p95 = 0.0 m vacuously (both methods agree
+/// exactly on a perfect grid). This fixture uses ~1000 randomly scattered survey
+/// points — the actual divergence path where the two approximations differ.
+///
+/// Both the Rust TerrainModel and the Python oracle are built from the SAME
+/// scatter points (stored in terrain_irregular_golden.json). Rust uses IDW
+/// k=4 nearest + bilinear; Python uses scipy.griddata Delaunay-linear.
+/// The gate: p95 absolute error < 0.1 m. The gate is NON-NEGOTIABLE.
+#[test]
+fn off_grid_elevation_irregular_scatter_p95() {
+    use hydro_terrain::TerrainModel;
+    use oracle::terrain::load_irregular_terrain_golden;
+
+    let fixture = load_irregular_terrain_golden();
+
+    let mut model = TerrainModel::from_xyz_list(&fixture.scatter_points).unwrap();
+    model.build_grid(fixture.build_grid_res).unwrap();
+
+    let mut abs_errors: Vec<f64> = fixture
+        .off_grid_queries
+        .iter()
+        .map(|q| (model.elevation_at(q.x, q.y) - q.oracle_z).abs())
+        .collect();
+
+    let n = abs_errors.len();
+    abs_errors.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let p95_idx = ((n as f64) * 0.95) as usize;
+    let p95 = abs_errors[p95_idx.min(n - 1)];
+    let max_err = abs_errors[n - 1];
+
+    // Always print so the measured values appear in test output (cargo test -- --nocapture
+    // or visible in CI failure output).
+    println!("off_grid_elevation_irregular_scatter_p95: n={n}, p95={p95:.6} m, max={max_err:.6} m");
+
+    assert!(
+        p95 < 0.1,
+        "ADR-5 gate FAILED on irregular scatter: p95={p95:.6} m >= 0.1 m \
+         (max={max_err:.6} m, n={n} queries). \
+         IDW-bilinear approximation is insufficient for this fixture. \
+         See design §6 ADR-5: consider tuning k/power or escalating to spade Delaunay post-v1."
+    );
+}
