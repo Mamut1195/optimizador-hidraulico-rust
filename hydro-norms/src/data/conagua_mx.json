@@ -1,0 +1,81 @@
+{
+  "agency": "CONAGUA",
+  "certification_note": "Source-traceable implementation profile. Project approval still requires review against the locally applicable CONAGUA/MAPAS edition and municipal criteria.",
+  "certified": true,
+  "code": "CONAGUA_MX",
+  "country": "MX",
+  "source_catalog": {
+    "mapas_sewer": {
+      "agency": "CONAGUA",
+      "document": "Manual de Agua Potable, Alcantarillado y Saneamiento: Alcantarillado Sanitario",
+      "note": "Used for sanitary sewer velocity, slope, and minimum diameter design limits.",
+      "section": "3.1.4",
+      "url": "https://files.conagua.gob.mx/conagua/mapas/SGAPDS-1-15-Libro20.pdf",
+      "value_basis": "published_standard",
+      "version": "SGAPDS-1-15-Libro20"
+    },
+    "mapas_pressure": {
+      "agency": "CONAGUA",
+      "document": "Manual de Agua Potable, Alcantarillado y Saneamiento",
+      "note": "Engine pressure-network defaults mapped from the existing CONAGUA implementation; confirm against local operating authority before legal certification.",
+      "section": "Agua potable/distribucion - criterios de operacion",
+      "url": "https://files.conagua.gob.mx/conagua/mapas/",
+      "value_basis": "engineering_default",
+      "version": "MAPAS"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Depth and maximum-diameter bounds are production guardrails, not a substitute for local project specifications.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "MAPAS-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.005, "units": "m/m", "description": "Minimum sanitary sewer slope.", "source_id": "mapas_sewer"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.05, "units": "m/m", "description": "Maximum sanitary sewer slope used to avoid erosive velocities.", "source_id": "mapas_sewer"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.2, "units": "m", "description": "Minimum pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Minimum self-cleaning sewer velocity.", "source_id": "mapas_sewer"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Maximum sewer velocity.", "source_id": "mapas_sewer"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Minimum sanitary sewer diameter.", "source_id": "mapas_sewer"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum pressure-pipe cover.", "source_id": "mapas_pressure"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum pressure-pipe velocity.", "source_id": "mapas_pressure"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Maximum pressure-pipe velocity.", "source_id": "mapas_pressure"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Minimum water-supply pipe diameter.", "source_id": "mapas_pressure"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Minimum service pressure.", "source_id": "mapas_pressure"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Maximum service pressure.", "source_id": "mapas_pressure"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum conveyance-pipe cover.", "source_id": "mapas_pressure"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum conveyance velocity.", "source_id": "mapas_pressure"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Maximum conveyance velocity.", "source_id": "mapas_pressure"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Minimum conveyance diameter.", "source_id": "mapas_pressure"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Minimum conveyance pressure.", "source_id": "mapas_pressure"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Maximum conveyance pressure.", "source_id": "mapas_pressure"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum distribution-pipe cover.", "source_id": "mapas_pressure"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum distribution velocity.", "source_id": "mapas_pressure"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Maximum distribution velocity.", "source_id": "mapas_pressure"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Minimum distribution pipe diameter.", "source_id": "mapas_pressure"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Minimum service pressure.", "source_id": "mapas_pressure"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Maximum service pressure.", "source_id": "mapas_pressure"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

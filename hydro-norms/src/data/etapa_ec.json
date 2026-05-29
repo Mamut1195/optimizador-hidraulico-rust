@@ -1,0 +1,82 @@
+{
+  "agency": "ETAPA EP (Empresa Pública Municipal de Telecomunicaciones, Agua Potable, Alcantarillado y Saneamiento de Cuenca)",
+  "certification_note": "Source-traceable implementation profile for the Cuenca metropolitan area, built on the ETAPA EP Especificaciones Técnicas Generales (2017 baseline with 2018/2023/2025 addenda) complemented by the national CPE INEN 005-9-1 / EX-IEOS. ETAPA holds ISO 9001:2008 in its treatment plants and ISO/IEC 17025 in its drinking-water lab. Project approval still requires direct review against the latest ETAPA bulletin.",
+  "certified": true,
+  "code": "ETAPA_EC",
+  "country": "EC",
+  "source_catalog": {
+    "etapa_especif_2017": {
+      "agency": "ETAPA EP — Cuenca",
+      "document": "Especificaciones Técnicas Generales para obras públicas de agua potable, alcantarillado y saneamiento",
+      "note": "Documento de referencia para licitaciones de obras públicas en Cuenca. Define materiales aceptados (PVC, PEAD, hormigón), pruebas, criterios constructivos y de aceptación. Para parámetros hidráulicos remite al CPE INEN 005-9-1, adaptado a la topografía andina de Cuenca (pendientes pronunciadas habilitadas).",
+      "section": "Especificaciones Particulares: Tuberías de Alcantarillado / Tuberías de Agua Potable",
+      "url": "https://www.etapa.net.ec/Portals/0/Documentos/convocatoriasanjose/9.-especificaciones_t%C3%A9cnicas_generales_etapa_ep_-_junio_2017.pdf",
+      "value_basis": "published_standard",
+      "version": "2017 (vigente con addenda 2018/2023/2025)"
+    },
+    "etapa_normativa_portal": {
+      "agency": "ETAPA EP — Cuenca",
+      "document": "Normativa Vigente, Leyes y Reglamentos (portal oficial)",
+      "note": "Página activa del portal ETAPA con la normativa vigente para agua potable, saneamiento y servicio.",
+      "section": "Agua Potable › Normativa Vigente",
+      "url": "https://webnueva.etapa.net.ec/principal/agua-potable/normativa-vigente-leyes-y-reglamentos",
+      "value_basis": "published_standard",
+      "version": "Vigente"
+    },
+    "cpe_inen_005": {
+      "agency": "INEN — Instituto Ecuatoriano de Normalización",
+      "document": "CPE INEN 005-9-1: Sistemas de agua potable y aguas residuales para poblaciones > 1000 habitantes",
+      "note": "Norma nacional supletoria. Diámetro mínimo de colector 200 mm; velocidad mínima 0.6 m/s; velocidad máxima 3.0 m/s hormigón y 4.5-5.0 m/s PVC; tirante máximo 75% del diámetro; presión máxima de servicio 50 mca.",
+      "section": "Parte 9, Capítulos 5-8",
+      "url": "https://archive.org/details/ec.cpe.5.9.1.1992",
+      "value_basis": "published_standard",
+      "version": "1992"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "ETAPA-EP-and-CPE-INEN-005-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.005, "units": "m/m", "description": "Pendiente mínima derivada de v=0.6 m/s en hormigón con D=200 mm (Manning).", "source_id": "cpe_inen_005"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.20, "units": "m/m", "description": "Pendiente máxima ampliada para topografía andina de Cuenca (criterio ETAPA, requiere estructuras de disipación).", "source_id": "etapa_especif_2017"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.2, "units": "m", "description": "Colchón mínimo sobre clave de colector (CPE INEN + ETAPA).", "source_id": "cpe_inen_005"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima de autolimpieza a tubo lleno.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima en PVC; 3.0 m/s en hormigón.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Diámetro nominal mínimo de colector cloacal (DN 200).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.009, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.009 PVC liso, 0.011 PVC corrugado, 0.013 hormigón (práctica ETAPA derivada de CPE INEN).", "source_id": "cpe_inen_005"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima en red de distribución.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria (DN 75).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.0, "units": "mca", "description": "Presión dinámica mínima en nodos críticos (criterio ETAPA para topografía Cuenca).", "source_id": "etapa_especif_2017"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio.", "source_id": "cpe_inen_005"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción (guardrail).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción (guardrail).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

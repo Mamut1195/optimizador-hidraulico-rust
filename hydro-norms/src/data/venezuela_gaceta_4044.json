@@ -1,0 +1,64 @@
+{
+  "agency": "Ministerio de Sanidad y Asistencia Social (Venezuela) — INOS (legacy) / HIDROVEN (vigente)",
+  "certification_note": "Source-traceable implementation profile for Venezuela, built on the Gaceta Oficial 4.044 Extraordinaria de 1988 (Normas Sanitarias para Proyecto, Construcción, Reparación, Reforma y Mantenimiento de Edificaciones) — still the reference for sanitary projects in Venezuela despite its age. Complemented by COVENIN standards. Project approval requires review against the latest Hidroven / sanitary regulator bulletin and the local hidrológica regional (Hidrocapital, Hidroven, etc.).",
+  "certified": true,
+  "code": "VENEZUELA_INOS",
+  "country": "VE",
+  "source_catalog": {
+    "gaceta_4044": {
+      "agency": "Ministerio de Sanidad y Asistencia Social (Venezuela)",
+      "document": "Gaceta Oficial 4.044 Extraordinaria — Normas Sanitarias para Proyecto, Construcción, Reparación, Reforma y Mantenimiento de Edificaciones",
+      "note": "Publicada en 1988, vigente como referencia técnica nacional. Cubre instalaciones de agua potable, eliminación de aguas servidas y pluviales, ventilación e instalaciones sanitarias. Aplica a edificaciones comerciales, oficinas, residenciales e industriales. Incluye tablas para velocidad, diámetro, pendiente y presión.",
+      "section": "Capítulos II (Agua Potable), III (Aguas Servidas), IV (Aguas Pluviales)",
+      "url": "https://mauricioravanal.wordpress.com/wp-content/uploads/2011/01/norma-sanitaria-gaceta-4044.pdf",
+      "value_basis": "published_standard",
+      "version": "1988 (vigente)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations. La Gaceta 4044 cubre principalmente edificaciones; los valores externos para redes urbanas se complementan con práctica regional (INOS heritage).",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "Gaceta-Oficial-4044-1988-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.004, "units": "m/m", "description": "Pendiente mínima para autolimpieza (criterio Gaceta 4044 + práctica INOS).", "source_id": "engine_constructability"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima compatible con velocidad límite.", "source_id": "engine_constructability"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Colchón mínimo sobre clave de colector.", "source_id": "gaceta_4044"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima sin sistemas especiales.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima de autolimpieza (Gaceta 4044).", "source_id": "gaceta_4044"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "gaceta_4044"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.15, "units": "m", "description": "Diámetro mínimo de colector DN 150 (Gaceta 4044).", "source_id": "gaceta_4044"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.010, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.010 PVC, 0.013 hormigón (práctica venezolana).", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable.", "source_id": "gaceta_4044"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en red.", "source_id": "gaceta_4044"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima.", "source_id": "gaceta_4044"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria.", "source_id": "gaceta_4044"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión mínima dinámica de servicio (Gaceta 4044).", "source_id": "gaceta_4044"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión máxima estática.", "source_id": "gaceta_4044"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima.", "source_id": "gaceta_4044"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima.", "source_id": "gaceta_4044"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima.", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

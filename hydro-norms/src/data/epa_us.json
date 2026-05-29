@@ -1,0 +1,90 @@
+{
+  "agency": "EPA / GLUMRB",
+  "certification_note": "Source-traceable implementation profile based on Ten States Standards and supporting public design criteria. Project approval still requires local authority review.",
+  "certified": true,
+  "code": "EPA_US",
+  "country": "US",
+  "source_catalog": {
+    "ten_states_wastewater": {
+      "agency": "Great Lakes - Upper Mississippi River Board",
+      "document": "Recommended Standards for Wastewater Facilities",
+      "note": "Used for gravity sewer minimum diameter, minimum velocity, recommended minimum slope, and high-velocity protection threshold.",
+      "section": "33.1, 33.4",
+      "url": "https://paperzz.com/doc/9430819/10-states-standards---recommended-standards-for-wastewater",
+      "value_basis": "published_standard",
+      "version": "2014/online text"
+    },
+    "ten_states_water": {
+      "agency": "Great Lakes - Upper Mississippi River Board",
+      "document": "Recommended Standards for Water Works",
+      "note": "Used for distribution minimum pressure and normal operating pressure guidance.",
+      "section": "8.2.1, 8.2.2",
+      "url": "https://studylib.net/doc/18097092/10-states-standards---recommended-standards-for-water-works",
+      "value_basis": "published_standard",
+      "version": "2007/online text"
+    },
+    "msdh_water_criteria": {
+      "agency": "Mississippi State Department of Health",
+      "document": "Minimum Design Criteria for Public Water Supplies",
+      "note": "Supporting public design criterion for max static pressure and max source/treatment/distribution velocity.",
+      "section": "Part V - Water Distribution",
+      "url": "https://msdh.ms.gov/msdhsite/_static/resources/1583.pdf",
+      "value_basis": "published_standard",
+      "version": "November 2019"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Cover, depth, and maximum-diameter bounds are production guardrails, not a substitute for local project specifications.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "Ten-States-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.004, "units": "m/m", "description": "Minimum sanitary sewer slope for an 8 inch sewer.", "source_id": "ten_states_wastewater"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.10, "units": "m/m", "description": "Maximum sewer slope guardrail before steep-slope protections are required.", "source_id": "ten_states_wastewater"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.9, "units": "m", "description": "Minimum pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 7.6, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Minimum full-flow sewer velocity.", "source_id": "ten_states_wastewater"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 4.6, "units": "m/s", "description": "High-velocity protection threshold.", "source_id": "ten_states_wastewater"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.203, "units": "m", "description": "Minimum public sanitary sewer diameter.", "source_id": "ten_states_wastewater"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.07, "units": "m", "description": "Minimum pressure-pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum pressure-pipe velocity.", "source_id": "engine_constructability"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Maximum water-supply velocity.", "source_id": "msdh_water_criteria"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.102, "units": "m", "description": "Minimum water main diameter used by this profile.", "source_id": "ten_states_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 14.1, "units": "mca", "description": "Minimum distribution pressure, converted from 20 psi.", "source_id": "ten_states_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 56.2, "units": "mca", "description": "Maximum static pressure, converted from 80 psi.", "source_id": "msdh_water_criteria"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.07, "units": "m", "description": "Minimum conveyance-pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.6, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum conveyance velocity.", "source_id": "engine_constructability"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.7, "units": "m/s", "description": "Maximum conveyance velocity guardrail.", "source_id": "engine_constructability"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.102, "units": "m", "description": "Minimum conveyance diameter.", "source_id": "ten_states_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 7.0, "units": "mca", "description": "Minimum conveyance pressure guardrail.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 105.6, "units": "mca", "description": "Maximum conveyance pressure guardrail, converted from 150 psi.", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.07, "units": "m", "description": "Minimum distribution-pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.3, "units": "m/s", "description": "Minimum distribution velocity.", "source_id": "engine_constructability"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Maximum distribution velocity.", "source_id": "msdh_water_criteria"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.051, "units": "m", "description": "Minimum distribution pipe diameter used by this profile.", "source_id": "ten_states_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 14.1, "units": "mca", "description": "Minimum distribution pressure, converted from 20 psi.", "source_id": "ten_states_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 56.2, "units": "mca", "description": "Maximum static pressure, converted from 80 psi.", "source_id": "msdh_water_criteria"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

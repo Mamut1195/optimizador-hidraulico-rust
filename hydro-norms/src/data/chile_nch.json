@@ -1,0 +1,83 @@
+{
+  "agency": "INN (Instituto Nacional de Normalización) — supervisada por SISS (Superintendencia de Servicios Sanitarios)",
+  "certification_note": "Source-traceable implementation profile for Chile, built on the two mandatory national norms NCh 691:2015 (agua potable) and NCh 1105:2009 (alcantarillado), both approved by Decreto Supremo del MOP — N°7/2016 y N°14/2016 respectivamente — y aplicadas por todas las concesionarias sanitarias (Aguas Andinas, ESVAL, ESSBIO, Aguas del Valle, Nuevo Sur, Aguas Antofagasta, ESSAL, SMAPA, etc.). Project approval still requires direct review against the certified INN bulletins plus the local concessionaire's complementary specifications.",
+  "certified": true,
+  "code": "CHILE_NCH",
+  "country": "CL",
+  "source_catalog": {
+    "nch_691_2015": {
+      "agency": "INN — Instituto Nacional de Normalización (Chile)",
+      "document": "NCh 691:2015 — Agua potable: Producción, conducción, almacenamiento y distribución — Requisitos de diseño",
+      "note": "Aprobada por Decreto Supremo del MOP N°7/2016 como norma técnica nacional obligatoria. Diámetro interior mínimo en red de distribución 90 mm; velocidad máxima 3,0 m/s; presión mínima dinámica 15 mca (147 kPa) para Qmáx horario; presión mínima en grifo 5 mca (49 kPa) para Qmáx diario + incendio; presión estática máxima 70 mca (686,47 kPa).",
+      "section": "Cláusulas 5 (Diseño hidráulico) y 6 (Diseño estructural)",
+      "url": "https://www.saludohiggins.cl/wp-content/uploads/2022/02/Norma-Chilena-0691-2015-Agua-potable-Produccion-conduccion-almacenamiento.pdf",
+      "value_basis": "published_standard",
+      "version": "2015 (vigente)"
+    },
+    "nch_1105_2009": {
+      "agency": "INN — Instituto Nacional de Normalización (Chile)",
+      "document": "NCh 1105:2009 — Ingeniería sanitaria: Alcantarillado de aguas residuales — Diseño y cálculo de redes",
+      "note": "Aprobada por Decreto Supremo del MOP N°14/2016 como norma técnica nacional obligatoria, reemplazando a NCh 1105:1999. Diámetro mínimo 200 mm; velocidad mínima a boca llena (h=D) 0,60 m/s; pendientes mínimas para DN 200: 5‰ recomendable y 3‰ crítica en tramos no iniciales, 10‰ recomendable y 6‰ crítica en tramos iniciales; tirante máximo 75% del diámetro; tracción tractiva mínima 0,6 Pa; Manning n: 0,009 PVC, 0,013 hormigón, 0,010 gres.",
+      "section": "Tabla 1 (pendientes mínimas), Cláusula 5 (velocidades), Tabla A (Manning)",
+      "url": "http://www.aidis.cl/wp-content/uploads/2018/06/04.-Gerardo-Ahumada-NCh-1105-2009.pdf",
+      "value_basis": "published_standard",
+      "version": "2009 (vigente; existe edición 2019 en revisión)"
+    },
+    "siss_regulator": {
+      "agency": "SISS — Superintendencia de Servicios Sanitarios",
+      "document": "Marco regulatorio sanitario chileno",
+      "note": "SISS supervisa el cumplimiento de las normas NCh por parte de las concesionarias y publica las normas técnicas oficiales en su portal. Toda obra sanitaria nueva en Chile debe aprobarse bajo este marco.",
+      "section": "Portal Normas Técnicas",
+      "url": "https://www.siss.gob.cl/586/w3-propertyvalue-6375.html",
+      "value_basis": "published_standard",
+      "version": "Vigente"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "NCh-691-2015-and-NCh-1105-2009-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.003, "units": "m/m", "description": "Pendiente mínima crítica para DN 200 en tramos no iniciales (3‰).", "source_id": "nch_1105_2009"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima admisible compatible con v < 3 m/s en PVC.", "source_id": "nch_1105_2009"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Profundidad mínima de cubierta sobre clave de colector (criterio MOP-SISS).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima sin sistemas de soporte especiales (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima a boca llena (h=D) para autolimpieza.", "source_id": "nch_1105_2009"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima en PVC; 2,4 m/s en hormigón.", "source_id": "nch_1105_2009"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Diámetro mínimo de colector cloacal (DN 200).", "source_id": "nch_1105_2009"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.009, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0,009 PVC, 0,010 gres, 0,013 hormigón (NCh 1105 Tabla A).", "source_id": "nch_1105_2009"},
+      {"key": "max_manhole_spacing", "element_type": "pipe", "max_value": 100.0, "units": "m", "description": "Separación máxima entre cámaras DN 200-300; 150 m para DN 400-600; 200 m para DN ≥ 700.", "source_id": "nch_1105_2009"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable (criterio MOP-SISS).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento (práctica chilena).", "source_id": "engine_constructability"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima en tuberías y elementos complementarios (NCh 691 §5).", "source_id": "nch_691_2015"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.09, "units": "m", "description": "Diámetro interior mínimo de tubería (DN 90 según NCh 691).", "source_id": "nch_691_2015"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Presión mínima dinámica al Qmáx horario sobre nivel de tubería (147 kPa).", "source_id": "nch_691_2015"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión estática máxima de servicio (686,47 kPa = 7 kgf/cm²).", "source_id": "nch_691_2015"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima en aducciones (NCh 691 §5).", "source_id": "nch_691_2015"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción primaria.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de servicio en grifo bajo Qmáx diario + incendio (NCh 691).", "source_id": "nch_691_2015"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima estática (NCh 691 §5).", "source_id": "nch_691_2015"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "agency": "EPMAPS (Empresa Pública Metropolitana de Agua Potable y Saneamiento de Quito)",
+  "certification_note": "Source-traceable implementation profile for the Distrito Metropolitano de Quito, built on the 2023 EPMAPS Norma Técnica de Drenaje Pluvial y Alcantarillado Sanitario (Resolución EPMAPS-2023-GG-048, Registro Oficial Nº 914) complemented by the national CPE INEN 005-9-1 / EX-IEOS for fields the local norm defers to the national code. Project approval still requires direct review against the certified 2023 EPMAPS bulletin plus EPMAPS' service-connection rules.",
+  "certified": true,
+  "code": "EPMAPS_EC",
+  "country": "EC",
+  "source_catalog": {
+    "epmaps_2023": {
+      "agency": "EPMAPS — Quito",
+      "document": "Norma Técnica de Drenaje Pluvial, Alcantarillado Sanitario y Separación de Caudales para el DMQ",
+      "note": "Resolución EPMAPS-2023-GG-048 (junio 2023), 202 páginas en el Registro Oficial Nº 914. Reemplaza a la antigua norma EMAAP-Q. Tabla 2.13 fija Manning n = 0.013 para hormigón simple, 0.011 para PVC/plástico corrugado, 0.015 para conductos de hormigón vertido en sitio. Prohíbe alcantarillados combinados nuevos y exige separación de caudales.",
+      "section": "Capítulos 2 (Hidráulica), 3 (Sanitario), 4 (Pluvial); Tabla 2.13 (Manning) y Tabla 2.32 (parámetros de diseño)",
+      "url": "https://www.aguaquito.gob.ec/Alojamientos/NORMA%20DE%20DRENAJE%20PLUVIAL/norma%20tecnica%20interna%20registro%20ofical.pdf",
+      "value_basis": "published_standard",
+      "version": "2023 (vigente)"
+    },
+    "cpe_inen_005": {
+      "agency": "INEN — Instituto Ecuatoriano de Normalización",
+      "document": "CPE INEN 005-9-1: Código Ecuatoriano de la Construcción — Sistemas de agua potable y disposición de aguas residuales para poblaciones > 1000 habitantes",
+      "note": "Norma nacional vigente desde 1992 (CO 10.07-601). Diámetro mínimo de colector cloacal 200 mm; velocidad mínima 0.6 m/s a tubo lleno para autolimpieza; velocidad máxima 3.0 m/s en hormigón / 4.5 m/s en PVC; tirante máximo 75% del diámetro; separación vertical mínima con red de agua potable 0.3 m (paralelas) y 0.2 m (cruces).",
+      "section": "Parte 9, Capítulos 5-8",
+      "url": "https://archive.org/details/ec.cpe.5.9.1.1992",
+      "value_basis": "published_standard",
+      "version": "1992 (vigente como norma nacional supletoria)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "EPMAPS-2023-and-CPE-INEN-005-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.005, "units": "m/m", "description": "Pendiente mínima derivada de v=0.6 m/s en hormigón con D=200 mm (Manning).", "source_id": "cpe_inen_005"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.15, "units": "m/m", "description": "Pendiente máxima compatible con velocidad < 5 m/s en topografía andina (criterio EPMAPS).", "source_id": "epmaps_2023"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.2, "units": "m", "description": "Colchón mínimo sobre clave de colector en calzada (EPMAPS).", "source_id": "epmaps_2023"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima de autolimpieza a tubo lleno.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidad máxima en PVC; 3.0 m/s en hormigón (EPMAPS criterio erosivo).", "source_id": "epmaps_2023"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Diámetro nominal mínimo de colector cloacal (DN 200 según CPE INEN, refrendado por EPMAPS).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.011, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.011 PVC, 0.013 hormigón simple, 0.015 hormigón vertido (Tabla 2.13).", "source_id": "epmaps_2023"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable (práctica EPMAPS).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima admisible en red de distribución.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria (DN 75).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.0, "units": "mca", "description": "Presión dinámica mínima en nodos críticos (criterio EPMAPS para topografía quiteña).", "source_id": "epmaps_2023"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio.", "source_id": "cpe_inen_005"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo de aducción primaria (DN 100).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción (guardrail interno).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción (guardrail interno).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

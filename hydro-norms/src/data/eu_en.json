@@ -1,0 +1,81 @@
+{
+  "agency": "CEN (European Committee for Standardization)",
+  "certification_note": "Source-traceable implementation profile based on EN 752:2017 (drain and sewer systems outside buildings) and EN 805:2000/2025 (water supply requirements outside buildings). EU standards harmonise minima; project approval still requires review against the national implementation (DIN W 400 in DE, BS EN in UK, NF EN in FR, UNI EN in IT, etc.) and the local utility.",
+  "certified": true,
+  "code": "EU_EN",
+  "country": "EU",
+  "source_catalog": {
+    "en_752_sewer": {
+      "agency": "CEN",
+      "document": "EN 752:2017 - Drain and sewer systems outside buildings",
+      "note": "Minimum average cross-sectional velocity 0.7 m/s for self-cleansing. Minimum nominal diameter 150 mm for sewers serving more than 10 properties (100 mm allowed only for very small connections). Maximum velocity is bounded by pipe material; 5 m/s is the conventional guardrail before abrasive-velocity protection is required.",
+      "section": "Sewer system management; functional requirements",
+      "url": "https://standards.iteh.ai/catalog/standards/cen/6a7b2fcb-4a39-4eb9-a98e-da291bd32926/en-752-2008",
+      "value_basis": "published_standard",
+      "version": "2017 (with corrigenda through Feb 2022)"
+    },
+    "en_805_water": {
+      "agency": "CEN",
+      "document": "EN 805 - Water supply. Requirements for systems and components outside buildings",
+      "note": "Defines hydraulic, pressure and material requirements for public water-supply systems. Typical EU implementations (DVGW W 400 in DE, BS EN 805 in UK) cap design velocity around 1.5-2.0 m/s with hard limits closer to 3 m/s; minimum service pressure is set nationally (commonly 15 m water column or 1.5 bar).",
+      "section": "Hydraulic design (clauses 5-7)",
+      "url": "https://www.en-standard.eu/bs-en-805-2025-water-supply-requirements-for-systems-and-components-outside-buildings/",
+      "value_basis": "published_standard",
+      "version": "2000 (BS EN 805:2025 update available)"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Cover, depth, slope, max-diameter and country-specific pressure bounds act as production guardrails when the European standard defers to national codes.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "EN-752-and-EN-805-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.005, "units": "m/m", "description": "Minimum slope guardrail (national codes typically set ≥1:200).", "source_id": "engine_constructability"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.10, "units": "m/m", "description": "Maximum slope guardrail before abrasive-velocity protection.", "source_id": "engine_constructability"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Minimum cover guardrail under trafficked surfaces.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Maximum trench depth (constructability guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.7, "units": "m/s", "description": "Minimum self-cleansing velocity per EN 752:2017.", "source_id": "en_752_sewer"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Maximum design velocity guardrail.", "source_id": "engine_constructability"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.15, "units": "m", "description": "Minimum nominal diameter for sewers serving more than 10 properties (DN 150).", "source_id": "en_752_sewer"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum pressure-pipe cover (national-code guardrail).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth (constructability guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Minimum design velocity to avoid stagnation.", "source_id": "en_805_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.0, "units": "m/s", "description": "Recommended maximum service velocity under EN 805 implementations.", "source_id": "en_805_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Minimum secondary water-main diameter (DN 50).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Minimum service pressure (≈1.5 bar, common EU national minimum).", "source_id": "en_805_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 60.0, "units": "mca", "description": "Maximum static pressure guardrail (~6 bar typical EU).", "source_id": "en_805_water"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum conveyance-pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Maximum trench depth (constructability guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Minimum design velocity in conveyance mains.", "source_id": "en_805_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Maximum design velocity for conveyance mains.", "source_id": "en_805_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Minimum diameter for primary mains (DN 100).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Minimum conveyance pressure guardrail.", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 100.0, "units": "mca", "description": "Maximum conveyance pressure guardrail (~10 bar typical EU upper bound).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Minimum distribution-pipe cover.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Maximum trench depth (constructability guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.5, "units": "m/s", "description": "Minimum design velocity to avoid stagnation.", "source_id": "en_805_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.0, "units": "m/s", "description": "Recommended maximum service velocity under EN 805.", "source_id": "en_805_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Minimum diameter for secondary water mains (DN 50).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Maximum diameter supported by this profile's commercial range.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 15.0, "units": "mca", "description": "Minimum service pressure.", "source_id": "en_805_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 60.0, "units": "mca", "description": "Maximum static pressure (~6 bar typical EU).", "source_id": "en_805_water"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

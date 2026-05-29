@@ -1,0 +1,81 @@
+{
+  "agency": "ABNT",
+  "certification_note": "Source-traceable implementation profile based on ABNT NBR 9649 (sanitary sewers) and ABNT NBR 12218:2017 (water distribution). Specific project approval requires direct review against the original certified standards plus local concessionaire criteria (e.g. Sabesp, Saneago, Compesa).",
+  "certified": true,
+  "code": "ABNT_BR",
+  "country": "BR",
+  "source_catalog": {
+    "nbr_9649_sewer": {
+      "agency": "ABNT",
+      "document": "NBR 9649 - Projeto de redes coletoras de esgoto sanitário",
+      "note": "Open-flow sanitary sewer collectors. Minimum slope follows I_min = 0.0055 * Qi^(-0.47); 0.0035 m/m is the practical lower guardrail used by Brazilian utility manuals (Saneago, Sabesp). Critical velocity vc = 6 * sqrt(g * Rh); maximum slope is the one yielding vf = 5 m/s.",
+      "section": "5 (declividade, velocidade), 6 (diametro, recobrimento)",
+      "url": "https://www.normas.com.br/visualizar/abnt-nbr-nm/5590/abnt-nbr9649-projeto-de-redes-coletoras-de-esgoto-sanitario-procedimento",
+      "value_basis": "published_standard",
+      "version": "1986 (vigente)"
+    },
+    "nbr_12218_water": {
+      "agency": "ABNT",
+      "document": "NBR 12218 - Projeto de rede de distribuição de água para abastecimento público",
+      "note": "Public water distribution. Minimum dynamic pressure 100 kPa (~10.2 mca); maximum static pressure 500 kPa (~51 mca). Maximum service velocity 3.5 m/s. Minimum diameter 50 mm for secondary networks, 100 mm for primary networks.",
+      "section": "5 (pressão), 6 (velocidade), 7 (diâmetro)",
+      "url": "https://www.normas.com.br/visualizar/abnt-nbr-nm/5611/abnt-nbr12218-projeto-de-rede-de-distribuicao-de-agua-para-abastecimento-publico-procedimento",
+      "value_basis": "published_standard",
+      "version": "2017"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Cover, depth, and maximum-diameter bounds are production guardrails when the standard does not fix an explicit value.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "NBR-9649-and-NBR-12218-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.0035, "units": "m/m", "description": "Declividade mínima prática (guardrail) compatível com I_min = 0.0055 * Qi^(-0.47).", "source_id": "nbr_9649_sewer"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.10, "units": "m/m", "description": "Declividade máxima limitada pela velocidade final vf = 5 m/s.", "source_id": "nbr_9649_sewer"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.9, "units": "m", "description": "Recobrimento mínimo em via de tráfego.", "source_id": "nbr_9649_sewer"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Profundidade máxima de vala (guardrail construtivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidade mínima de autolimpeza (tensão trativa 1.0 Pa).", "source_id": "nbr_9649_sewer"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 5.0, "units": "m/s", "description": "Velocidade final máxima admissível.", "source_id": "nbr_9649_sewer"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diâmetro mínimo de coletor sanitário (DN 100).", "source_id": "nbr_9649_sewer"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diâmetro máximo suportado pela faixa comercial deste perfil.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Recobrimento mínimo de tubulação sob pressão.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidade máxima de vala (guardrail construtivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidade mínima para evitar estagnação.", "source_id": "nbr_12218_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.5, "units": "m/s", "description": "Velocidade máxima admissível na tubulação.", "source_id": "nbr_12218_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Diâmetro mínimo de rede secundária (DN 50).", "source_id": "nbr_12218_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diâmetro máximo suportado pela faixa comercial deste perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.2, "units": "mca", "description": "Pressão dinâmica mínima (100 kPa) no ponto crítico em hora de maior consumo.", "source_id": "nbr_12218_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 51.0, "units": "mca", "description": "Pressão estática máxima admissível (500 kPa).", "source_id": "nbr_12218_water"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Recobrimento mínimo de adutora.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidade máxima de vala (guardrail construtivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidade mínima para evitar deposição.", "source_id": "nbr_12218_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.5, "units": "m/s", "description": "Velocidade máxima admissível em adutoras pressurizadas (alinhada com NBR 12218).", "source_id": "nbr_12218_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diâmetro mínimo de rede primária (DN 100).", "source_id": "nbr_12218_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diâmetro máximo suportado pela faixa comercial deste perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Pressão mínima de adução (guardrail interno).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Pressão máxima de adução (guardrail interno).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 0.8, "units": "m", "description": "Recobrimento mínimo de rede de distribuição.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidade máxima de vala (guardrail construtivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidade mínima para evitar estagnação.", "source_id": "nbr_12218_water"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.5, "units": "m/s", "description": "Velocidade máxima admissível na rede.", "source_id": "nbr_12218_water"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.05, "units": "m", "description": "Diâmetro mínimo de rede secundária (DN 50).", "source_id": "nbr_12218_water"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diâmetro máximo suportado pela faixa comercial deste perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.2, "units": "mca", "description": "Pressão dinâmica mínima (100 kPa).", "source_id": "nbr_12218_water"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 51.0, "units": "mca", "description": "Pressão estática máxima (500 kPa).", "source_id": "nbr_12218_water"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

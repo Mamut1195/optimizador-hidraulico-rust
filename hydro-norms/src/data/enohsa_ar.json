@@ -1,0 +1,90 @@
+{
+  "agency": "ENOHSA (Ente Nacional de Obras Hídricas de Saneamiento)",
+  "certification_note": "Source-traceable implementation profile based on the ENOHSA design guidelines and the AySA Criterios de Diseño Hidráulico. Project approval still requires direct review against the certified ENOHSA guideline plus the local concessionaire (AySA, ABSA, Aguas del Norte, etc.).",
+  "certified": true,
+  "code": "ENOHSA_AR",
+  "country": "AR",
+  "source_catalog": {
+    "enohsa_cloacas": {
+      "agency": "ENOHSA",
+      "document": "Guías para la elaboración de proyectos: redes cloacales",
+      "note": "Sanitary sewers: minimum tractive force τ = 0.10 kgf/m² (~1.0 Pa). Maximum velocity 3.0 m/s general (Boussinesq criterion below DN 150) or 4.0 m/s erosive for DN > 150. Minimum slope 1:60 (0.0167 m/m), maximum slope 1:20 (0.05 m/m). Minimum collector diameter DN 200; minimum cover (tapada) 1.30 m in unpaved road for DN < 400.",
+      "section": "Capítulo 5 (Pendientes), Capítulo 6 (Velocidades), Capítulo 7 (Diámetros), Capítulo 8 (Tapadas)",
+      "url": "https://www.argentina.gob.ar/enohsa/guias-redes-cloacales",
+      "value_basis": "published_standard",
+      "version": "2010 (vigente, complementada por AySA 2021)"
+    },
+    "enohsa_agua": {
+      "agency": "ENOHSA",
+      "document": "Guías para la elaboración de proyectos: redes de agua potable",
+      "note": "Water distribution: dynamic pressure ≥ 12 mca at vereda level in critical nodes; maximum static pressure 50 mca. Maximum velocity 3.0 m/s to avoid erosion. Minimum DN 63 mm for distribution; primary mains DN > 250, secondary 90 < DN ≤ 250, subsidiary DN 90-160.",
+      "section": "Criterios de presión, velocidad y diámetro",
+      "url": "https://www.argentina.gob.ar/enohsa/guias-agua-potable",
+      "value_basis": "published_standard",
+      "version": "2010 (vigente)"
+    },
+    "aysa_diseno_hidraulico": {
+      "agency": "AySA (Agua y Saneamientos Argentinos S.A.)",
+      "document": "Criterios de Diseño Hidráulico - Agua y Cloacas",
+      "note": "AMBA concessionaire criteria that complement ENOHSA for the Buenos Aires metropolitan area; aligns minimum dynamic pressure 12 mca and maximum 50 mca, with maximum service velocity 3 m/s.",
+      "section": "Tomo I (agua) y Tomo II (cloacas)",
+      "url": "https://www.argentina.gob.ar/sites/default/files/2021/04/diseno_hidraulico.pdf",
+      "value_basis": "published_standard",
+      "version": "2021"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the guidelines defer to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "ENOHSA-and-AySA-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.0167, "units": "m/m", "description": "Pendiente mínima 1:60 (~1.67%) según ENOHSA.", "source_id": "enohsa_cloacas"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.05, "units": "m/m", "description": "Pendiente máxima 1:20 (5%) según ENOHSA.", "source_id": "enohsa_cloacas"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.3, "units": "m", "description": "Tapada mínima en calle de tierra para DN < 400.", "source_id": "enohsa_cloacas"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 6.0, "units": "m", "description": "Profundidad máxima de excavación (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima de autolimpieza compatible con τ = 0.1 kgf/m² (1 Pa).", "source_id": "enohsa_cloacas"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible (DN ≤ 150 por Boussinesq).", "source_id": "enohsa_cloacas"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.2, "units": "m", "description": "Diámetro nominal mínimo de colector cloacal (DN 200).", "source_id": "enohsa_cloacas"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en cañerías de agua potable (práctica ENOHSA/AySA).", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento (práctica AySA).", "source_id": "aysa_diseno_hidraulico"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible para evitar erosión.", "source_id": "enohsa_agua"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.063, "units": "m", "description": "Diámetro mínimo en red de distribución (DN 63).", "source_id": "enohsa_agua"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 12.0, "units": "mca", "description": "Presión dinámica mínima sobre nivel de vereda en nodos críticos.", "source_id": "enohsa_agua"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio.", "source_id": "enohsa_agua"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "aysa_diseno_hidraulico"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "enohsa_agua"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción primaria (DN 100).", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima de aducción (guardrail interno).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima de aducción (guardrail interno).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de distribución.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento.", "source_id": "aysa_diseno_hidraulico"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 3.0, "units": "m/s", "description": "Velocidad máxima admisible para evitar erosión.", "source_id": "enohsa_agua"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.063, "units": "m", "description": "Diámetro mínimo en red de distribución (DN 63).", "source_id": "enohsa_agua"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial de este perfil.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 12.0, "units": "mca", "description": "Presión dinámica mínima sobre nivel de vereda.", "source_id": "enohsa_agua"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio.", "source_id": "enohsa_agua"}
+    ],
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}

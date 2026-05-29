@@ -1,0 +1,82 @@
+{
+  "agency": "Interagua C. Ltda. (concesionaria, operadora) y EMAPAG-EP (regulador municipal)",
+  "certification_note": "Source-traceable implementation profile for the Guayaquil metropolitan area, built on the Interagua design manuals (MA-OED-003 alcantarillado, MA-OED-004 acueductos) under the EMAPAG-EP concession contract and complemented by the national CPE INEN 005-9-1. Topografía costera plana habilita el diámetro mínimo de 150 mm que el CPE INEN admite explícitamente para esa condición. Project approval requires direct review against the current Interagua/EMAPAG-EP bulletin.",
+  "certified": true,
+  "code": "INTERAGUA_EC",
+  "country": "EC",
+  "source_catalog": {
+    "interagua_manuales": {
+      "agency": "Interagua C. Ltda. — Guayaquil",
+      "document": "Manuales internos de diseño: MA-OED-003 (Redes de Alcantarillado) y MA-OED-004 (Acueductos)",
+      "note": "Manuales de diseño de la concesionaria que opera el servicio en Guayaquil bajo contrato de concesión con EMAPAG-EP. Referenciados en memorias técnicas hidrosanitarias del Municipio (LICO-MIMG-061-2022 y similares). Adoptan los criterios del CPE INEN 005-9-1 con adaptaciones para topografía plana costera.",
+      "section": "MA-OED-003 §3-4 (alcantarillado), MA-OED-004 §3-5 (acueductos)",
+      "url": "https://www.interagua.com.ec/sites/default/files/portal-de-transparencia/planes-programas/tomo_i.pdf",
+      "value_basis": "published_standard",
+      "version": "Vigentes bajo concesión EMAPAG-Interagua"
+    },
+    "emapag_ep": {
+      "agency": "EMAPAG-EP — Ente Municipal de Regulación y Control del Agua Potable de Guayaquil",
+      "document": "Marco regulatorio de la concesión",
+      "note": "EMAPAG-EP supervisa la concesión a 30 años otorgada a Interagua. Publica reportes técnicos, plan maestro y normativa de control.",
+      "section": "Portal Transparencia",
+      "url": "https://www.emapag-ep.gob.ec/emapag/",
+      "value_basis": "published_standard",
+      "version": "Vigente"
+    },
+    "cpe_inen_005": {
+      "agency": "INEN — Instituto Ecuatoriano de Normalización",
+      "document": "CPE INEN 005-9-1: Sistemas de agua potable y aguas residuales para poblaciones > 1000 habitantes",
+      "note": "Norma nacional. Diámetro mínimo de colector cloacal 200 mm (150 mm permitido en topografía plana — aplicable a Guayaquil); velocidad mínima 0.6 m/s; velocidad máxima 3.0 m/s hormigón, 4.5 m/s PVC; tirante máximo 75% del diámetro; presión máxima 50 mca; separación con red de agua potable 0.3 m paralelas / 0.2 m cruces.",
+      "section": "Parte 9, Capítulos 5-8",
+      "url": "https://archive.org/details/ec.cpe.5.9.1.1992",
+      "value_basis": "published_standard",
+      "version": "1992"
+    },
+    "engine_constructability": {
+      "agency": "Hydro Engine",
+      "document": "Internal constructability defaults",
+      "note": "Maximum depth and maximum-diameter bounds act as production guardrails when the norm defers the limit to project-specific calculations.",
+      "section": "DesignConstraints",
+      "url": null,
+      "value_basis": "engineering_default",
+      "version": "0.1.0"
+    }
+  },
+  "version": "Interagua-EMAPAG-and-CPE-INEN-005-source-traceable",
+  "project_rules": {
+    "SEWER": [
+      {"key": "min_slope", "element_type": "pipe", "min_value": 0.003, "units": "m/m", "description": "Pendiente mínima reducida para topografía plana costera (criterio Interagua compatible con velocidad mínima v=0.6 m/s en colectores DN 150-200).", "source_id": "interagua_manuales"},
+      {"key": "max_slope", "element_type": "pipe", "max_value": 0.08, "units": "m/m", "description": "Pendiente máxima compatible con velocidad < 4 m/s en PVC.", "source_id": "interagua_manuales"},
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.2, "units": "m", "description": "Colchón mínimo sobre clave de colector.", "source_id": "cpe_inen_005"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 5.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail constructivo, limitado por nivel freático costero).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima de autolimpieza a tubo lleno.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 4.5, "units": "m/s", "description": "Velocidad máxima en PVC (CPE INEN); 3.0 m/s en hormigón.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.15, "units": "m", "description": "Diámetro mínimo en topografía plana (CPE INEN 005-9-1 admite DN 150 explícitamente para ciudades planas).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "default_roughness", "element_type": "pipe", "min_value": 0.009, "max_value": 0.013, "units": "n_manning", "description": "Manning n: 0.009 PVC, 0.013 hormigón (práctica Interagua).", "source_id": "interagua_manuales"}
+    ],
+    "WATER_SUPPLY": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima sobre red de agua potable.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 3.0, "units": "m", "description": "Profundidad máxima de zanja (guardrail).", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima para evitar estancamiento.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima en red de distribución.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.075, "units": "m", "description": "Diámetro mínimo en red secundaria (DN 75).", "source_id": "cpe_inen_005"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo soportado por la franja comercial.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 10.0, "units": "mca", "description": "Presión dinámica mínima en nodos críticos (criterio Interagua para Guayaquil plana).", "source_id": "interagua_manuales"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 50.0, "units": "mca", "description": "Presión estática máxima de servicio.", "source_id": "cpe_inen_005"}
+    ],
+    "CONVEYANCE": [
+      {"key": "min_cover", "element_type": "pipe", "min_value": 1.0, "units": "m", "description": "Tapada mínima en aducciones.", "source_id": "engine_constructability"},
+      {"key": "max_depth", "element_type": "pipe", "max_value": 4.0, "units": "m", "description": "Profundidad máxima de zanja.", "source_id": "engine_constructability"},
+      {"key": "min_velocity", "element_type": "pipe", "min_value": 0.6, "units": "m/s", "description": "Velocidad mínima en aducciones.", "source_id": "cpe_inen_005"},
+      {"key": "max_velocity", "element_type": "pipe", "max_value": 2.5, "units": "m/s", "description": "Velocidad máxima admisible.", "source_id": "cpe_inen_005"},
+      {"key": "min_diameter", "element_type": "pipe", "min_value": 0.1, "units": "m", "description": "Diámetro mínimo en aducción.", "source_id": "engine_constructability"},
+      {"key": "max_diameter", "element_type": "pipe", "max_value": 1.2, "units": "m", "description": "Diámetro máximo.", "source_id": "engine_constructability"},
+      {"key": "min_pressure", "element_type": "node", "min_value": 5.0, "units": "mca", "description": "Presión mínima (guardrail).", "source_id": "engine_constructability"},
+      {"key": "max_pressure", "element_type": "node", "max_value": 70.0, "units": "mca", "description": "Presión máxima (guardrail).", "source_id": "engine_constructability"}
+    ],
+    "DISTRIBUTION": {"copy_from": "WATER_SUPPLY"},
+    "PUMP_STATION": {"copy_from": "CONVEYANCE"},
+    "INTAKE": {"copy_from": "CONVEYANCE"}
+  }
+}
