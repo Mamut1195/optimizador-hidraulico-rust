@@ -189,19 +189,28 @@ impl CompactGraph {
 
 // ── Priority queue entry for Dijkstra ────────────────────────────────────
 
-/// Min-heap entry: `(neg_cost, node_idx)` — negate to turn BinaryHeap into min-heap.
+/// Min-heap entry: `(distance, insertion_counter, node_idx)`.
+///
+/// The insertion counter serves as a FIFO tie-breaker when two entries have
+/// equal distance, exactly mirroring networkx's `_dijkstra_multisource` which
+/// uses `(distance, count, node)` with an auto-incrementing counter.  Without
+/// this secondary key the Rust `BinaryHeap` resolves equal-distance ties
+/// non-deterministically, producing a different Voronoi partition than the
+/// Python oracle and therefore a heavier (suboptimal) Steiner tree.
 #[derive(Debug, PartialEq)]
-struct HeapEntry(f64, usize);
+struct HeapEntry(f64, u64, usize);
 
 impl Eq for HeapEntry {}
 
 impl Ord for HeapEntry {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        // Reverse for min-heap: smaller distance has higher priority
+        // Reverse distance (min-heap) then reverse counter (FIFO — smaller counter
+        // = earlier push = higher heap priority when distances are equal).
         other
             .0
             .partial_cmp(&self.0)
             .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| other.1.cmp(&self.1))
     }
 }
 
@@ -296,6 +305,21 @@ pub fn steiner_tree(
 /// Returns `(voronoi_terminal[v], voronoi_dist[v])` for every node `v`:
 /// - `voronoi_terminal[v]` = index of the nearest terminal.
 /// - `voronoi_dist[v]` = shortest distance from `v` to that terminal.
+///
+/// ## Tie-breaking (oracle parity)
+///
+/// networkx's `_dijkstra_multisource` uses a `(distance, count, node)` heap
+/// where `count` is an auto-incrementing insertion counter.  When two entries
+/// have equal distance, the one with the smaller counter (i.e., the one pushed
+/// earlier) wins.  This gives FIFO ordering for equal-distance discoveries.
+///
+/// We replicate this exactly:
+/// 1. Terminals are sorted lexicographically by node name before being pushed,
+///    so the ordering is deterministic and independent of HashMap/HashSet
+///    iteration order.
+/// 2. Every `heap.push()` increments a counter that is embedded in the entry.
+///    Equal-distance entries pop in FIFO order (smaller counter first), matching
+///    networkx's `itertools.count()` tie-breaker.
 fn multi_source_dijkstra(
     graph: &CompactGraph,
     terminal_indices: &[usize],
@@ -304,14 +328,25 @@ fn multi_source_dijkstra(
     let mut dist = vec![f64::INFINITY; n];
     let mut voronoi = vec![usize::MAX; n];
     let mut heap = BinaryHeap::new();
+    let mut counter: u64 = 0;
 
-    for &t in terminal_indices {
+    // Sort terminals by node name (lexicographic) for deterministic source order.
+    // This mirrors the fact that networkx pushes sources in set-iteration order,
+    // but since Python set order is non-deterministic (PYTHONHASHSEED), we use
+    // sorted order instead.  Empirically, the 451.5-weight tree is the unique
+    // Mehlhorn result for all terminal orderings on this fixture (verified in
+    // Python), so sorted order correctly reproduces the oracle tree.
+    let mut sorted_terminals: Vec<usize> = terminal_indices.to_vec();
+    sorted_terminals.sort_by_key(|&idx| graph.node_names[idx].clone());
+
+    for &t in &sorted_terminals {
         dist[t] = 0.0;
         voronoi[t] = t;
-        heap.push(HeapEntry(0.0, t));
+        heap.push(HeapEntry(0.0, counter, t));
+        counter += 1;
     }
 
-    while let Some(HeapEntry(d, u)) = heap.pop() {
+    while let Some(HeapEntry(d, _, u)) = heap.pop() {
         if d > dist[u] {
             continue; // stale entry
         }
@@ -320,7 +355,8 @@ fn multi_source_dijkstra(
             if nd < dist[v] {
                 dist[v] = nd;
                 voronoi[v] = voronoi[u];
-                heap.push(HeapEntry(nd, v));
+                heap.push(HeapEntry(nd, counter, v));
+                counter += 1;
             }
         }
     }
@@ -464,65 +500,53 @@ fn kruskal_mst_with_n(edges: &[ClosureEdge], n_nodes: usize) -> Vec<ClosureEdge>
 
 // ── Step 4: Expand closure MST to path subgraph ──────────────────────────
 
-/// For each closure MST edge `(T_u, T_v)`, reconstruct the underlying shortest path
-/// through the Voronoi regions and add all path edges to a subgraph.
+/// For each closure MST edge `(T_u, T_v)`, find the shortest path from terminal T_u
+/// to terminal T_v in the original graph and add all path edges to a subgraph.
 ///
-/// The path goes:  T_u → ... → crossing edge → ... → T_v
+/// ## Parity note
 ///
-/// We find the original edge `(u_orig, v_orig)` that achieves the minimum
-/// `voronoi_dist[u_orig] + w + voronoi_dist[v_orig]` for the given terminal pair,
-/// then trace back the Voronoi paths from u_orig and v_orig to their terminals.
+/// networkx's `_mehlhorn_steiner_tree` (step G_3) expands closure MST edges by calling
+/// `nx.shortest_path(G, u, v, weight=weight)` where u, v are the TERMINAL nodes.
+/// This is a full Dijkstra from one terminal to the other in the original graph.
+///
+/// An earlier Rust implementation used a "find crossing edge + trace Voronoi paths"
+/// approach which diverges when two crossing edges have equal metric distance —
+/// Dijkstra with FIFO tie-breaking always picks the lexicographically-first path.
+/// The full Dijkstra approach matches networkx exactly.
 ///
 /// Returns a flat list of `ClosureEdge` representing the path subgraph (in original
 /// graph node indices).
 fn expand_closure_to_paths(
     graph: &CompactGraph,
-    voronoi_terminal: &[usize],
-    voronoi_dist: &[f64],
+    _voronoi_terminal: &[usize],
+    _voronoi_dist: &[f64],
     closure_mst: &[ClosureEdge],
     _terminal_indices: &[usize],
 ) -> Vec<ClosureEdge> {
-    // Build a reverse-path map: for each node v, which neighbor is on the shortest
-    // path toward its voronoi terminal?
-    // We reconstruct by re-running Dijkstra per closure MST edge.
-    // Efficient enough for the 11×11 fixture (~121 nodes) and in general for small
-    // Steiner instances (the Mehlhorn algorithm is designed for sparse terminals).
-
     let mut path_edges: Vec<ClosureEdge> = Vec::new();
 
     for closure_edge in closure_mst {
         let tu = closure_edge.u;
         let tv = closure_edge.v;
 
-        // Find the original crossing edge (u_orig, v_orig) that bridges tu→tv regions
-        let (u_cross, v_cross, w_cross) =
-            find_best_crossing_edge(graph, voronoi_terminal, voronoi_dist, tu, tv);
+        // Full shortest path from terminal tu to terminal tv, with FIFO counter
+        // tie-breaking — mirrors networkx's nx.shortest_path(G, u, v, weight=weight).
+        let path_node_seq = shortest_path_dijkstra_fifo(graph, tu, tv);
 
-        // Trace path from tu to u_cross (Voronoi path)
-        let path_tu = trace_voronoi_path(graph, voronoi_terminal, voronoi_dist, u_cross, tu);
-
-        // Trace path from tv to v_cross (Voronoi path)
-        let path_tv = trace_voronoi_path(graph, voronoi_terminal, voronoi_dist, v_cross, tv);
-
-        // Add all path edges
-        for &(a, b, w) in &path_tu {
+        // Convert node sequence to edge list
+        for w in path_node_seq.windows(2) {
+            let a = w[0];
+            let b = w[1];
+            // Look up actual edge weight in adj[a]
+            let edge_w = graph.adj[a]
+                .iter()
+                .find(|&&(v, _)| v == b)
+                .map(|&(_, w)| w)
+                .unwrap_or(0.0);
             path_edges.push(ClosureEdge {
                 u: a,
                 v: b,
-                weight: w,
-            });
-        }
-        // Add crossing edge
-        path_edges.push(ClosureEdge {
-            u: u_cross,
-            v: v_cross,
-            weight: w_cross,
-        });
-        for &(a, b, w) in &path_tv {
-            path_edges.push(ClosureEdge {
-                u: a,
-                v: b,
-                weight: w,
+                weight: edge_w,
             });
         }
     }
@@ -531,133 +555,57 @@ fn expand_closure_to_paths(
     dedup_path_edges(path_edges)
 }
 
-/// Find the original graph edge `(u, v, w)` with the minimum
-/// `voronoi_dist[u] + w + voronoi_dist[v]` where `voronoi[u] == tu` and `voronoi[v] == tv`.
-fn find_best_crossing_edge(
-    graph: &CompactGraph,
-    voronoi_terminal: &[usize],
-    voronoi_dist: &[f64],
-    tu: usize,
-    tv: usize,
-) -> (usize, usize, f64) {
-    let mut best = (0, 0, f64::INFINITY);
-    for u in 0..graph.node_count() {
-        if voronoi_terminal[u] != tu {
-            continue;
-        }
-        for &(v, w) in &graph.adj[u] {
-            if voronoi_terminal[v] != tv {
-                continue;
-            }
-            let d = voronoi_dist[u] + w + voronoi_dist[v];
-            if d < best.2 {
-                best = (u, v, w);
-            }
-        }
-    }
-    best
-}
-
-/// Trace the shortest path from `node` back to `target_terminal` using Dijkstra
-/// over the original graph, restricted to the node's Voronoi region.
+/// Dijkstra shortest path from `source` to `target` with FIFO counter tie-breaking.
 ///
-/// Returns list of `(u, v, w)` tuples forming the path edges.
-fn trace_voronoi_path(
-    graph: &CompactGraph,
-    voronoi_terminal: &[usize],
-    _voronoi_dist: &[f64],
-    start: usize,
-    target_terminal: usize,
-) -> Vec<(usize, usize, f64)> {
-    if start == target_terminal {
-        return Vec::new();
+/// Mirrors `nx.shortest_path(G, source, target, weight=weight)` which uses
+/// `_dijkstra_multisource` internally. The counter ensures that when two paths
+/// have equal cost, the first-discovered one (by adjacency-list order) wins,
+/// exactly as networkx's `itertools.count()` tie-breaker does.
+///
+/// Returns the ordered node sequence from `source` to `target` (inclusive).
+fn shortest_path_dijkstra_fifo(graph: &CompactGraph, source: usize, target: usize) -> Vec<usize> {
+    if source == target {
+        return vec![source];
     }
 
-    // Dijkstra from target_terminal, find path to start
     let n = graph.node_count();
     let mut dist = vec![f64::INFINITY; n];
-    let mut prev: Vec<Option<(usize, f64)>> = vec![None; n]; // (prev_node, edge_weight)
+    let mut prev: Vec<Option<usize>> = vec![None; n];
     let mut heap = BinaryHeap::new();
+    let mut counter: u64 = 0;
 
-    dist[target_terminal] = 0.0;
-    heap.push(HeapEntry(0.0, target_terminal));
+    dist[source] = 0.0;
+    heap.push(HeapEntry(0.0, counter, source));
+    counter += 1;
 
-    while let Some(HeapEntry(d, u)) = heap.pop() {
+    while let Some(HeapEntry(d, _, u)) = heap.pop() {
         if d > dist[u] {
             continue;
         }
-        if u == start {
+        if u == target {
             break;
         }
         for &(v, w) in &graph.adj[u] {
-            // Stay within the same Voronoi region (both voronoi_terminal == target_terminal)
-            // OR allow crossing through the target terminal itself
-            if voronoi_terminal[v] != target_terminal && v != target_terminal {
-                continue;
-            }
             let nd = d + w;
             if nd < dist[v] {
                 dist[v] = nd;
-                prev[v] = Some((u, w));
-                heap.push(HeapEntry(nd, v));
+                prev[v] = Some(u);
+                heap.push(HeapEntry(nd, counter, v));
+                counter += 1;
             }
         }
-    }
-
-    // If we didn't reach start via Voronoi-constrained path, fall back to
-    // full Dijkstra (handles edge cases where start is on boundary)
-    if dist[start] == f64::INFINITY {
-        return trace_full_dijkstra(graph, start, target_terminal);
     }
 
     // Reconstruct path
-    let mut edges = Vec::new();
-    let mut cur = start;
-    while let Some((p, w)) = prev[cur] {
-        edges.push((p, cur, w));
+    let mut path = Vec::new();
+    let mut cur = target;
+    while let Some(p) = prev[cur] {
+        path.push(cur);
         cur = p;
     }
-    edges
-}
-
-/// Full Dijkstra path from `start` to `target` (fallback — no Voronoi constraint).
-fn trace_full_dijkstra(
-    graph: &CompactGraph,
-    start: usize,
-    target: usize,
-) -> Vec<(usize, usize, f64)> {
-    let n = graph.node_count();
-    let mut dist = vec![f64::INFINITY; n];
-    let mut prev: Vec<Option<(usize, f64)>> = vec![None; n];
-    let mut heap = BinaryHeap::new();
-
-    dist[target] = 0.0;
-    heap.push(HeapEntry(0.0, target));
-
-    while let Some(HeapEntry(d, u)) = heap.pop() {
-        if d > dist[u] {
-            continue;
-        }
-        if u == start {
-            break;
-        }
-        for &(v, w) in &graph.adj[u] {
-            let nd = d + w;
-            if nd < dist[v] {
-                dist[v] = nd;
-                prev[v] = Some((u, w));
-                heap.push(HeapEntry(nd, v));
-            }
-        }
-    }
-
-    let mut edges = Vec::new();
-    let mut cur = start;
-    while let Some((p, w)) = prev[cur] {
-        edges.push((p, cur, w));
-        cur = p;
-    }
-    edges
+    path.push(source);
+    path.reverse();
+    path
 }
 
 /// Deduplicate path edges: for each undirected pair `(min(u,v), max(u,v))`,
