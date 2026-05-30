@@ -1,11 +1,20 @@
 //! hydro-solvers — Solver trait and the six domain-specific solvers.
 //!
-//! Implements the `Solver` trait and six concrete solvers:
-//! SewerSolver, WaterSupplySolver, ConveyanceSolver, DistributionSolver,
-//! PumpStationSolver, IntakeSolver.
+//! Implements the `Solver` trait and concrete solvers:
+//! - SewerSolver (PR-6): gravity sewer networks
+//! - WaterSupplySolver, ConveyanceSolver (PR-7a): pressure systems
+//! - DistributionSolver, PumpStationSolver, IntakeSolver (PR-7b): remaining solvers
 //!
-//! Each solver is an orchestration layer on top of hydro-hydraulics, hydro-terrain,
-//! and hydro-norms. No direct I/O.
+//! Each solver is an orchestration layer on top of hydro-hydraulics,
+//! hydro-terrain, and hydro-norms. No direct I/O.
+
+pub mod error;
+pub mod sewer;
+pub mod solver;
+
+pub use error::SolverError;
+pub use sewer::SewerSolver;
+pub use solver::{Solver, SolverParams};
 
 #[cfg(test)]
 mod tests {

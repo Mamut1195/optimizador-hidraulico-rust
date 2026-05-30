@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_sewer_golden",
+  "description": "SewerSolver oracle fixture: 5x5 grid (20m spacing), z=100+0.006*x, outlet=g0=(0,0), services=g6,g12,g16. Gravity-feasible (natural slope 0.006 >= min_slope 0.005). All service/outlet at on-grid coordinates for EXACT elevation queries.",
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.006,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.0
+      ],
+      [
+        0.0,
+        40.0,
+        100.0
+      ],
+      [
+        0.0,
+        60.0,
+        100.0
+      ],
+      [
+        0.0,
+        80.0,
+        100.0
+      ],
+      [
+        20.0,
+        0.0,
+        100.12
+      ],
+      [
+        20.0,
+        20.0,
+        100.12
+      ],
+      [
+        20.0,
+        40.0,
+        100.12
+      ],
+      [
+        20.0,
+        60.0,
+        100.12
+      ],
+      [
+        20.0,
+        80.0,
+        100.12
+      ],
+      [
+        40.0,
+        0.0,
+        100.24
+      ],
+      [
+        40.0,
+        20.0,
+        100.24
+      ],
+      [
+        40.0,
+        40.0,
+        100.24
+      ],
+      [
+        40.0,
+        60.0,
+        100.24
+      ],
+      [
+        40.0,
+        80.0,
+        100.24
+      ],
+      [
+        60.0,
+        0.0,
+        100.36
+      ],
+      [
+        60.0,
+        20.0,
+        100.36
+      ],
+      [
+        60.0,
+        40.0,
+        100.36
+      ],
+      [
+        60.0,
+        60.0,
+        100.36
+      ],
+      [
+        60.0,
+        80.0,
+        100.36
+      ],
+      [
+        80.0,
+        0.0,
+        100.48
+      ],
+      [
+        80.0,
+        20.0,
+        100.48
+      ],
+      [
+        80.0,
+        40.0,
+        100.48
+      ],
+      [
+        80.0,
+        60.0,
+        100.48
+      ],
+      [
+        80.0,
+        80.0,
+        100.48
+      ]
+    ]
+  },
+  "solver_params": {
+    "outlet": [
+      0.0,
+      0.0
+    ],
+    "service_points": [
+      [
+        20.0,
+        20.0
+      ],
+      [
+        40.0,
+        40.0
+      ],
+      [
+        60.0,
+        20.0
+      ]
+    ],
+    "flow_per_service": 0.002,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 1,
+    "route_variant": 0,
+    "slope_factor": 1.0,
+    "cover_factor": 1.0,
+    "diameter_offset": 0,
+    "manhole_spacing": null
+  },
+  "node_count": 7,
+  "pipe_count": 6,
+  "total_length": 120.0,
+  "nodes": [
+    {
+      "id": "g1",
+      "x": 0.0,
+      "y": 20.0,
+      "z": 100.0,
+      "node_type": "MANHOLE",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.6
+    },
+    {
+      "id": "g6",
+      "x": 20.0,
+      "y": 20.0,
+      "z": 100.12,
+      "node_type": "PUMP",
+      "rim_elevation": 100.12,
+      "sump_elevation": 98.72
+    },
+    {
+      "id": "g11",
+      "x": 40.0,
+      "y": 20.0,
+      "z": 100.24,
+      "node_type": "MANHOLE",
+      "rim_elevation": 100.24,
+      "sump_elevation": 98.83999999999999
+    },
+    {
+      "id": "g0",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "PUMP",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5
+    },
+    {
+      "id": "g12",
+      "x": 40.0,
+      "y": 40.0,
+      "z": 100.24,
+      "node_type": "PUMP",
+      "rim_elevation": 100.24,
+      "sump_elevation": 98.83999999999999
+    },
+    {
+      "id": "g7",
+      "x": 20.0,
+      "y": 40.0,
+      "z": 100.12,
+      "node_type": "MANHOLE",
+      "rim_elevation": 100.12,
+      "sump_elevation": 98.72
+    },
+    {
+      "id": "g16",
+      "x": 60.0,
+      "y": 20.0,
+      "z": 100.36,
+      "node_type": "SERVICE",
+      "rim_elevation": 100.36,
+      "sump_elevation": 98.96
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Pipe - (1)",
+      "start_node_id": "g1",
+      "end_node_id": "g0",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.0,
+      "start_invert": 98.8,
+      "end_invert": 98.8,
+      "design_flow": 0.006,
+      "roughness": 0.009,
+      "bypassed_by_pump": true
+    },
+    {
+      "id": "Pipe - (2)",
+      "start_node_id": "g6",
+      "end_node_id": "g1",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.006000000000000227,
+      "start_invert": 98.92,
+      "end_invert": 98.8,
+      "design_flow": 0.006,
+      "roughness": 0.009,
+      "bypassed_by_pump": false
+    },
+    {
+      "id": "Pipe - (3)",
+      "start_node_id": "g7",
+      "end_node_id": "g6",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.0,
+      "start_invert": 98.92,
+      "end_invert": 98.92,
+      "design_flow": 0.004,
+      "roughness": 0.009,
+      "bypassed_by_pump": true
+    },
+    {
+      "id": "Pipe - (4)",
+      "start_node_id": "g12",
+      "end_node_id": "g7",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.005999999999999517,
+      "start_invert": 99.03999999999999,
+      "end_invert": 98.92,
+      "design_flow": 0.004,
+      "roughness": 0.009,
+      "bypassed_by_pump": false
+    },
+    {
+      "id": "Pipe - (5)",
+      "start_node_id": "g11",
+      "end_node_id": "g12",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.0,
+      "start_invert": 99.03999999999999,
+      "end_invert": 99.03999999999999,
+      "design_flow": 0.002,
+      "roughness": 0.009,
+      "bypassed_by_pump": true
+    },
+    {
+      "id": "Pipe - (6)",
+      "start_node_id": "g16",
+      "end_node_id": "g11",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.006000000000000227,
+      "start_invert": 99.16,
+      "end_invert": 99.03999999999999,
+      "design_flow": 0.002,
+      "roughness": 0.009,
+      "bypassed_by_pump": false
+    }
+  ],
+  "score": {
+    "total_cost": 708.0000000000007,
+    "total_length": 120.0,
+    "total_excavation": 144.00000000000034,
+    "norm_violations": 3,
+    "pump_count": 3
+  },
+  "evaluate_only": {
+    "total_cost": 708.0000000000007,
+    "total_length": 120.0,
+    "total_excavation": 144.00000000000034,
+    "norm_violations": 3,
+    "pump_count": 3,
+    "details": {
+      "pipe_count": 6.0,
+      "node_count": 7.0,
+      "avg_excavation": 1.2000000000000028
+    }
+  },
+  "cost_formula": {
+    "w_length": 1.0,
+    "w_excavation": 2.0,
+    "w_violations": 100.0,
+    "expected_cost": 708.0000000000007
+  }
+}
