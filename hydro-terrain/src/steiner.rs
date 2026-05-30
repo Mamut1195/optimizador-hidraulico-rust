@@ -113,6 +113,24 @@ impl SteinerTree {
         self.edges.len()
     }
 
+    /// Return all edges as `(node_a, node_b, weight)` triples.
+    ///
+    /// Each edge appears once (as inserted, not deduplicated). Used by downstream
+    /// solvers (e.g., SewerSolver) to convert the Steiner tree into a directed graph.
+    pub fn edges(&self) -> &[(String, String, f64)] {
+        &self.edges
+    }
+
+    /// Return all node IDs in the Steiner tree.
+    pub fn node_ids(&self) -> &[String] {
+        &self.nodes
+    }
+
+    /// Return the adjacency map (undirected): node → [(neighbor, weight)].
+    pub fn adjacency(&self) -> &HashMap<String, Vec<(String, f64)>> {
+        &self.adj
+    }
+
     /// Return sorted (lexicographic) edge pairs for snapshot tests.
     ///
     /// Each pair is `(min(a,b), max(a,b))`.

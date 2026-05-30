@@ -35,7 +35,9 @@ impl Solver for MockSolver {
 fn mock_solver_implements_trait() {
     let mut solver = MockSolver::new();
     let params = SolverParams::default();
-    let solutions = solver.solve(&params).expect("solve must not error on MockSolver");
+    let solutions = solver
+        .solve(&params)
+        .expect("solve must not error on MockSolver");
     assert!(
         solutions.is_empty(),
         "MockSolver returns empty solutions by design"
@@ -50,7 +52,9 @@ fn mock_solver_evaluate_returns_default_score() {
     let nodes = vec![];
     let pipes = vec![];
     let net = PipeNetwork::new("test", nodes, pipes);
-    let score = solver.evaluate(&net).expect("evaluate must not error on MockSolver");
+    let score = solver
+        .evaluate(&net)
+        .expect("evaluate must not error on MockSolver");
     assert_eq!(score.total_cost, 0.0);
     assert_eq!(score.norm_violations, 0);
 }

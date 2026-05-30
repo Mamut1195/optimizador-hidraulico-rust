@@ -105,6 +105,69 @@ pub fn partial_flow_ratio(y_over_d: f64) -> (f64, f64, f64) {
     (area_ratio, radius_ratio, flow_ratio)
 }
 
+/// Default available commercial pipe diameters (m).
+///
+/// Mirrors the Python oracle `DesignConstraints.available_diameters` default (R-08).
+const DEFAULT_AVAILABLE_DIAMETERS: [f64; 10] =
+    [0.2, 0.25, 0.3, 0.38, 0.45, 0.61, 0.76, 0.91, 1.07, 1.22];
+
+/// Select the minimum diameter that can handle the required flow at the given slope.
+///
+/// Mirrors Python `required_diameter(flow, slope, roughness, available)`:
+/// - Computes `full_flow_capacity` for all available diameters.
+/// - Returns the smallest diameter whose capacity ≥ required flow.
+/// - Falls back to the largest available diameter if flow exceeds all.
+///
+/// Matches Python oracle exactly (same sort, same capacity formula, same fallback).
+///
+/// # Arguments
+///
+/// * `flow`        – Required design flow (m³/s).
+/// * `slope`       – Design slope (m/m, sign ignored).
+/// * `roughness_n` – Manning's n.
+/// * `available`   – Sorted list of available diameters (m). Uses default if empty.
+///
+/// # Returns
+///
+/// The selected diameter (m).
+pub fn required_diameter(flow: f64, slope: f64, roughness_n: f64, available: &[f64]) -> f64 {
+    let diameters: Vec<f64> = if available.is_empty() {
+        DEFAULT_AVAILABLE_DIAMETERS.to_vec()
+    } else {
+        let mut sorted = available.to_vec();
+        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        sorted
+    };
+
+    for &d in &diameters {
+        let capacity = full_flow_capacity(d, slope, roughness_n);
+        if capacity >= flow {
+            return d;
+        }
+    }
+    // Fallback: largest available (matches Python oracle)
+    *diameters.last().unwrap_or(&DEFAULT_AVAILABLE_DIAMETERS[9])
+}
+
+/// Compute Manning velocities for a batch of pipes (full-pipe assumption).
+///
+/// Mirrors `ComputeBackend.manning_batch(diameters, slopes, roughness)`:
+///   v_i = full_flow_velocity(diameters[i], |slopes[i]|, roughness)
+///
+/// Used in evaluate() to compute velocity violations.
+pub fn manning_batch(diameters: &[f64], slopes: &[f64], roughness: f64) -> Vec<f64> {
+    assert_eq!(
+        diameters.len(),
+        slopes.len(),
+        "diameters and slopes must have the same length"
+    );
+    diameters
+        .iter()
+        .zip(slopes.iter())
+        .map(|(&d, &s)| full_flow_velocity(d, s.abs(), roughness))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
