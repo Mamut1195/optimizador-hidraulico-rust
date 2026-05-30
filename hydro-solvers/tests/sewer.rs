@@ -95,14 +95,20 @@ fn parse_node_type(s: &str) -> NodeType {
     }
 }
 
-// ── T-5.2.a: sewer_evaluate_exact_parity ─────────────────────────────────────
+// ── T-5.2.a: sewer_evaluate_formula_exact ────────────────────────────────────
+//
+// Formerly named sewer_evaluate_exact_parity. Renamed because the test verifies
+// that evaluate() computes the correct formula on the ORACLE-reconstructed network —
+// it does NOT test solve() and is NOT end-to-end parity. See sewer_solve_end_to_end_parity
+// below for the genuine end-to-end test.
 
 /// T-5.2.a: evaluate() on the oracle-reconstructed network returns the exact
 /// oracle score (total_cost, total_length, total_excavation, norm_violations, pump_count).
 ///
-/// RED: fails until SewerSolver::evaluate() is implemented.
+/// This verifies formula correctness independent of the solver pipeline.
+/// It is NOT a substitute for end-to-end solve() parity — see sewer_solve_end_to_end_parity.
 #[test]
-fn sewer_evaluate_exact_parity() {
+fn sewer_evaluate_formula_exact() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
@@ -224,24 +230,22 @@ fn sewer_network_topology_structural() {
 
     let network = &solutions[0].network;
 
-    // STRUCTURAL: node count within ±1 of oracle (Mehlhorn cross-language may route
-    // through slightly different intermediate nodes; parity is network-level, not bit-exact)
-    let node_diff = (network.node_count() as i64 - f.node_count as i64).abs();
-    assert!(
-        node_diff <= 1,
-        "node_count {} differs from oracle {} by {} (> ±1 tolerance)",
+    // STRUCTURAL EXACT parity: the Steiner tie-break fix (CRITICAL-1) ensures Rust
+    // builds the same 7-node tree as the oracle. No ±1 tolerance is needed or
+    // acceptable — this is the primary structural gate for T-5.2.
+    assert_eq!(
         network.node_count(),
         f.node_count,
-        node_diff
+        "node_count {} does not match oracle {} (EXACT gate — ±1 tolerance removed)",
+        network.node_count(),
+        f.node_count
     );
-    // STRUCTURAL: pipe count within ±1 of oracle
-    let pipe_diff = (network.pipe_count() as i64 - f.pipe_count as i64).abs();
-    assert!(
-        pipe_diff <= 1,
-        "pipe_count {} differs from oracle {} by {} (> ±1 tolerance)",
+    assert_eq!(
         network.pipe_count(),
         f.pipe_count,
-        pipe_diff
+        "pipe_count {} does not match oracle {} (EXACT gate)",
+        network.pipe_count(),
+        f.pipe_count
     );
 
     // Domain invariant: for every non-pump pipe, end_invert <= start_invert + 1e-9
@@ -346,4 +350,137 @@ fn sewer_invert_and_cover_domain_invariants() {
             );
         }
     }
+}
+
+// ── T-5.2.f: sewer_solve_end_to_end_parity ───────────────────────────────────
+
+/// T-5.2.f (RED phase): solve() builds the SAME network as the oracle and evaluate()
+/// returns the oracle's exact cost.
+///
+/// This is the genuine end-to-end parity test. It:
+///   1. Calls Rust's `solve_sewer()` (the real solver entry) on fixture inputs.
+///   2. Evaluates the Rust-built network.
+///   3. Asserts that the Rust solver reproduced the oracle's exact network structure:
+///      - node_count == oracle node_count (EXACT, no ±1 tolerance)
+///      - pipe_count == oracle pipe_count (EXACT, no ±1 tolerance)
+///   4. Asserts total_cost parity within 1e-4 (justified: same network structure →
+///      same pipe lengths and elevations → cost differs only by float rounding).
+///
+/// RED: fails until CRITICAL-1 (Steiner tie-break) is fixed so that Rust builds
+/// the same 7-node Steiner tree as the oracle.
+///
+/// GATE: This test MUST pass for PR-6 to merge. It is the primary parity gate for T-5.2.
+#[test]
+fn sewer_solve_end_to_end_parity() {
+    let f = load_sewer_golden();
+    let terrain = make_fixture_terrain(&f);
+    let constraints = DesignConstraints::default();
+    let mut solver = SewerSolver::new(terrain, constraints.clone());
+
+    let params = SolverParams {
+        route_variant: f.solver_params.route_variant,
+        slope_factor: f.solver_params.slope_factor,
+        cover_factor: f.solver_params.cover_factor,
+        diameter_offset: f.solver_params.diameter_offset,
+        manhole_spacing: f.solver_params.manhole_spacing,
+        num_alternatives: f.solver_params.num_alternatives,
+        grid_resolution: f.solver_params.grid_resolution,
+        design_flow: f.solver_params.flow_per_service,
+        ..SolverParams::default()
+    };
+
+    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+    let service_points: Vec<(f64, f64)> = f
+        .solver_params
+        .service_points
+        .iter()
+        .map(|sp| (sp[0], sp[1]))
+        .collect();
+
+    let solutions = solver
+        .solve_sewer(
+            &service_points,
+            outlet,
+            "SewerTest",
+            f.solver_params.flow_per_service,
+            PipeMaterial::Pvc,
+            &params,
+        )
+        .expect("solve_sewer must succeed on fixture terrain");
+
+    assert!(
+        !solutions.is_empty(),
+        "solve_sewer must return at least one solution"
+    );
+    let network = &solutions[0].network;
+
+    // ── Structural EXACT parity (no ±1 tolerance) ─────────────────────────
+    assert_eq!(
+        network.node_count(),
+        f.node_count,
+        "node_count {} does not match oracle {} (EXACT gate — no ±1 tolerance). \
+         The Rust Steiner tree must reproduce the oracle's exact 7-node tree. \
+         Fix CRITICAL-1 (deterministic Steiner tie-break) before this can pass.",
+        network.node_count(),
+        f.node_count
+    );
+    assert_eq!(
+        network.pipe_count(),
+        f.pipe_count,
+        "pipe_count {} does not match oracle {} (EXACT gate)",
+        network.pipe_count(),
+        f.pipe_count
+    );
+
+    // ── Cost parity ────────────────────────────────────────────────────────
+    // The Rust solver builds the same network as the oracle → evaluate() must
+    // return the same total_cost. Tolerance 1e-4 accounts for float accumulation
+    // over 6 pipes; if the networks are truly identical, |diff| will be < 1e-9.
+    let score = solver
+        .evaluate(network)
+        .expect("evaluate must not error on solver-built network");
+
+    let oracle_cost = f.evaluate_only.total_cost;
+    let abs_diff = (score.total_cost - oracle_cost).abs();
+
+    println!(
+        "E2E parity: Rust_cost={:.6}, oracle_cost={:.6}, |diff|={:.2e}",
+        score.total_cost, oracle_cost, abs_diff
+    );
+
+    assert!(
+        abs_diff < 1e-4,
+        "total_cost parity FAILED: Rust={:.6}, oracle={:.6}, |diff|={:.2e} >= 1e-4. \
+         If the Steiner tree is now identical, this difference should be < 1e-9. \
+         Tolerance 1e-4 is the outer bound; aim for < 1e-9.",
+        score.total_cost,
+        oracle_cost,
+        abs_diff
+    );
+
+    // ── Node identity check ────────────────────────────────────────────────
+    // Verify the Rust network contains the same node IDs as the oracle.
+    let oracle_node_ids: std::collections::HashSet<String> =
+        f.nodes.iter().map(|n| n.id.clone()).collect();
+    let rust_node_ids: std::collections::HashSet<String> =
+        network.nodes.iter().map(|n| n.id.to_string()).collect();
+    let missing: Vec<_> = oracle_node_ids.difference(&rust_node_ids).collect();
+    let extra: Vec<_> = rust_node_ids.difference(&oracle_node_ids).collect();
+    assert!(
+        missing.is_empty() && extra.is_empty(),
+        "Node ID mismatch: missing_from_rust={:?}, extra_in_rust={:?}. \
+         Oracle nodes: {:?}. Rust nodes: {:?}.",
+        missing,
+        extra,
+        {
+            let mut v: Vec<_> = oracle_node_ids.iter().collect();
+            v.sort();
+            v
+        },
+        {
+            let mut v: Vec<_> = rust_node_ids.iter().collect();
+            v.sort();
+            v
+        }
+    );
 }

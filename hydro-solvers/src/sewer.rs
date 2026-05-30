@@ -487,8 +487,32 @@ impl SewerSolver {
                 let start_z = nodes[start_idx].z;
                 let end_z = nodes[end_idx].z;
 
-                // Use path_length as the pipe length (accounts for simplified chains)
-                let length = path_length;
+                // Compute pipe length from node coordinates.
+                //
+                // The `path_length` stored in work_adj is the cumulative Euclidean
+                // distance of the chain when manhole_spacing simplification is active
+                // (set by _simplify_tree in Python).  When manhole_spacing is None,
+                // Python falls back to `start_node.distance_to(end_node)` — the
+                // Euclidean distance between the two adjacent nodes.
+                //
+                // In the Rust implementation, for the no-simplification path, the
+                // steiner tree edge weight (a CostFunction scalar, NOT a distance)
+                // was incorrectly stored as path_length.  We fix this by computing
+                // the Euclidean distance from node coordinates whenever we have
+                // direct node access (no simplification) or using path_length when
+                // it genuinely represents a chain length (simplification active).
+                let length = if params.manhole_spacing.is_some() {
+                    // Simplified chain: path_length is the cumulative Euclidean chain length.
+                    path_length
+                } else {
+                    // No simplification: compute Euclidean distance from node coordinates.
+                    // Mirrors Python: edge_data.get("path_length", start_node.distance_to(end_node))
+                    let su = nodes[start_idx].x;
+                    let sv = nodes[start_idx].y;
+                    let eu = nodes[end_idx].x;
+                    let ev = nodes[end_idx].y;
+                    ((su - eu).powi(2) + (sv - ev).powi(2)).sqrt()
+                };
                 if length < 0.1 {
                     continue;
                 }
