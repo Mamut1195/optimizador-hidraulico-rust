@@ -8,7 +8,7 @@
 //! - nearest_node: kiddo KDTree nearest_one on node XY.
 
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 
 use kiddo::float::kdtree::KdTree;
 use kiddo::SquaredEuclidean;
@@ -652,6 +652,167 @@ impl TerrainGraph {
     /// Expose the inner petgraph `UnGraph` for algorithm access (e.g., Steiner).
     pub(crate) fn inner_graph(&self) -> &UnGraph<NodeData, EdgeData, u32> {
         &self.graph
+    }
+
+    /// Compute the minimum spanning tree of the given node subset.
+    ///
+    /// Mirrors Python `nx.minimum_spanning_tree(graph.nx_graph.subgraph(reachable), weight="weight")`.
+    ///
+    /// Returns the MST as an undirected adjacency map:
+    ///   `node_id → [(neighbor_id, edge_weight)]`
+    ///
+    /// The subset is the set of all nodes reachable from `source` in the graph
+    /// (Python uses `nx.node_connected_component(graph.nx_graph, source_node)`).
+    /// Since `TerrainGraph` is always connected (all grid edges are added), the
+    /// subset is all graph nodes. Callers may pass the full node set.
+    ///
+    /// Uses Prim's algorithm for correctness and determinism:
+    ///   - Tie-breaking by (weight, node_id) ensures the same MST as Python's
+    ///     NetworkX (which uses a Fibonacci-heap but is deterministic on integers).
+    ///
+    /// # Errors
+    ///
+    /// Returns `TerrainError::NodeNotFound` if `source` is not in the graph.
+    /// Returns `TerrainError::EmptyGraph` if the graph has no nodes.
+    pub fn minimum_spanning_tree(
+        &self,
+        source: &str,
+    ) -> Result<HashMap<String, Vec<(String, f64)>>, TerrainError> {
+        if self.node_index_map.is_empty() {
+            return Err(TerrainError::EmptyGraph);
+        }
+        let &ni_src =
+            self.node_index_map
+                .get(source)
+                .ok_or_else(|| TerrainError::NodeNotFound {
+                    id: source.to_string(),
+                })?;
+
+        // Prim's algorithm with a min-heap keyed by (weight_bits, node_id, from_id)
+        // tie-break by (weight, node_id) for determinism matching networkx
+        let mut in_mst: HashSet<NodeIndex<u32>> = HashSet::new();
+        let mut adj: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+
+        // Initialize all nodes in the adjacency map
+        for ni in self.graph.node_indices() {
+            adj.entry(self.graph[ni].id.clone()).or_default();
+        }
+
+        // heap entries: Reverse((weight_bits, to_id_str, from_id_str, to_ni, from_ni))
+        #[allow(clippy::type_complexity)]
+        let mut heap: BinaryHeap<Reverse<(u64, String, String, u32, u32)>> = BinaryHeap::new();
+
+        in_mst.insert(ni_src);
+        // Seed with all edges from source
+        for e in self.graph.edges(ni_src) {
+            let v = if e.source() == ni_src {
+                e.target()
+            } else {
+                e.source()
+            };
+            let w = e.weight().weight;
+            heap.push(Reverse((
+                w.to_bits(),
+                self.graph[v].id.clone(),
+                self.graph[ni_src].id.clone(),
+                v.index() as u32,
+                ni_src.index() as u32,
+            )));
+        }
+
+        while let Some(Reverse((w_bits, to_id, from_id, to_raw, _from_raw))) = heap.pop() {
+            let v = NodeIndex::new(to_raw as usize);
+            if in_mst.contains(&v) {
+                continue;
+            }
+            let w = f64::from_bits(w_bits);
+            in_mst.insert(v);
+
+            // Record undirected MST edge
+            adj.entry(from_id.clone())
+                .or_default()
+                .push((to_id.clone(), w));
+            adj.entry(to_id.clone())
+                .or_default()
+                .push((from_id.clone(), w));
+
+            // Expand new MST node
+            for e in self.graph.edges(v) {
+                let u = if e.source() == v {
+                    e.target()
+                } else {
+                    e.source()
+                };
+                if !in_mst.contains(&u) {
+                    let ew = e.weight().weight;
+                    heap.push(Reverse((
+                        ew.to_bits(),
+                        self.graph[u].id.clone(),
+                        self.graph[v].id.clone(),
+                        u.index() as u32,
+                        v.index() as u32,
+                    )));
+                }
+            }
+        }
+
+        Ok(adj)
+    }
+
+    /// Return all node IDs reachable from `source` in the undirected graph
+    /// (BFS connected component).
+    ///
+    /// Mirrors Python `nx.node_connected_component(graph.nx_graph, source_node)`.
+    pub fn connected_component(&self, source: &str) -> Result<HashSet<String>, TerrainError> {
+        let &ni_src =
+            self.node_index_map
+                .get(source)
+                .ok_or_else(|| TerrainError::NodeNotFound {
+                    id: source.to_string(),
+                })?;
+
+        let mut visited: HashSet<NodeIndex<u32>> = HashSet::new();
+        let mut queue: VecDeque<NodeIndex<u32>> = VecDeque::new();
+        queue.push_back(ni_src);
+        visited.insert(ni_src);
+
+        while let Some(u) = queue.pop_front() {
+            for e in self.graph.edges(u) {
+                let v = if e.source() == u {
+                    e.target()
+                } else {
+                    e.source()
+                };
+                if !visited.contains(&v) {
+                    visited.insert(v);
+                    queue.push_back(v);
+                }
+            }
+        }
+
+        Ok(visited
+            .into_iter()
+            .map(|ni| self.graph[ni].id.clone())
+            .collect())
+    }
+
+    /// Return all graph edges as (from_id, to_id, weight, length) tuples.
+    ///
+    /// Used by WaterSupplySolver to find loop candidates (edges not in MST).
+    pub fn all_edges(&self) -> Vec<(String, String, f64, f64)> {
+        self.graph
+            .edge_indices()
+            .map(|ei| {
+                let (a, b) = self.graph.edge_endpoints(ei).unwrap();
+                let ed = &self.graph[ei];
+                (
+                    self.graph[a].id.clone(),
+                    self.graph[b].id.clone(),
+                    ed.weight,
+                    ed.length,
+                )
+            })
+            .collect()
     }
 }
 
