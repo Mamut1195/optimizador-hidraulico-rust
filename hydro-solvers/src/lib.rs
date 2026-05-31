@@ -9,12 +9,14 @@
 //! hydro-terrain, and hydro-norms. No direct I/O.
 
 pub mod conveyance;
+pub mod distribution;
 pub mod error;
 pub mod sewer;
 pub mod solver;
 pub mod water_supply;
 
 pub use conveyance::ConveyanceSolver;
+pub use distribution::DistributionSolver;
 pub use error::SolverError;
 pub use sewer::SewerSolver;
 pub use solver::{Solver, SolverParams};

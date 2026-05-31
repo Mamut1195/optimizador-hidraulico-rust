@@ -508,6 +508,207 @@ pub struct ConvAlternativesGolden {
     pub distinct_costs: Vec<f64>,
 }
 
+// ── DistributionSolver fixture structs ───────────────────────────────────────
+
+/// Terrain parameters for distribution fixtures.
+///
+/// z(x, y) = base_z + slope_x * x + slope_y * y
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    pub slope_x: f64,
+    #[serde(default)]
+    pub slope_y: f64,
+    pub base_z: f64,
+    /// All terrain points as [x, y, z] triples.
+    pub points: Vec<[f64; 3]>,
+}
+
+/// Solver input parameters for distribution fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribSolverParams {
+    pub source: [f64; 2],
+    pub demand_points: Vec<[f64; 2]>,
+    pub source_head: f64,
+    pub demand_per_node: f64,
+    pub material: String,
+    pub grid_resolution: f64,
+    pub num_alternatives: u32,
+    pub mesh_density: f64,
+    pub diameter_offset: i32,
+    pub valve_spacing: f64,
+    pub hydrant_spacing: f64,
+}
+
+/// One node in the oracle-built distribution network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+    pub demand: f64,
+    pub pressure_mca: Option<f64>,
+    pub accessory: Option<String>,
+}
+
+/// One pipe in the oracle-built distribution network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribPipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+}
+
+/// Oracle score for distribution fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict fields for distribution fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribDetailsGolden {
+    pub pipe_count: f64,
+    pub node_count: f64,
+    pub valve_count: f64,
+    pub hydrant_count: f64,
+    pub pressure_std: f64,
+    pub avg_excavation: f64,
+}
+
+/// Evaluate-only sub-fixture for distribution.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: DistribDetailsGolden,
+}
+
+/// Cost formula for distribution.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribCostFormula {
+    pub w_length: f64,
+    pub w_excavation: f64,
+    pub w_violations: f64,
+    pub w_pressure_std: f64,
+    pub w_valve: f64,
+    pub w_hydrant: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_distribution_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: DistribTerrainParams,
+    pub solver_params: DistribSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<DistribNodeGolden>,
+    pub pipes: Vec<DistribPipeGolden>,
+    pub score: DistribScoreGolden,
+    pub evaluate_only: DistribEvaluateOnlyGolden,
+    pub cost_formula: DistribCostFormula,
+}
+
+/// Root fixture struct for `solvers_distribution_valves_saturated.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribValvesSaturatedGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: DistribTerrainParams,
+    pub solver_params: DistribSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<DistribNodeGolden>,
+    pub pipes: Vec<DistribPipeGolden>,
+    pub score: DistribScoreGolden,
+    pub evaluate_only: DistribEvaluateOnlyGolden,
+    pub expected_valve_count: usize,
+    pub expected_hydrant_count: usize,
+    pub cost_formula: DistribCostFormula,
+}
+
+/// One alternative solution in the distribution alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub details: DistribDetailsGolden,
+}
+
+/// Root fixture struct for `solvers_distribution_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistribAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: DistribSolverParams,
+    pub terrain: DistribTerrainParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<DistribAltSolution>,
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── DistributionSolver loaders ────────────────────────────────────────────────
+
+/// Load `solvers_distribution_golden.json` (panics in tests if missing/malformed).
+pub fn load_distribution_golden() -> DistribGolden {
+    load_fixture::<DistribGolden>("solvers_distribution_golden").expect(
+        "solvers_distribution_golden.json must be present; regenerate with generate_solvers_distribution.py",
+    )
+}
+
+/// Load `solvers_distribution_golden.json` as `Result` (non-panicking).
+pub fn try_load_distribution_golden() -> Result<DistribGolden, OracleError> {
+    load_fixture::<DistribGolden>("solvers_distribution_golden")
+}
+
+/// Load `solvers_distribution_valves_saturated.json` (panics in tests if missing).
+pub fn load_distribution_valves_saturated() -> DistribValvesSaturatedGolden {
+    load_fixture::<DistribValvesSaturatedGolden>("solvers_distribution_valves_saturated")
+        .expect("solvers_distribution_valves_saturated.json must be present")
+}
+
+/// Load `solvers_distribution_alternatives.json` (panics in tests if missing).
+pub fn load_distribution_alternatives() -> DistribAlternativesGolden {
+    load_fixture::<DistribAlternativesGolden>("solvers_distribution_alternatives")
+        .expect("solvers_distribution_alternatives.json must be present")
+}
+
 // ── ConveyanceSolver loaders ──────────────────────────────────────────────────
 
 /// Load `solvers_conveyance_golden.json` (panics in tests if missing/malformed).

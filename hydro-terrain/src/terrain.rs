@@ -319,6 +319,16 @@ impl TerrainModel {
         self.elevations[self.nearest_idx(x, y)]
     }
 
+    /// Get elevation using nearest-neighbor lookup (exact stored value).
+    ///
+    /// Unlike `elevation_at` (which uses bilinear interpolation), this always
+    /// returns the exact stored z-value of the nearest input point. Used by
+    /// `TerrainGraph::from_grid` to avoid floating-point interpolation errors
+    /// at exact grid points, ensuring edge weights match Python oracle exactly.
+    pub fn elevation_at_nn(&self, x: f64, y: f64) -> f64 {
+        self.elevations[self.nearest_idx(x, y)]
+    }
+
     /// Vectorized elevation query for multiple points.
     pub fn elevations_at(&self, coords: &[[f64; 2]]) -> Vec<f64> {
         coords

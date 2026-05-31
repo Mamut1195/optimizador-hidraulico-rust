@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_distribution_alternatives",
+  "description": "DistributionSolver alternatives fixture: 3 alternatives. Asymmetric terrain z=100+0.003*x+0.004*y. source=g12=(40,40), demands=[g0, g4, g24]. Pairwise-distinct total_costs guarantee ordering assertions are non-vacuous.",
+  "solver_params": {
+    "source": [
+      40.0,
+      40.0
+    ],
+    "demand_points": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        80.0
+      ],
+      [
+        80.0,
+        80.0
+      ]
+    ],
+    "source_head": 40.0,
+    "demand_per_node": 0.002,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 3,
+    "mesh_density": 0.5,
+    "diameter_offset": 0,
+    "valve_spacing": 200.0,
+    "hydrant_spacing": 200.0
+  },
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.003,
+    "slope_y": 0.004,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.08
+      ],
+      [
+        0.0,
+        40.0,
+        100.16
+      ],
+      [
+        0.0,
+        60.0,
+        100.24
+      ],
+      [
+        0.0,
+        80.0,
+        100.32
+      ],
+      [
+        20.0,
+        0.0,
+        100.06
+      ],
+      [
+        20.0,
+        20.0,
+        100.14
+      ],
+      [
+        20.0,
+        40.0,
+        100.22
+      ],
+      [
+        20.0,
+        60.0,
+        100.3
+      ],
+      [
+        20.0,
+        80.0,
+        100.38
+      ],
+      [
+        40.0,
+        0.0,
+        100.12
+      ],
+      [
+        40.0,
+        20.0,
+        100.2
+      ],
+      [
+        40.0,
+        40.0,
+        100.28
+      ],
+      [
+        40.0,
+        60.0,
+        100.36
+      ],
+      [
+        40.0,
+        80.0,
+        100.44
+      ],
+      [
+        60.0,
+        0.0,
+        100.18
+      ],
+      [
+        60.0,
+        20.0,
+        100.26
+      ],
+      [
+        60.0,
+        40.0,
+        100.34
+      ],
+      [
+        60.0,
+        60.0,
+        100.42
+      ],
+      [
+        60.0,
+        80.0,
+        100.5
+      ],
+      [
+        80.0,
+        0.0,
+        100.24
+      ],
+      [
+        80.0,
+        20.0,
+        100.32
+      ],
+      [
+        80.0,
+        40.0,
+        100.39999999999999
+      ],
+      [
+        80.0,
+        60.0,
+        100.47999999999999
+      ],
+      [
+        80.0,
+        80.0,
+        100.55999999999999
+      ]
+    ]
+  },
+  "num_alternatives_requested": 3,
+  "num_solutions_returned": 3,
+  "solutions": [
+    {
+      "rank": 1,
+      "total_cost": 12568.70741448392,
+      "total_length": 560.0,
+      "total_excavation": 672.0000000000014,
+      "norm_violations": 28,
+      "pump_count": 0,
+      "node_count": 25,
+      "pipe_count": 28,
+      "details": {
+        "pipe_count": 28.0,
+        "node_count": 25.0,
+        "valve_count": 12.0,
+        "hydrant_count": 1.0,
+        "pressure_std": 0.14,
+        "avg_excavation": 1.2000000000000024
+      }
+    },
+    {
+      "rank": 2,
+      "total_cost": 12774.70741448392,
+      "total_length": 580.0,
+      "total_excavation": 696.0000000000014,
+      "norm_violations": 29,
+      "pump_count": 0,
+      "node_count": 25,
+      "pipe_count": 29,
+      "details": {
+        "pipe_count": 29.0,
+        "node_count": 25.0,
+        "valve_count": 12.0,
+        "hydrant_count": 1.0,
+        "pressure_std": 0.14,
+        "avg_excavation": 1.2000000000000024
+      }
+    },
+    {
+      "rank": 3,
+      "total_cost": 12980.707557243157,
+      "total_length": 600.0,
+      "total_excavation": 720.0000000000014,
+      "norm_violations": 30,
+      "pump_count": 0,
+      "node_count": 25,
+      "pipe_count": 30,
+      "details": {
+        "pipe_count": 30.0,
+        "node_count": 25.0,
+        "valve_count": 12.0,
+        "hydrant_count": 1.0,
+        "pressure_std": 0.14,
+        "avg_excavation": 1.2000000000000022
+      }
+    }
+  ],
+  "distinct_costs": [
+    12568.70741448392,
+    12774.70741448392,
+    12980.707557243157
+  ]
+}
