@@ -575,7 +575,9 @@ fn distrib_alternatives_pairwise_distinct() {
 
     let costs: Vec<f64> = solutions.iter().map(|s| s.score.total_cost).collect();
 
-    // Per-solution cost matches oracle within 1e-4
+    // Per-solution cost AND structural counts match oracle.
+    // Cost parity alone can miss structural divergence (a different mesh with a
+    // coincidentally equal cost), so assert node/pipe counts per alternative too.
     for (i, (sol, oracle_sol)) in solutions.iter().zip(f.solutions.iter()).enumerate() {
         let abs_diff = (sol.score.total_cost - oracle_sol.total_cost).abs();
         assert!(
@@ -585,6 +587,22 @@ fn distrib_alternatives_pairwise_distinct() {
             sol.score.total_cost,
             oracle_sol.total_cost,
             abs_diff
+        );
+        assert_eq!(
+            sol.network.node_count(),
+            oracle_sol.node_count,
+            "alternatives[{}] node_count {} does not match oracle {}",
+            i,
+            sol.network.node_count(),
+            oracle_sol.node_count
+        );
+        assert_eq!(
+            sol.network.pipe_count(),
+            oracle_sol.pipe_count,
+            "alternatives[{}] pipe_count {} does not match oracle {}",
+            i,
+            sol.network.pipe_count(),
+            oracle_sol.pipe_count
         );
     }
 
