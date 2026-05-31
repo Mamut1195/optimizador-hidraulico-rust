@@ -226,12 +226,90 @@ def _generate_regular_grid_fixture(out_dir: Path) -> None:
             "expected_node_id": str(nid),
         })
 
+    # -----------------------------------------------------------------------
+    # K-shortest-paths cases (Yen's / nx.shortest_simple_paths oracle parity)
+    # Anti-tie-break discipline: only accept cases where the first k path costs
+    # are pairwise STRICTLY distinct and the gap to any (k+1)-th path is also strict.
+    # This ensures ordered k-path result is immune to tie-break divergence.
+    # -----------------------------------------------------------------------
+    K_PATHS_K = 3
+    K_PATHS_ATOL = 1e-6
+
+    def k_paths_costs_strictly_distinct(g_nx, src, tgt, k, atol=K_PATHS_ATOL):
+        """Return (paths, costs) if anti-tie-break qualifies, else None."""
+        try:
+            # Fetch k+1 paths to check the gap to the discarded one
+            paths_plus = list(itertools.islice(
+                nx.shortest_simple_paths(g_nx, src, tgt, weight="weight"), k + 1
+            ))
+        except Exception:
+            return None
+        if len(paths_plus) < k:
+            return None  # fewer than k paths exist
+        paths = paths_plus[:k]
+        costs = [nx.path_weight(g_nx, p, weight="weight") for p in paths]
+        # (b) pairwise strictly distinct
+        for i in range(len(costs) - 1):
+            if costs[i + 1] - costs[i] <= atol:
+                return None
+        # (c) gap to (k+1)-th if it exists
+        if len(paths_plus) > k:
+            cost_kp1 = nx.path_weight(g_nx, paths_plus[k], weight="weight")
+            if cost_kp1 - costs[-1] <= atol:
+                return None
+        return paths, costs
+
+    k_paths_cases = []
+    # Candidate pairs: diverse source-target pairs over the 51x51 grid
+    kp_candidate_pairs = [
+        ("g0", "g10"),
+        ("g0", "g50"),
+        ("g0", "g110"),
+        ("g5", "g55"),
+        ("g5", "g60"),
+        ("g10", "g60"),
+        ("g50", "g110"),
+        ("g100", "g200"),
+        ("g150", "g250"),
+        ("g200", "g300"),
+        ("g100", "g160"),
+        ("g50", "g160"),
+        ("g0", "g160"),
+        ("g25", "g125"),
+        ("g50", "g200"),
+    ]
+    for (src, tgt) in kp_candidate_pairs:
+        if len(k_paths_cases) >= 3:
+            break
+        if src not in graph.nx_graph or tgt not in graph.nx_graph:
+            continue
+        result = k_paths_costs_strictly_distinct(graph.nx_graph, src, tgt, K_PATHS_K)
+        if result is None:
+            print(f"  k-paths: Skipping {src}->{tgt}: costs not strictly distinct or too few paths")
+            continue
+        paths, costs = result
+        k_paths_cases.append({
+            "source_id": src,
+            "target_id": tgt,
+            "k": K_PATHS_K,
+            "paths": [list(p) for p in paths],
+            "costs": [float(c) for c in costs],
+        })
+        gaps = [costs[i + 1] - costs[i] for i in range(len(costs) - 1)]
+        print(
+            f"  k-paths: Accepted {src}->{tgt}: k={K_PATHS_K}, "
+            f"costs={[f'{c:.4f}' for c in costs]}, gaps={[f'{g:.4f}' for g in gaps]}"
+        )
+
+    print(f"  k_paths_cases: {len(k_paths_cases)}")
+
     graph_fixture = {
         "resolution": float(GRAPH_RES),
         "node_count": int(node_count),
         "edge_count": int(edge_count),
         "dijkstra_cases": dijkstra_cases,
         "nearest_node_cases": nearest_node_cases,
+        "k_paths_cases": k_paths_cases,
     }
 
     # -----------------------------------------------------------------------
@@ -263,6 +341,7 @@ def _generate_regular_grid_fixture(out_dir: Path) -> None:
     print(f"  graph nodes: {node_count}, edges: {edge_count}")
     print(f"  dijkstra_cases: {len(dijkstra_cases)}")
     print(f"  nearest_node_cases: {len(nearest_node_cases)}")
+    print(f"  k_paths_cases: {len(k_paths_cases)}")
 
 
 def generate_irregular_scatter_fixture(out_dir: Path) -> None:

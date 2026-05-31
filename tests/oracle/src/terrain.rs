@@ -57,6 +57,21 @@ pub struct NearestNodeCase {
     pub expected_node_id: String,
 }
 
+// ── K-shortest-paths case ─────────────────────────────────────────────────
+
+/// A single k-shortest-paths oracle case (Yen's / nx.shortest_simple_paths).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KPathsCase {
+    pub source_id: String,
+    pub target_id: String,
+    /// Number of paths requested.
+    pub k: u32,
+    /// Ordered list of paths, each a list of node IDs.
+    pub paths: Vec<Vec<String>>,
+    /// Total weighted cost for each path (same order as `paths`).
+    pub costs: Vec<f64>,
+}
+
 // ── Graph fixture ──────────────────────────────────────────────────────────
 
 /// The TerrainGraph structural and algorithmic oracle fixture.
@@ -72,6 +87,8 @@ pub struct GraphFixture {
     pub dijkstra_cases: Vec<DijkstraCase>,
     /// Nearest-node queries to assert against.
     pub nearest_node_cases: Vec<NearestNodeCase>,
+    /// K-shortest-paths cases (Yen's algorithm oracle parity).
+    pub k_paths_cases: Vec<KPathsCase>,
 }
 
 // ── Root fixture ───────────────────────────────────────────────────────────
