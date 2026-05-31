@@ -315,6 +315,219 @@ pub fn load_water_supply_alternatives() -> WsAlternativesGolden {
     )
 }
 
+// ── ConveyanceSolver fixture structs ─────────────────────────────────────────
+
+/// Solver input parameters for conveyance fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvSolverParams {
+    pub source: [f64; 2],
+    pub destination: [f64; 2],
+    pub design_flow: f64,
+    pub source_head: f64,
+    pub material: String,
+    pub grid_resolution: f64,
+    pub num_alternatives: u32,
+    pub route_variant: u32,
+    pub cover_factor: f64,
+    pub valve_spacing: f64,
+}
+
+/// Terrain parameters for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    #[serde(default)]
+    pub slope_x: f64,
+    #[serde(default)]
+    pub slope_y: f64,
+    #[serde(default)]
+    pub base_z: f64,
+    pub points: Vec<[f64; 3]>,
+}
+
+/// One node in a conveyance oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+    pub pressure_mca: Option<f64>,
+    pub valve_type: Option<String>,
+}
+
+/// One pipe in a conveyance oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvPipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+}
+
+/// Score for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvDetailsGolden {
+    pub pipe_count: f64,
+    pub node_count: f64,
+    pub avg_excavation: f64,
+    #[serde(default)]
+    pub structure_count: f64,
+}
+
+/// Evaluate-only sub-fixture for conveyance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: ConvDetailsGolden,
+}
+
+/// Cost formula for conveyance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvCostFormula {
+    pub w_length: f64,
+    pub w_excavation: f64,
+    pub w_violations: f64,
+    pub w_structures: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_conveyance_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<ConvNodeGolden>,
+    pub pipes: Vec<ConvPipeGolden>,
+    pub score: ConvScoreGolden,
+    pub evaluate_only: ConvEvaluateOnlyGolden,
+    pub cost_formula: ConvCostFormula,
+}
+
+/// One valve node in the valve-placement fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValveNodeGolden {
+    pub id: String,
+    pub node_type: String,
+    pub valve_type: Option<String>,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+/// Valve terrain params (with z_for_x map).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValveTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    pub points: Vec<[f64; 3]>,
+}
+
+/// Root fixture struct for `solvers_conveyance_valves.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValvesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvValveTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub structure_count: usize,
+    pub valve_nodes: Vec<ConvValveNodeGolden>,
+    pub nodes: Vec<ConvNodeGolden>,
+    pub pipes: Vec<ConvPipeGolden>,
+    pub score: ConvScoreGolden,
+    pub evaluate_only: ConvEvaluateOnlyGolden,
+    pub cost_formula: ConvCostFormula,
+}
+
+/// One alternative solution in the alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+}
+
+/// Root fixture struct for `solvers_conveyance_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<ConvAltSolution>,
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── ConveyanceSolver loaders ──────────────────────────────────────────────────
+
+/// Load `solvers_conveyance_golden.json` (panics in tests if missing/malformed).
+pub fn load_conveyance_golden() -> ConvGolden {
+    load_fixture::<ConvGolden>("solvers_conveyance_golden").expect(
+        "solvers_conveyance_golden.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
+/// Load `solvers_conveyance_valves.json` (panics in tests if missing/malformed).
+pub fn load_conveyance_valves() -> ConvValvesGolden {
+    load_fixture::<ConvValvesGolden>("solvers_conveyance_valves").expect(
+        "solvers_conveyance_valves.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
+/// Load `solvers_conveyance_alternatives.json` (panics in tests if missing).
+pub fn load_conveyance_alternatives() -> ConvAlternativesGolden {
+    load_fixture::<ConvAlternativesGolden>("solvers_conveyance_alternatives").expect(
+        "solvers_conveyance_alternatives.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]

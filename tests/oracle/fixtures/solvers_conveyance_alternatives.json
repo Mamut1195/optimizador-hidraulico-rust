@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_conveyance_alternatives",
+  "description": "ConveyanceSolver alternatives fixture: g0=(0,0) -> g15=(60,0), z=100.0+0.006*x+0.001*y, num_alternatives=2. Pairwise-distinct total_costs: path1=3hops/60m, path2=5hops/100m.",
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.006,
+    "slope_y": 0.001,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.02
+      ],
+      [
+        0.0,
+        40.0,
+        100.04
+      ],
+      [
+        0.0,
+        60.0,
+        100.06
+      ],
+      [
+        0.0,
+        80.0,
+        100.08
+      ],
+      [
+        20.0,
+        0.0,
+        100.12
+      ],
+      [
+        20.0,
+        20.0,
+        100.14
+      ],
+      [
+        20.0,
+        40.0,
+        100.16000000000001
+      ],
+      [
+        20.0,
+        60.0,
+        100.18
+      ],
+      [
+        20.0,
+        80.0,
+        100.2
+      ],
+      [
+        40.0,
+        0.0,
+        100.24
+      ],
+      [
+        40.0,
+        20.0,
+        100.25999999999999
+      ],
+      [
+        40.0,
+        40.0,
+        100.28
+      ],
+      [
+        40.0,
+        60.0,
+        100.3
+      ],
+      [
+        40.0,
+        80.0,
+        100.32
+      ],
+      [
+        60.0,
+        0.0,
+        100.36
+      ],
+      [
+        60.0,
+        20.0,
+        100.38
+      ],
+      [
+        60.0,
+        40.0,
+        100.4
+      ],
+      [
+        60.0,
+        60.0,
+        100.42
+      ],
+      [
+        60.0,
+        80.0,
+        100.44
+      ],
+      [
+        80.0,
+        0.0,
+        100.48
+      ],
+      [
+        80.0,
+        20.0,
+        100.5
+      ],
+      [
+        80.0,
+        40.0,
+        100.52000000000001
+      ],
+      [
+        80.0,
+        60.0,
+        100.54
+      ],
+      [
+        80.0,
+        80.0,
+        100.56
+      ]
+    ]
+  },
+  "solver_params": {
+    "source": [
+      0.0,
+      0.0
+    ],
+    "destination": [
+      60.0,
+      0.0
+    ],
+    "design_flow": 0.01,
+    "source_head": 30.0,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 2,
+    "route_variant": 0,
+    "cover_factor": 1.0,
+    "valve_spacing": 500.0
+  },
+  "num_alternatives_requested": 2,
+  "num_solutions_returned": 2,
+  "solutions": [
+    {
+      "rank": 1,
+      "total_cost": 834.0000000000003,
+      "total_length": 60.0,
+      "total_excavation": 72.00000000000017,
+      "norm_violations": 3,
+      "pump_count": 0,
+      "node_count": 4,
+      "pipe_count": 3
+    },
+    {
+      "rank": 2,
+      "total_cost": 1890.0000000000005,
+      "total_length": 100.0,
+      "total_excavation": 120.00000000000028,
+      "norm_violations": 5,
+      "pump_count": 0,
+      "node_count": 6,
+      "pipe_count": 5
+    }
+  ],
+  "distinct_costs": [
+    834.0000000000003,
+    1890.0000000000005
+  ]
+}
