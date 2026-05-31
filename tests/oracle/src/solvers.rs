@@ -292,6 +292,9 @@ pub struct WsAlternativesGolden {
     pub num_alternatives_requested: u32,
     pub num_solutions_returned: usize,
     pub solutions: Vec<WsAltSolution>,
+    /// Pairwise-distinct oracle costs (one per solution).
+    /// All entries are strictly distinct (|costs[i] - costs[j]| >= 1e-3 for i != j).
+    pub distinct_costs: Vec<f64>,
 }
 
 // ── WaterSupplySolver loaders ─────────────────────────────────────────────────
@@ -644,17 +647,38 @@ mod tests {
     fn ws_alternatives_loads_and_has_multiple_solutions() {
         let f = load_water_supply_alternatives();
         assert_eq!(f.schema_version, 1);
-        assert_eq!(f.num_alternatives_requested, 3);
         assert!(
-            f.num_solutions_returned >= 1,
-            "must have at least one alternative"
+            f.num_solutions_returned >= 2,
+            "must have at least two alternatives"
         );
-        // Solutions sorted by total_cost ascending
+        assert_eq!(
+            f.distinct_costs.len(),
+            f.num_solutions_returned,
+            "distinct_costs must have one entry per solution"
+        );
+        // Solutions sorted by total_cost strictly ascending (pairwise gap >= 1e-3)
         for i in 0..f.solutions.len().saturating_sub(1) {
             assert!(
-                f.solutions[i].total_cost <= f.solutions[i + 1].total_cost + 1e-6,
-                "solutions must be sorted by cost ascending"
+                f.solutions[i + 1].total_cost - f.solutions[i].total_cost >= 1e-3,
+                "solutions must be strictly ascending: costs[{}]={:.6} costs[{}]={:.6}",
+                i,
+                f.solutions[i].total_cost,
+                i + 1,
+                f.solutions[i + 1].total_cost
             );
+        }
+        // distinct_costs are pairwise strictly distinct
+        for i in 0..f.distinct_costs.len() {
+            for j in (i + 1)..f.distinct_costs.len() {
+                assert!(
+                    (f.distinct_costs[i] - f.distinct_costs[j]).abs() >= 1e-3,
+                    "distinct_costs[{}]={:.6} and distinct_costs[{}]={:.6} must differ",
+                    i,
+                    f.distinct_costs[i],
+                    j,
+                    f.distinct_costs[j]
+                );
+            }
         }
     }
 }

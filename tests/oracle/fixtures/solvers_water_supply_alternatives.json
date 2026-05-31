@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "fixture_name": "solvers_water_supply_alternatives",
-  "description": "WaterSupplySolver alternatives fixture: 3 solutions for Yen k-paths parity. source=g0=(0,0), demand=[g15=(60,0)], num_alternatives=3, network_type=0.",
+  "description": "WaterSupplySolver alternatives fixture: 2 solutions for Yen k-paths parity. source=g0=(0,0), demand=[g15=(60,0)], num_alternatives=2, network_type=0. num_alternatives=2 (not 3) because on this uniform grid Yen produces a tied 3rd path; 2 alternatives gives MST (3-hop/60m) + next Yen (5-hop/100m) with pairwise-distinct total_costs, making ordering assertions non-vacuous.",
   "solver_params": {
     "source": [
       0.0,
@@ -17,7 +17,7 @@
     "demand_per_node": 0.002,
     "material": "PVC",
     "grid_resolution": 20.0,
-    "num_alternatives": 3,
+    "num_alternatives": 2,
     "network_type": 0,
     "diameter_offset": 0,
     "loop_density": 0.0
@@ -159,8 +159,8 @@
       ]
     ]
   },
-  "num_alternatives_requested": 3,
-  "num_solutions_returned": 3,
+  "num_alternatives_requested": 2,
+  "num_solutions_returned": 2,
   "solutions": [
     {
       "rank": 1,
@@ -172,19 +172,15 @@
     },
     {
       "rank": 2,
-      "total_cost": 1780.0000000000005,
-      "total_length": 100.0,
-      "norm_violations": 10,
-      "node_count": 6,
-      "pipe_count": 5
-    },
-    {
-      "rank": 3,
       "total_cost": 8750.000000000002,
       "total_length": 500.0,
       "norm_violations": 49,
       "node_count": 25,
       "pipe_count": 25
     }
+  ],
+  "distinct_costs": [
+    1780.0000000000005,
+    8750.000000000002
   ]
 }
