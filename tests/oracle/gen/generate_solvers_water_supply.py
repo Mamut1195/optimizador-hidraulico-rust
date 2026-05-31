@@ -44,9 +44,12 @@ MST uniqueness: The asymmetric slope (different x and y coefficients 0.006 vs 0.
 makes horizontal edges (20m, dz=0.12) and vertical edges (20m, dz=0.02) cost differently,
 breaking all tie-weight MST ambiguities. Uniqueness verified by the generator.
 
-Alternatives fixture: A SECOND fixture with num_alternatives=3 is generated
+Alternatives fixture: A SECOND fixture with num_alternatives=2 is generated
 for Yen k-paths parity. Uses a single demand point for clean path enumeration
-with pairwise-distinct total_costs.
+with pairwise-distinct total_costs. num_alternatives=3 is intentionally NOT used
+because on this uniform grid Yen returns a 3rd path with the same cost as the 2nd,
+making ordering assertions vacuous. 2 alternatives gives MST (60m) + next Yen path
+(100m) with strictly distinct costs.
 """
 
 from __future__ import annotations
@@ -287,18 +290,29 @@ def make_water_supply_fixture():
 
 
 def make_alternatives_fixture():
-    """Build the alternatives fixture (num_alternatives=3) for Yen k-paths parity.
+    """Build the alternatives fixture (num_alternatives=2) for Yen k-paths parity.
 
-    Uses 2 demand points for simpler Yen enumeration and ensures
-    alternative total_costs are pairwise strictly distinct (tie-break-immune).
+    Uses a single demand point at g15=(60,0) and num_alternatives=2 so that:
+      - Alternative 1 = MST primary path  (g0 -> g5 -> g10 -> g15, 3 hops / 60m)
+      - Alternative 2 = next Yen path     (longer route, more hops / longer length)
+
+    WHY num_alternatives=2 and NOT 3:
+      With num_alternatives=3 on this 5×5 uniform grid, Yen's algorithm finds a
+      second path with the SAME hop-count/length as the MST (alternative 2 ≡ alt 1
+      because symmetric grid edges tie at cost 1780.0), making the ordering assertion
+      vacuous.  Using num_alternatives=2 gives MST (3 hops, 60m) plus the next
+      *genuinely longer* Yen path (5 hops, 100m), guaranteeing pairwise-distinct
+      total_costs and a real ordering test.
+
+    The fixture ASSERTS pairwise distinctness before writing JSON.
     """
     terrain, points, grid_res = make_terrain_and_points()
 
-    # Use source at g0=(0,0), single demand at g15=(60,0) (farthest node on x-axis)
-    # Multiple paths exist: via x-axis (g0->g5->g10->g15), or via diagonal paths
-    source = (0.0, 0.0)    # g0: lowest z
+    # Source at g0=(0,0), single demand at g15=(60,0) — farthest node on x-axis.
+    # Both are ON-GRID (exact elevation_at, no interpolation).
+    source = (0.0, 0.0)    # g0: z=100.0 (lowest)
     demand_points = [
-        (60.0, 0.0),        # g15: farthest along x-axis from source
+        (60.0, 0.0),        # g15: z=100.36
     ]
     source_head = 80.0
     demand_per_node = 0.002
@@ -314,8 +328,8 @@ def make_alternatives_fixture():
         demand_per_node=demand_per_node,
         material=PipeMaterial.PVC,
         grid_resolution=grid_res,
-        num_alternatives=3,
-        network_type=0,  # tree only (no loops for clean path comparison)
+        num_alternatives=2,   # 2 ensures pairwise-distinct costs (see docstring)
+        network_type=0,       # tree only (no loops for clean path comparison)
         diameter_offset=0,
         loop_density=0.0,
     )
@@ -323,16 +337,26 @@ def make_alternatives_fixture():
     print(f"\nAlternatives fixture: {len(solutions)} solutions generated")
     costs = [s.score.total_cost for s in solutions]
     for i, (sol, cost) in enumerate(zip(solutions, costs)):
-        print(f"  Alt {i+1}: total_cost={cost:.6f}, rank={sol.rank}")
+        print(
+            f"  Alt {i+1}: total_cost={cost:.6f}, total_length={sol.score.total_length:.3f}m, "
+            f"nodes={sol.network.node_count}, pipes={sol.network.pipe_count}, rank={sol.rank}"
+        )
 
-    # Verify pairwise strictly distinct costs
+    # Assert pairwise strictly distinct costs — fixture is invalid if this fails.
+    print("\nPairwise distinctness check:")
     for i in range(len(costs)):
         for j in range(i + 1, len(costs)):
             diff = abs(costs[i] - costs[j])
-            if diff < 1e-6:
-                print(f"  WARNING: costs[{i}] and costs[{j}] are nearly equal ({diff:.2e})")
+            if diff < 1e-3:
+                raise AssertionError(
+                    f"WS alternatives costs[{i}]={costs[i]:.6f} and "
+                    f"costs[{j}]={costs[j]:.6f} are NOT pairwise strictly distinct "
+                    f"(|diff|={diff:.2e} < 1e-3). "
+                    "Redesign the fixture terrain or num_alternatives."
+                )
             else:
-                print(f"  costs[{i}] vs costs[{j}]: |diff|={diff:.6f} OK strictly distinct")
+                print(f"  costs[{i}]={costs[i]:.6f} vs costs[{j}]={costs[j]:.6f}: "
+                      f"|diff|={diff:.6f} >= 1e-3  OK")
 
     alts_data = []
     for sol in solutions:
@@ -350,8 +374,11 @@ def make_alternatives_fixture():
         "schema_version": 1,
         "fixture_name": "solvers_water_supply_alternatives",
         "description": (
-            "WaterSupplySolver alternatives fixture: 3 solutions for Yen k-paths parity. "
-            "source=g0=(0,0), demand=[g15=(60,0)], num_alternatives=3, network_type=0."
+            "WaterSupplySolver alternatives fixture: 2 solutions for Yen k-paths parity. "
+            "source=g0=(0,0), demand=[g15=(60,0)], num_alternatives=2, network_type=0. "
+            "num_alternatives=2 (not 3) because on this uniform grid Yen produces a tied "
+            "3rd path; 2 alternatives gives MST (3-hop/60m) + next Yen (5-hop/100m) with "
+            "pairwise-distinct total_costs, making ordering assertions non-vacuous."
         ),
         "solver_params": {
             "source": list(source),
@@ -360,7 +387,7 @@ def make_alternatives_fixture():
             "demand_per_node": demand_per_node,
             "material": "PVC",
             "grid_resolution": grid_res,
-            "num_alternatives": 3,
+            "num_alternatives": 2,
             "network_type": 0,
             "diameter_offset": 0,
             "loop_density": 0.0,
@@ -376,9 +403,10 @@ def make_alternatives_fixture():
             "base_z": 100.0,
             "points": points,
         },
-        "num_alternatives_requested": 3,
+        "num_alternatives_requested": 2,
         "num_solutions_returned": len(solutions),
         "solutions": alts_data,
+        "distinct_costs": costs,
     }
 
 
@@ -418,7 +446,7 @@ def main():
         )
 
     # Alternatives fixture
-    print("\n=== Alternatives fixture (num_alternatives=3) ===")
+    print("\n=== Alternatives fixture (num_alternatives=2) ===")
     alt_fixture = make_alternatives_fixture()
     alt_path = FIXTURES_DIR / "solvers_water_supply_alternatives.json"
     with open(alt_path, "w") as f:
