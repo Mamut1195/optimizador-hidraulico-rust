@@ -143,7 +143,11 @@ impl TerrainGraph {
         for (i, &x) in xs.iter().enumerate() {
             for (j, &y) in ys.iter().enumerate() {
                 let nid = format!("g{counter}");
-                let z = terrain.elevation_at(x, y);
+                // Use nearest-neighbor z for grid nodes to avoid bilinear interpolation
+                // floating-point errors at exact grid points. For a terrain built from the
+                // same grid coordinates, NN gives the exact stored z-value, matching Python's
+                // oracle which computes z directly (100 + slope_x*x + slope_y*y).
+                let z = terrain.elevation_at_nn(x, y);
                 self.add_node_internal(&nid, x, y, z);
                 grid_ids[i][j] = nid;
                 counter += 1;

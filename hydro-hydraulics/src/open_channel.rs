@@ -5,6 +5,117 @@
 //!
 //! Faithful port of `hydro_engine/hydraulics/open_channel.py`.
 
+// ── RectangularChannelResult ──────────────────────────────────────────────────
+
+/// Full hydraulic analysis of a rectangular open channel.
+///
+/// Mirrors the dict returned by Python `rectangular_channel_flow(width, depth, slope, roughness)`.
+/// All fields carry the same rounding as the Python oracle.
+#[derive(Debug, Clone)]
+pub struct RectangularChannelResult {
+    pub area_m2: f64,
+    pub wetted_perimeter_m: f64,
+    pub hydraulic_radius_m: f64,
+    /// Velocity rounded to 3 decimal places (mirrors Python `round(vel, 3)`).
+    pub velocity_m_s: f64,
+    /// Flow rounded to 6 decimal places (mirrors Python `round(flow, 6)`).
+    pub flow_m3_s: f64,
+    /// Flow in L/s, rounded to 3 decimal places (mirrors Python `round(flow * 1000, 3)`).
+    pub flow_lps: f64,
+    /// Froude number, rounded to 3 decimal places.
+    pub froude_number: f64,
+    /// "subcritical" | "supercritical" | "critical"
+    pub regime: &'static str,
+}
+
+/// Full flow analysis in a rectangular open channel, matching Python
+/// `rectangular_channel_flow(width, depth, slope, roughness)` dict output.
+///
+/// Geometry:
+///   A = b * y
+///   P = b + 2y
+///   R = A / P
+///   V = (1/n) * R^(2/3) * |S|^(1/2)
+///   Q = V * A
+///   Fr = V / sqrt(g * y)  (rectangular: hydraulic depth = y)
+///
+/// # Arguments
+///
+/// * `width_m`     – Channel bottom width b (m).
+/// * `depth_m`     – Flow depth y (m).
+/// * `slope`       – Channel bed slope S (m/m, sign ignored via abs()).
+/// * `roughness_n` – Manning's n coefficient.
+///
+/// # Returns
+///
+/// [`RectangularChannelResult`] with rounded fields matching the Python dict.
+pub fn rectangular_channel_flow_full(
+    width_m: f64,
+    depth_m: f64,
+    slope: f64,
+    roughness_n: f64,
+) -> RectangularChannelResult {
+    let area = width_m * depth_m;
+    let wetted_perimeter = width_m + 2.0 * depth_m;
+    let hydraulic_radius = if wetted_perimeter > 0.0 {
+        area / wetted_perimeter
+    } else {
+        0.0
+    };
+    let vel = (1.0 / roughness_n) * hydraulic_radius.powf(2.0 / 3.0) * slope.abs().sqrt();
+    let flow = vel * area;
+    let froude = if depth_m > 0.0 {
+        vel / (GRAVITY * depth_m).sqrt()
+    } else {
+        0.0
+    };
+
+    let regime = if froude < 1.0 {
+        "subcritical"
+    } else if froude > 1.0 {
+        "supercritical"
+    } else {
+        "critical"
+    };
+
+    RectangularChannelResult {
+        area_m2: round4(area),
+        wetted_perimeter_m: round4(wetted_perimeter),
+        hydraulic_radius_m: round4(hydraulic_radius),
+        velocity_m_s: round3(vel),
+        flow_m3_s: round6(flow),
+        flow_lps: round3(flow * 1000.0),
+        froude_number: round3(froude),
+        regime,
+    }
+}
+
+// ── Rounding helpers (mirrors Python round(x, n)) ─────────────────────────────
+
+/// Round to 3 decimal places.
+#[inline]
+fn round3(x: f64) -> f64 {
+    (x * 1000.0).round() / 1000.0
+}
+
+/// Round to 4 decimal places.
+#[inline]
+fn round4(x: f64) -> f64 {
+    (x * 10000.0).round() / 10000.0
+}
+
+/// Round to 6 decimal places.
+#[inline]
+fn round6(x: f64) -> f64 {
+    (x * 1_000_000.0).round() / 1_000_000.0
+}
+
+// ── Gravitational acceleration ─────────────────────────────────────────────────
+
+const GRAVITY: f64 = 9.81;
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /// Compute velocity in a rectangular open channel using Manning's equation.
 ///
 /// Geometry:

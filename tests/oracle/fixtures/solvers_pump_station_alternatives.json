@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_pump_station_alternatives",
+  "description": "PumpStationSolver alternatives fixture: 3 pump configs (num_operating = 1, 2, 3). design_flow=0.100 m3/s, suction_elev=95.0, discharge_elev=125.0 (big 30m static lift), suction_l=15.0, discharge_l=80.0, suction_d=0.25, discharge_d=0.20, STEEL. Pairwise-distinct total_costs guarantee ordering assertions are non-vacuous.",
+  "solver_params": {
+    "design_flow": 0.1,
+    "suction_elevation": 95.0,
+    "discharge_elevation": 125.0,
+    "suction_pipe_length": 15.0,
+    "discharge_pipe_length": 80.0,
+    "suction_diameter": 0.25,
+    "discharge_diameter": 0.2,
+    "material": "STEEL",
+    "num_alternatives": 3
+  },
+  "num_alternatives_requested": 3,
+  "num_solutions_returned": 3,
+  "solutions": [
+    {
+      "rank": 1,
+      "total_cost": 154473.25,
+      "total_length": 99.155,
+      "total_excavation": 30.0,
+      "norm_violations": 2,
+      "pump_count": 4,
+      "node_count": 5,
+      "pipe_count": 4,
+      "details": {
+        "equipment_cost": 105600.0,
+        "civil_cost": 24000.0,
+        "pipe_cost": 14873.0,
+        "power_kw_per_pump": 22.0,
+        "total_pumps": 4.0,
+        "wet_well_volume_m3": 30.0
+      },
+      "network_metadata": {
+        "tdh": 39.13,
+        "static_lift": 30.0,
+        "hw_c": 120.0,
+        "pump": {
+          "flow_m3s": 0.0333,
+          "tdh_m": 39.13,
+          "power_kw": 22.0,
+          "efficiency": 0.6583333333333333,
+          "num_operating": 3,
+          "num_reserve": 1,
+          "total_pumps": 4
+        },
+        "wet_well": {
+          "volume_m3": 30.0,
+          "width_m": 2.15,
+          "length_m": 4.31,
+          "depth_m": 3.23,
+          "retention_minutes": 5.0,
+          "num_pumps_installed": 4
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "total_cost": 156873.25,
+      "total_length": 99.155,
+      "total_excavation": 30.0,
+      "norm_violations": 2,
+      "pump_count": 3,
+      "node_count": 5,
+      "pipe_count": 4,
+      "details": {
+        "equipment_cost": 108000.0,
+        "civil_cost": 24000.0,
+        "pipe_cost": 14873.0,
+        "power_kw_per_pump": 30.0,
+        "total_pumps": 3.0,
+        "wet_well_volume_m3": 30.0
+      },
+      "network_metadata": {
+        "tdh": 39.13,
+        "static_lift": 30.0,
+        "hw_c": 120.0,
+        "pump": {
+          "flow_m3s": 0.05,
+          "tdh_m": 39.13,
+          "power_kw": 30.0,
+          "efficiency": 0.7,
+          "num_operating": 2,
+          "num_reserve": 1,
+          "total_pumps": 3
+        },
+        "wet_well": {
+          "volume_m3": 30.0,
+          "width_m": 2.15,
+          "length_m": 4.31,
+          "depth_m": 3.23,
+          "retention_minutes": 5.0,
+          "num_pumps_installed": 3
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "total_cost": 180873.25,
+      "total_length": 99.155,
+      "total_excavation": 30.0,
+      "norm_violations": 2,
+      "pump_count": 2,
+      "node_count": 5,
+      "pipe_count": 4,
+      "details": {
+        "equipment_cost": 132000.0,
+        "civil_cost": 24000.0,
+        "pipe_cost": 14873.0,
+        "power_kw_per_pump": 55.0,
+        "total_pumps": 2.0,
+        "wet_well_volume_m3": 30.0
+      },
+      "network_metadata": {
+        "tdh": 39.13,
+        "static_lift": 30.0,
+        "hw_c": 120.0,
+        "pump": {
+          "flow_m3s": 0.1,
+          "tdh_m": 39.13,
+          "power_kw": 55.0,
+          "efficiency": 0.7266666666666667,
+          "num_operating": 1,
+          "num_reserve": 1,
+          "total_pumps": 2
+        },
+        "wet_well": {
+          "volume_m3": 30.0,
+          "width_m": 2.15,
+          "length_m": 4.31,
+          "depth_m": 3.23,
+          "retention_minutes": 5.0,
+          "num_pumps_installed": 2
+        }
+      }
+    }
+  ],
+  "distinct_costs": [
+    154473.25,
+    156873.25,
+    180873.25
+  ]
+}

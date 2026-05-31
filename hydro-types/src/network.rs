@@ -199,6 +199,13 @@ pub struct PipeNetwork {
     /// Not serialized — rebuilt from `nodes` + `pipes` on demand.
     #[serde(skip)]
     pub adjacency: HashMap<NodeId, Vec<(NodeId, usize)>>,
+    /// Free-form network-level metadata (Python: network.metadata dict).
+    ///
+    /// Used by PumpStationSolver to store pump selection and wet-well info
+    /// that evaluate() needs to read back.  Skipped from adjacency but included
+    /// in serde for JSON round-trips.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub metadata: HashMap<String, serde_json::Value>,
 }
 
 impl PipeNetwork {
@@ -221,6 +228,7 @@ impl PipeNetwork {
             pipes,
             total_length,
             adjacency,
+            metadata: HashMap::new(),
         }
     }
 

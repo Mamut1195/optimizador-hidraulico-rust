@@ -29,15 +29,27 @@ pub const HW_COEFFICIENTS: &[(&str, f64)] = &[
 ];
 
 /// Look up the Hazen-Williams C coefficient for a pipe material by its Python
-/// string name (e.g. `"PVC"`, `"PEAD"`, `"Acero"`). Falls back to 150.0.
+/// string name (e.g. `"PVC"`, `"PEAD"`, `"Acero"`) OR its Rust canonical name
+/// (e.g. `"STEEL"`, `"CONCRETE"`, `"CAST_IRON"`). Falls back to 150.0.
+///
+/// The Rust `PipeMaterial::as_str()` returns uppercase names ("STEEL", "CONCRETE", …)
+/// while the Python oracle uses Spanish names ("Acero", "Concreto", …). Both forms
+/// are accepted so callers can pass `material.as_str()` directly.
 ///
 /// Matches Python `HW_COEFFICIENTS.get(mat_name, 150.0)`.
 pub fn hw_coefficient(mat_name: &str) -> f64 {
-    HW_COEFFICIENTS
-        .iter()
-        .find(|(k, _)| *k == mat_name)
-        .map(|(_, v)| *v)
-        .unwrap_or(150.0)
+    // Primary lookup: Python oracle names
+    if let Some(&(_, v)) = HW_COEFFICIENTS.iter().find(|(k, _)| *k == mat_name) {
+        return v;
+    }
+    // Canonical Rust names → map to Python equivalents
+    match mat_name {
+        "STEEL" | "ACERO" => 120.0,
+        "CONCRETE" | "CONCRETO" => 110.0,
+        "CAST_IRON" | "FIERRO_FUNDIDO" => 100.0,
+        "HDPE" | "PEAD" => 150.0,
+        _ => 150.0, // default (PVC, unknown)
+    }
 }
 
 // ── required_diameter_pressure ────────────────────────────────────────────────

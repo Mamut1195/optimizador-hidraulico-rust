@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_pump_station_golden",
+  "description": "PumpStationSolver oracle fixture: design_flow=0.050 m3/s, suction_elev=100.0, discharge_elev=115.0, suction_l=10.0, discharge_l=50.0, suction_d=0.3, discharge_d=0.25, material=STEEL, num_alternatives=1. DesignConstraints() defaults. NOTE: SolutionScore.total_excavation is repurposed to carry wet_well_volume_m3.",
+  "solver_params": {
+    "design_flow": 0.05,
+    "suction_elevation": 100.0,
+    "discharge_elevation": 115.0,
+    "suction_pipe_length": 10.0,
+    "discharge_pipe_length": 50.0,
+    "suction_diameter": 0.3,
+    "discharge_diameter": 0.25,
+    "material": "STEEL",
+    "num_alternatives": 1
+  },
+  "node_count": 5,
+  "pipe_count": 4,
+  "total_length": 63.71,
+  "nodes": [
+    {
+      "id": "Inlet",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "INLET",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5
+    },
+    {
+      "id": "WetWell",
+      "x": 1.71,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "RESERVOIR",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5
+    },
+    {
+      "id": "PumpManifold",
+      "x": 5.42,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "PUMP",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5
+    },
+    {
+      "id": "DischargeManifold",
+      "x": 15.42,
+      "y": 0.0,
+      "z": 107.5,
+      "node_type": "JUNCTION",
+      "rim_elevation": 107.5,
+      "sump_elevation": 106.0
+    },
+    {
+      "id": "Outlet",
+      "x": 65.42,
+      "y": 0.0,
+      "z": 115.0,
+      "node_type": "OUTLET",
+      "rim_elevation": 115.0,
+      "sump_elevation": 113.5
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Pipe - (1)",
+      "start_node_id": "Inlet",
+      "end_node_id": "WetWell",
+      "length": 1.71,
+      "diameter": 0.3,
+      "slope": 0.0,
+      "start_invert": 99.5,
+      "end_invert": 99.5,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Pipe - (2)",
+      "start_node_id": "WetWell",
+      "end_node_id": "PumpManifold",
+      "length": 2.0,
+      "diameter": 0.3,
+      "slope": 0.0,
+      "start_invert": 99.5,
+      "end_invert": 99.5,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Pipe - (3)",
+      "start_node_id": "PumpManifold",
+      "end_node_id": "DischargeManifold",
+      "length": 10.0,
+      "diameter": 0.25,
+      "slope": -0.75,
+      "start_invert": 99.5,
+      "end_invert": 107.0,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Pipe - (4)",
+      "start_node_id": "DischargeManifold",
+      "end_node_id": "Outlet",
+      "length": 50.0,
+      "diameter": 0.25,
+      "slope": -0.15,
+      "start_invert": 107.0,
+      "end_invert": 114.5,
+      "design_flow": 0.05
+    }
+  ],
+  "network_metadata": {
+    "tdh": 15.756,
+    "static_lift": 15.0,
+    "hw_c": 120.0,
+    "pump": {
+      "flow_m3s": 0.05,
+      "tdh_m": 15.756,
+      "power_kw": 15.0,
+      "efficiency": 0.7,
+      "num_operating": 1,
+      "num_reserve": 1,
+      "total_pumps": 2
+    },
+    "wet_well": {
+      "volume_m3": 15.0,
+      "width_m": 1.71,
+      "length_m": 3.42,
+      "depth_m": 2.56,
+      "retention_minutes": 5.0,
+      "num_pumps_installed": 2
+    }
+  },
+  "score": {
+    "total_cost": 57556.5,
+    "total_length": 63.71,
+    "total_excavation": 15.0,
+    "norm_violations": 0,
+    "pump_count": 2
+  },
+  "evaluate_only": {
+    "total_cost": 57556.5,
+    "total_length": 63.71,
+    "total_excavation": 15.0,
+    "norm_violations": 0,
+    "pump_count": 2,
+    "details": {
+      "equipment_cost": 36000.0,
+      "civil_cost": 12000.0,
+      "pipe_cost": 9556.0,
+      "power_kw_per_pump": 15.0,
+      "total_pumps": 2.0,
+      "wet_well_volume_m3": 15.0
+    }
+  },
+  "cost_formula": {
+    "w_equipment": 1200.0,
+    "w_civil": 800.0,
+    "w_pipe": 150.0,
+    "w_violations": 5000.0,
+    "expected_cost": 57556.5
+  },
+  "note_total_excavation_repurposed": "SolutionScore.total_excavation = wet_well.volume_m3 (not real excavation)"
+}
