@@ -709,6 +709,194 @@ pub fn load_distribution_alternatives() -> DistribAlternativesGolden {
         .expect("solvers_distribution_alternatives.json must be present")
 }
 
+// ── PumpStationSolver fixture structs ────────────────────────────────────────
+
+/// Solver input parameters for pump station fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpSolverParams {
+    pub design_flow: f64,
+    pub suction_elevation: f64,
+    pub discharge_elevation: f64,
+    pub suction_pipe_length: f64,
+    pub discharge_pipe_length: f64,
+    pub suction_diameter: f64,
+    pub discharge_diameter: f64,
+    pub material: String,
+    pub num_alternatives: u32,
+}
+
+/// One node in a pump station oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+}
+
+/// One pipe in a pump station oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpPipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+}
+
+/// Pump pump-selection metadata embedded in pump station fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpSelectionMeta {
+    pub flow_m3s: f64,
+    pub tdh_m: f64,
+    pub power_kw: f64,
+    pub efficiency: f64,
+    pub num_operating: i64,
+    pub num_reserve: i64,
+    pub total_pumps: i64,
+}
+
+/// Wet well geometry embedded in pump station fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WetWellMeta {
+    pub volume_m3: f64,
+    pub width_m: f64,
+    pub length_m: f64,
+    pub depth_m: f64,
+    pub retention_minutes: f64,
+    pub num_pumps_installed: i64,
+}
+
+/// Network metadata block in the pump station fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpNetworkMetadata {
+    pub tdh: f64,
+    pub static_lift: f64,
+    pub hw_c: f64,
+    pub pump: PumpSelectionMeta,
+    pub wet_well: WetWellMeta,
+}
+
+/// Oracle score for pump station fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// NOTE: repurposed to carry wet_well_volume_m3.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict for pump station fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpDetailsGolden {
+    pub equipment_cost: f64,
+    pub civil_cost: f64,
+    pub pipe_cost: f64,
+    pub power_kw_per_pump: f64,
+    pub total_pumps: f64,
+    pub wet_well_volume_m3: f64,
+}
+
+/// Evaluate-only sub-fixture for pump station.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// NOTE: repurposed to carry wet_well_volume_m3.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: PumpDetailsGolden,
+}
+
+/// Cost formula for pump station.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpCostFormula {
+    pub w_equipment: f64,
+    pub w_civil: f64,
+    pub w_pipe: f64,
+    pub w_violations: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_pump_station_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: PumpSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<PumpNodeGolden>,
+    pub pipes: Vec<PumpPipeGolden>,
+    pub network_metadata: PumpNetworkMetadata,
+    pub score: PumpScoreGolden,
+    pub evaluate_only: PumpEvaluateOnlyGolden,
+    pub cost_formula: PumpCostFormula,
+}
+
+/// One alternative solution in the pump station alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// Repurposed as wet_well_volume_m3.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub details: PumpDetailsGolden,
+    pub network_metadata: PumpNetworkMetadata,
+}
+
+/// Root fixture struct for `solvers_pump_station_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PumpAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: PumpSolverParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<PumpAltSolution>,
+    /// Pairwise-distinct oracle costs (one per solution, sorted ascending).
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── PumpStationSolver loaders ─────────────────────────────────────────────────
+
+/// Load `solvers_pump_station_golden.json` (panics in tests if missing/malformed).
+pub fn load_pump_station_golden() -> PumpGolden {
+    load_fixture::<PumpGolden>("solvers_pump_station_golden").expect(
+        "solvers_pump_station_golden.json must be present; regenerate with generate_solvers_pump_station.py",
+    )
+}
+
+/// Load `solvers_pump_station_golden.json` as `Result` (non-panicking).
+pub fn try_load_pump_station_golden() -> Result<PumpGolden, OracleError> {
+    load_fixture::<PumpGolden>("solvers_pump_station_golden")
+}
+
+/// Load `solvers_pump_station_alternatives.json` (panics in tests if missing).
+pub fn load_pump_station_alternatives() -> PumpAlternativesGolden {
+    load_fixture::<PumpAlternativesGolden>("solvers_pump_station_alternatives").expect(
+        "solvers_pump_station_alternatives.json must be present; regenerate with generate_solvers_pump_station.py",
+    )
+}
+
 // ── ConveyanceSolver loaders ──────────────────────────────────────────────────
 
 /// Load `solvers_conveyance_golden.json` (panics in tests if missing/malformed).
