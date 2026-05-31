@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_intake_alternatives",
+  "description": "IntakeSolver alternatives fixture: 3 alternatives with v_notch weir. design_flow=0.030 m3/s, source_elev=115.0, pipe_elev=113.0, channel_slope=0.005, material=CONCRETE, weir_type=1 (v_notch). width_multipliers = linspace(1.0, 1.5, 3) = [1.0, 1.25, 1.5]. Pairwise-distinct total_costs guarantee ordering assertions are non-vacuous.",
+  "solver_params": {
+    "design_flow": 0.03,
+    "source_elevation": 115.0,
+    "pipe_elevation": 113.0,
+    "channel_slope": 0.005,
+    "material": "CONCRETE",
+    "weir_type": 1,
+    "num_alternatives": 3,
+    "channel_width_factor": 1.0,
+    "channel_slope_factor": 1.0,
+    "screen_velocity_factor": 1.0
+  },
+  "num_alternatives_requested": 3,
+  "num_solutions_returned": 3,
+  "solutions": [
+    {
+      "rank": 1,
+      "total_cost": 3284.8702263316586,
+      "total_length": 16.880000000000003,
+      "total_excavation": 2.098783710552764,
+      "norm_violations": 0,
+      "pump_count": 0,
+      "node_count": 6,
+      "pipe_count": 5,
+      "details": {
+        "concrete_volume_m3": 1.87,
+        "screen_concrete_m3": 0.22,
+        "pipe_cost": 2026.0,
+        "concrete_cost": 1259.0,
+        "channel_velocity": 0.733
+      },
+      "network_metadata": {
+        "design_flow_m3s": 0.03,
+        "source_type": "river",
+        "screen": {
+          "net_area": 0.2,
+          "gross_area": 0.28,
+          "clear_ratio": 0.714,
+          "gross_width": 0.748,
+          "net_width": 0.535,
+          "height": 0.374,
+          "bar_spacing_m": 0.025,
+          "bar_thickness_m": 0.01,
+          "velocity_through_screen": 0.15,
+          "head_loss_m": 0.0007
+        },
+        "channel": {
+          "width_m": 0.535,
+          "depth_m": 0.07964824120603016,
+          "area_m2": 0.0426,
+          "wetted_perimeter_m": 0.6943,
+          "hydraulic_radius_m": 0.0614,
+          "velocity_m_s": 0.733,
+          "flow_m3_s": 0.031255,
+          "flow_lps": 31.255,
+          "froude_number": 0.83,
+          "regime": "subcritical",
+          "length_m": 13.38,
+          "slope": 0.005
+        },
+        "weir": {
+          "weir_type": "v_notch",
+          "angle_degrees": 90.0,
+          "head": 0.2162,
+          "crest_length": 0.0,
+          "flow_check_m3s": 0.03,
+          "coefficient": 1.38
+        },
+        "pipe_transition": {
+          "diameter": 0.2,
+          "diameter_mm": 200.0,
+          "velocity_m_s": 0.955,
+          "material": "Concreto",
+          "hw_c": 110.0,
+          "transition_type": "gradual_contraction",
+          "contraction_angle_deg": 15.0
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "total_cost": 4234.856965025125,
+      "total_length": 20.22,
+      "total_excavation": 3.0140949417085428,
+      "norm_violations": 0,
+      "pump_count": 0,
+      "node_count": 6,
+      "pipe_count": 5,
+      "details": {
+        "concrete_volume_m3": 2.79,
+        "screen_concrete_m3": 0.22,
+        "pipe_cost": 2426.0,
+        "concrete_cost": 1808.0,
+        "channel_velocity": 0.757
+      },
+      "network_metadata": {
+        "design_flow_m3s": 0.03,
+        "source_type": "river",
+        "screen": {
+          "net_area": 0.2,
+          "gross_area": 0.28,
+          "clear_ratio": 0.714,
+          "gross_width": 0.748,
+          "net_width": 0.535,
+          "height": 0.374,
+          "bar_spacing_m": 0.025,
+          "bar_thickness_m": 0.01,
+          "velocity_through_screen": 0.15,
+          "head_loss_m": 0.0007
+        },
+        "channel": {
+          "width_m": 0.6687500000000001,
+          "depth_m": 0.07964824120603016,
+          "area_m2": 0.0533,
+          "wetted_perimeter_m": 0.828,
+          "hydraulic_radius_m": 0.0643,
+          "velocity_m_s": 0.757,
+          "flow_m3_s": 0.040311,
+          "flow_lps": 40.311,
+          "froude_number": 0.856,
+          "regime": "subcritical",
+          "length_m": 16.72,
+          "slope": 0.005
+        },
+        "weir": {
+          "weir_type": "v_notch",
+          "angle_degrees": 90.0,
+          "head": 0.2162,
+          "crest_length": 0.0,
+          "flow_check_m3s": 0.03,
+          "coefficient": 1.38
+        },
+        "pipe_transition": {
+          "diameter": 0.2,
+          "diameter_mm": 200.0,
+          "velocity_m_s": 0.955,
+          "material": "Concreto",
+          "hw_c": 110.0,
+          "transition_type": "gradual_contraction",
+          "contraction_angle_deg": 15.0
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "total_cost": 5217.833331859297,
+      "total_length": 23.56,
+      "total_excavation": 3.9843888864321615,
+      "norm_violations": 0,
+      "pump_count": 0,
+      "node_count": 6,
+      "pipe_count": 5,
+      "details": {
+        "concrete_volume_m3": 3.76,
+        "screen_concrete_m3": 0.22,
+        "pipe_cost": 2827.0,
+        "concrete_cost": 2391.0,
+        "channel_velocity": 0.688
+      },
+      "network_metadata": {
+        "design_flow_m3s": 0.03,
+        "source_type": "river",
+        "screen": {
+          "net_area": 0.2,
+          "gross_area": 0.28,
+          "clear_ratio": 0.714,
+          "gross_width": 0.748,
+          "net_width": 0.535,
+          "height": 0.374,
+          "bar_spacing_m": 0.025,
+          "bar_thickness_m": 0.01,
+          "velocity_through_screen": 0.15,
+          "head_loss_m": 0.0007
+        },
+        "channel": {
+          "width_m": 0.8025,
+          "depth_m": 0.06482412060301508,
+          "area_m2": 0.052,
+          "wetted_perimeter_m": 0.9321,
+          "hydraulic_radius_m": 0.0558,
+          "velocity_m_s": 0.688,
+          "flow_m3_s": 0.035813,
+          "flow_lps": 35.813,
+          "froude_number": 0.863,
+          "regime": "subcritical",
+          "length_m": 20.06,
+          "slope": 0.005
+        },
+        "weir": {
+          "weir_type": "v_notch",
+          "angle_degrees": 90.0,
+          "head": 0.2162,
+          "crest_length": 0.0,
+          "flow_check_m3s": 0.03,
+          "coefficient": 1.38
+        },
+        "pipe_transition": {
+          "diameter": 0.2,
+          "diameter_mm": 200.0,
+          "velocity_m_s": 0.955,
+          "material": "Concreto",
+          "hw_c": 110.0,
+          "transition_type": "gradual_contraction",
+          "contraction_angle_deg": 15.0
+        }
+      }
+    }
+  ],
+  "distinct_costs": [
+    3284.8702263316586,
+    4234.856965025125,
+    5217.833331859297
+  ]
+}

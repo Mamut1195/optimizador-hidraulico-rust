@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_intake_golden",
+  "description": "IntakeSolver oracle fixture: design_flow=0.050 m3/s, source_elev=120.0, pipe_elev=118.0, channel_slope=0.005, material=CONCRETE, weir_type=0 (rectangular), num_alternatives=1. DesignConstraints() defaults. NOTE: SolutionScore.total_excavation is repurposed to carry concrete_volume + screen_concrete.",
+  "solver_params": {
+    "design_flow": 0.05,
+    "source_elevation": 120.0,
+    "pipe_elevation": 118.0,
+    "channel_slope": 0.005,
+    "material": "CONCRETE",
+    "weir_type": 0,
+    "num_alternatives": 1,
+    "channel_width_factor": 1.0,
+    "channel_slope_factor": 1.0,
+    "screen_velocity_factor": 1.0
+  },
+  "node_count": 6,
+  "pipe_count": 5,
+  "total_length": 20.75,
+  "nodes": [
+    {
+      "id": "Source",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 120.0,
+      "node_type": "RESERVOIR",
+      "rim_elevation": 120.3,
+      "sump_elevation": 118.5
+    },
+    {
+      "id": "Screen",
+      "x": 1.0,
+      "y": 0.0,
+      "z": 119.7585,
+      "node_type": "INLET",
+      "rim_elevation": 120.0585,
+      "sump_elevation": 118.2585
+    },
+    {
+      "id": "ChannelIn",
+      "x": 6.175,
+      "y": 0.0,
+      "z": 119.6585,
+      "node_type": "JUNCTION",
+      "rim_elevation": 119.9585,
+      "sump_elevation": 118.1585
+    },
+    {
+      "id": "ChannelOut",
+      "x": 18.25,
+      "y": 0.0,
+      "z": 119.57225,
+      "node_type": "JUNCTION",
+      "rim_elevation": 119.87225,
+      "sump_elevation": 118.07225
+    },
+    {
+      "id": "Weir",
+      "x": 18.75,
+      "y": 0.0,
+      "z": 119.57225,
+      "node_type": "JUNCTION",
+      "rim_elevation": 119.87225,
+      "sump_elevation": 118.07225
+    },
+    {
+      "id": "PipeStart",
+      "x": 20.75,
+      "y": 0.0,
+      "z": 118.0,
+      "node_type": "OUTLET",
+      "rim_elevation": 118.3,
+      "sump_elevation": 116.5
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Seg-Screen",
+      "start_node_id": "Source",
+      "end_node_id": "Screen",
+      "length": 1.0,
+      "diameter": 0.966,
+      "slope": 0.24150000000000205,
+      "start_invert": 119.8,
+      "end_invert": 119.5585,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Seg-ChIn",
+      "start_node_id": "Screen",
+      "end_node_id": "ChannelIn",
+      "length": 5.175,
+      "diameter": 0.69,
+      "slope": 0.019323671497583444,
+      "start_invert": 119.5585,
+      "end_invert": 119.4585,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Seg-Channel",
+      "start_node_id": "ChannelIn",
+      "end_node_id": "ChannelOut",
+      "length": 12.075,
+      "diameter": 0.69,
+      "slope": 0.007142857142857708,
+      "start_invert": 119.4585,
+      "end_invert": 119.37225,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Seg-Weir",
+      "start_node_id": "ChannelOut",
+      "end_node_id": "Weir",
+      "length": 0.5,
+      "diameter": 0.671,
+      "slope": 0.0,
+      "start_invert": 119.37225,
+      "end_invert": 119.37225,
+      "design_flow": 0.05
+    },
+    {
+      "id": "Seg-Pipe",
+      "start_node_id": "Weir",
+      "end_node_id": "PipeStart",
+      "length": 2.0,
+      "diameter": 0.2,
+      "slope": 0.7861249999999984,
+      "start_invert": 119.37225,
+      "end_invert": 117.8,
+      "design_flow": 0.05
+    }
+  ],
+  "network_metadata": {
+    "design_flow_m3s": 0.05,
+    "source_type": "river",
+    "screen": {
+      "net_area": 0.3333,
+      "gross_area": 0.4667,
+      "clear_ratio": 0.714,
+      "gross_width": 0.966,
+      "net_width": 0.69,
+      "height": 0.483,
+      "bar_spacing_m": 0.025,
+      "bar_thickness_m": 0.01,
+      "velocity_through_screen": 0.15,
+      "head_loss_m": 0.0007
+    },
+    "channel": {
+      "width_m": 0.69,
+      "depth_m": 0.09447236180904522,
+      "area_m2": 0.0652,
+      "wetted_perimeter_m": 0.8789,
+      "hydraulic_radius_m": 0.0742,
+      "velocity_m_s": 0.832,
+      "flow_m3_s": 0.054243,
+      "flow_lps": 54.243,
+      "froude_number": 0.864,
+      "regime": "subcritical",
+      "length_m": 17.25,
+      "slope": 0.005
+    },
+    "weir": {
+      "weir_type": "rectangular",
+      "crest_length": 0.671,
+      "head": 0.1179,
+      "flow_check_m3s": 0.05,
+      "coefficient": 1.84
+    },
+    "pipe_transition": {
+      "diameter": 0.2,
+      "diameter_mm": 200.0,
+      "velocity_m_s": 1.592,
+      "material": "Concreto",
+      "hw_c": 110.0,
+      "transition_type": "gradual_contraction",
+      "contraction_angle_deg": 15.0
+    }
+  },
+  "score": {
+    "total_cost": 4549.017641005025,
+    "total_length": 20.75,
+    "total_excavation": 3.431696068341709,
+    "norm_violations": 0,
+    "pump_count": 0
+  },
+  "evaluate_only": {
+    "total_cost": 4549.017641005025,
+    "total_length": 20.75,
+    "total_excavation": 3.431696068341709,
+    "norm_violations": 0,
+    "pump_count": 0,
+    "details": {
+      "concrete_volume_m3": 3.06,
+      "screen_concrete_m3": 0.37,
+      "pipe_cost": 2490.0,
+      "concrete_cost": 2059.0,
+      "channel_velocity": 0.832
+    }
+  },
+  "cost_formula": {
+    "w_concrete": 600.0,
+    "w_pipe": 120.0,
+    "w_violations": 3000.0,
+    "expected_cost": 4549.017641005025
+  },
+  "note_total_excavation_repurposed": "SolutionScore.total_excavation = concrete_volume + screen_concrete (not real excavation)"
+}

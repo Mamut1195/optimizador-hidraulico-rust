@@ -920,6 +920,227 @@ pub fn load_conveyance_alternatives() -> ConvAlternativesGolden {
     )
 }
 
+// ── IntakeSolver fixture structs ──────────────────────────────────────────────
+
+/// Solver input parameters for intake fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeSolverParams {
+    pub design_flow: f64,
+    pub source_elevation: f64,
+    pub pipe_elevation: f64,
+    pub channel_slope: f64,
+    pub material: String,
+    pub weir_type: i32,
+    pub num_alternatives: u32,
+    pub channel_width_factor: f64,
+    pub channel_slope_factor: f64,
+    pub screen_velocity_factor: f64,
+}
+
+/// One node in an intake oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+}
+
+/// One pipe in an intake oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakePipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+}
+
+/// Screen design metadata embedded in intake fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeScreenMeta {
+    pub net_area: f64,
+    pub gross_area: f64,
+    pub clear_ratio: f64,
+    pub gross_width: f64,
+    pub net_width: f64,
+    pub height: f64,
+    pub bar_spacing_m: f64,
+    pub bar_thickness_m: f64,
+    pub velocity_through_screen: f64,
+    pub head_loss_m: f64,
+}
+
+/// Channel design metadata embedded in intake fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeChannelMeta {
+    pub width_m: f64,
+    pub depth_m: f64,
+    pub area_m2: f64,
+    pub wetted_perimeter_m: f64,
+    pub hydraulic_radius_m: f64,
+    pub velocity_m_s: f64,
+    pub flow_m3_s: f64,
+    pub flow_lps: f64,
+    pub froude_number: f64,
+    pub regime: String,
+    pub length_m: f64,
+    pub slope: f64,
+}
+
+/// Weir design metadata embedded in intake fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeWeirMeta {
+    pub weir_type: String,
+    #[serde(default)]
+    pub angle_degrees: f64,
+    pub head: f64,
+    pub crest_length: f64,
+    pub flow_check_m3s: f64,
+    pub coefficient: f64,
+}
+
+/// Pipe transition metadata embedded in intake fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakePipeTransMeta {
+    pub diameter: f64,
+    pub diameter_mm: f64,
+    pub velocity_m_s: f64,
+    pub material: String,
+    pub hw_c: f64,
+    pub transition_type: String,
+    pub contraction_angle_deg: f64,
+}
+
+/// Network metadata block in the intake fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeNetworkMetadata {
+    pub design_flow_m3s: f64,
+    pub source_type: String,
+    pub screen: IntakeScreenMeta,
+    pub channel: IntakeChannelMeta,
+    pub weir: IntakeWeirMeta,
+    pub pipe_transition: IntakePipeTransMeta,
+}
+
+/// Oracle score for intake fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// NOTE: repurposed to carry concrete_volume + screen_concrete.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict for intake fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeDetailsGolden {
+    pub concrete_volume_m3: f64,
+    pub screen_concrete_m3: f64,
+    pub pipe_cost: f64,
+    pub concrete_cost: f64,
+    pub channel_velocity: f64,
+}
+
+/// Evaluate-only sub-fixture for intake.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// NOTE: repurposed to carry concrete_volume + screen_concrete.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: IntakeDetailsGolden,
+}
+
+/// Cost formula for intake.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeCostFormula {
+    pub w_concrete: f64,
+    pub w_pipe: f64,
+    pub w_violations: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_intake_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: IntakeSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<IntakeNodeGolden>,
+    pub pipes: Vec<IntakePipeGolden>,
+    pub network_metadata: IntakeNetworkMetadata,
+    pub score: IntakeScoreGolden,
+    pub evaluate_only: IntakeEvaluateOnlyGolden,
+    pub cost_formula: IntakeCostFormula,
+}
+
+/// One alternative solution in the intake alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    /// Repurposed as concrete_volume + screen_concrete.
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub details: IntakeDetailsGolden,
+    pub network_metadata: IntakeNetworkMetadata,
+}
+
+/// Root fixture struct for `solvers_intake_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntakeAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: IntakeSolverParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<IntakeAltSolution>,
+    /// Pairwise-distinct oracle costs (one per solution, sorted ascending).
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── IntakeSolver loaders ──────────────────────────────────────────────────────
+
+/// Load `solvers_intake_golden.json` (panics in tests if missing/malformed).
+pub fn load_intake_golden() -> IntakeGolden {
+    load_fixture::<IntakeGolden>("solvers_intake_golden").expect(
+        "solvers_intake_golden.json must be present; regenerate with generate_solvers_intake.py",
+    )
+}
+
+/// Load `solvers_intake_golden.json` as `Result` (non-panicking).
+pub fn try_load_intake_golden() -> Result<IntakeGolden, OracleError> {
+    load_fixture::<IntakeGolden>("solvers_intake_golden")
+}
+
+/// Load `solvers_intake_alternatives.json` (panics in tests if missing).
+pub fn load_intake_alternatives() -> IntakeAlternativesGolden {
+    load_fixture::<IntakeAlternativesGolden>("solvers_intake_alternatives").expect(
+        "solvers_intake_alternatives.json must be present; regenerate with generate_solvers_intake.py",
+    )
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
