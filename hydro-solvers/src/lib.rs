@@ -11,10 +11,12 @@
 pub mod error;
 pub mod sewer;
 pub mod solver;
+pub mod water_supply;
 
 pub use error::SolverError;
 pub use sewer::SewerSolver;
 pub use solver::{Solver, SolverParams};
+pub use water_supply::WaterSupplySolver;
 
 #[cfg(test)]
 mod tests {

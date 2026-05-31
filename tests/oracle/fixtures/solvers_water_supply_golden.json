@@ -1,0 +1,791 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_water_supply_golden",
+  "description": "WaterSupplySolver oracle fixture: 5x5 grid (20m spacing), z=100.0+0.003*x, source=g20=(80,0), demands=g0,g7,g18. source_head=80mca (no violations). DesignConstraints() defaults. All source/demand at on-grid coords for EXACT elevation queries.",
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.006,
+    "slope_y": 0.001,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.02
+      ],
+      [
+        0.0,
+        40.0,
+        100.04
+      ],
+      [
+        0.0,
+        60.0,
+        100.06
+      ],
+      [
+        0.0,
+        80.0,
+        100.08
+      ],
+      [
+        20.0,
+        0.0,
+        100.12
+      ],
+      [
+        20.0,
+        20.0,
+        100.14
+      ],
+      [
+        20.0,
+        40.0,
+        100.16000000000001
+      ],
+      [
+        20.0,
+        60.0,
+        100.18
+      ],
+      [
+        20.0,
+        80.0,
+        100.2
+      ],
+      [
+        40.0,
+        0.0,
+        100.24
+      ],
+      [
+        40.0,
+        20.0,
+        100.25999999999999
+      ],
+      [
+        40.0,
+        40.0,
+        100.28
+      ],
+      [
+        40.0,
+        60.0,
+        100.3
+      ],
+      [
+        40.0,
+        80.0,
+        100.32
+      ],
+      [
+        60.0,
+        0.0,
+        100.36
+      ],
+      [
+        60.0,
+        20.0,
+        100.38
+      ],
+      [
+        60.0,
+        40.0,
+        100.4
+      ],
+      [
+        60.0,
+        60.0,
+        100.42
+      ],
+      [
+        60.0,
+        80.0,
+        100.44
+      ],
+      [
+        80.0,
+        0.0,
+        100.48
+      ],
+      [
+        80.0,
+        20.0,
+        100.5
+      ],
+      [
+        80.0,
+        40.0,
+        100.52000000000001
+      ],
+      [
+        80.0,
+        60.0,
+        100.54
+      ],
+      [
+        80.0,
+        80.0,
+        100.56
+      ]
+    ]
+  },
+  "solver_params": {
+    "source": [
+      0.0,
+      0.0
+    ],
+    "demand_points": [
+      [
+        60.0,
+        0.0
+      ],
+      [
+        20.0,
+        40.0
+      ],
+      [
+        40.0,
+        60.0
+      ]
+    ],
+    "source_head": 30.0,
+    "demand_per_node": 0.002,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 1,
+    "network_type": 1,
+    "diameter_offset": 0,
+    "loop_density": 0.5
+  },
+  "slope_x": 0.006,
+  "slope_y": 0.001,
+  "node_count": 25,
+  "pipe_count": 26,
+  "total_length": 520.0,
+  "nodes": [
+    {
+      "id": "g0",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "TANK",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5,
+      "demand": 0.0,
+      "pressure_mca": 30.0
+    },
+    {
+      "id": "g1",
+      "x": 0.0,
+      "y": 20.0,
+      "z": 100.02,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.02,
+      "sump_elevation": 98.52,
+      "demand": 0.0,
+      "pressure_mca": 29.97949351699596
+    },
+    {
+      "id": "g5",
+      "x": 20.0,
+      "y": 0.0,
+      "z": 100.12,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.12,
+      "sump_elevation": 98.62,
+      "demand": 0.0,
+      "pressure_mca": 29.876125698273036
+    },
+    {
+      "id": "g2",
+      "x": 0.0,
+      "y": 40.0,
+      "z": 100.04,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.04,
+      "sump_elevation": 98.54,
+      "demand": 0.0,
+      "pressure_mca": 29.958987033991903
+    },
+    {
+      "id": "g6",
+      "x": 20.0,
+      "y": 20.0,
+      "z": 100.14,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.14,
+      "sump_elevation": 98.64,
+      "demand": 0.0,
+      "pressure_mca": 29.855619215268995
+    },
+    {
+      "id": "g10",
+      "x": 40.0,
+      "y": 0.0,
+      "z": 100.24,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.24,
+      "sump_elevation": 98.74,
+      "demand": 0.0,
+      "pressure_mca": 29.75429729315465
+    },
+    {
+      "id": "g3",
+      "x": 0.0,
+      "y": 60.0,
+      "z": 100.06,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.06,
+      "sump_elevation": 98.56,
+      "demand": 0.0,
+      "pressure_mca": 29.93848055098786
+    },
+    {
+      "id": "g7",
+      "x": 20.0,
+      "y": 40.0,
+      "z": 100.16000000000001,
+      "node_type": "SERVICE",
+      "rim_elevation": 100.16000000000001,
+      "sump_elevation": 98.66000000000001,
+      "demand": 2.0,
+      "pressure_mca": 29.83511273226494
+    },
+    {
+      "id": "g11",
+      "x": 40.0,
+      "y": 20.0,
+      "z": 100.25999999999999,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.25999999999999,
+      "sump_elevation": 98.75999999999999,
+      "demand": 0.0,
+      "pressure_mca": 29.73511273226496
+    },
+    {
+      "id": "g15",
+      "x": 60.0,
+      "y": 0.0,
+      "z": 100.36,
+      "node_type": "SERVICE",
+      "rim_elevation": 100.36,
+      "sump_elevation": 98.86,
+      "demand": 2.0,
+      "pressure_mca": 29.6337908101506
+    },
+    {
+      "id": "g4",
+      "x": 0.0,
+      "y": 80.0,
+      "z": 100.08,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.08,
+      "sump_elevation": 98.58,
+      "demand": 0.0,
+      "pressure_mca": 29.91797406798382
+    },
+    {
+      "id": "g8",
+      "x": 20.0,
+      "y": 60.0,
+      "z": 100.18,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.18,
+      "sump_elevation": 98.68,
+      "demand": 0.0,
+      "pressure_mca": 29.814606249260898
+    },
+    {
+      "id": "g12",
+      "x": 40.0,
+      "y": 40.0,
+      "z": 100.28,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.28,
+      "sump_elevation": 98.78,
+      "demand": 0.0,
+      "pressure_mca": 29.714606249260903
+    },
+    {
+      "id": "g16",
+      "x": 60.0,
+      "y": 20.0,
+      "z": 100.38,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.38,
+      "sump_elevation": 98.88,
+      "demand": 0.0,
+      "pressure_mca": 29.61328432714656
+    },
+    {
+      "id": "g20",
+      "x": 80.0,
+      "y": 0.0,
+      "z": 100.48,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.48,
+      "sump_elevation": 98.98,
+      "demand": 0.0,
+      "pressure_mca": 29.51328432714655
+    },
+    {
+      "id": "g9",
+      "x": 20.0,
+      "y": 80.0,
+      "z": 100.2,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.2,
+      "sump_elevation": 98.7,
+      "demand": 0.0,
+      "pressure_mca": 29.794099766256856
+    },
+    {
+      "id": "g13",
+      "x": 40.0,
+      "y": 60.0,
+      "z": 100.3,
+      "node_type": "SERVICE",
+      "rim_elevation": 100.3,
+      "sump_elevation": 98.8,
+      "demand": 2.0,
+      "pressure_mca": 29.694099766256862
+    },
+    {
+      "id": "g17",
+      "x": 60.0,
+      "y": 40.0,
+      "z": 100.4,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.4,
+      "sump_elevation": 98.9,
+      "demand": 0.0,
+      "pressure_mca": 29.592777844142503
+    },
+    {
+      "id": "g21",
+      "x": 80.0,
+      "y": 20.0,
+      "z": 100.5,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.5,
+      "sump_elevation": 99.0,
+      "demand": 0.0,
+      "pressure_mca": 29.49277784414251
+    },
+    {
+      "id": "g14",
+      "x": 40.0,
+      "y": 80.0,
+      "z": 100.32,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.32,
+      "sump_elevation": 98.82,
+      "demand": 0.0,
+      "pressure_mca": 29.67359328325282
+    },
+    {
+      "id": "g18",
+      "x": 60.0,
+      "y": 60.0,
+      "z": 100.42,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.42,
+      "sump_elevation": 98.92,
+      "demand": 0.0,
+      "pressure_mca": 29.572271361138462
+    },
+    {
+      "id": "g22",
+      "x": 80.0,
+      "y": 40.0,
+      "z": 100.52000000000001,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.52000000000001,
+      "sump_elevation": 99.02000000000001,
+      "demand": 0.0,
+      "pressure_mca": 29.472271361138453
+    },
+    {
+      "id": "g19",
+      "x": 60.0,
+      "y": 80.0,
+      "z": 100.44,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.44,
+      "sump_elevation": 98.94,
+      "demand": 0.0,
+      "pressure_mca": 29.55176487813442
+    },
+    {
+      "id": "g23",
+      "x": 80.0,
+      "y": 60.0,
+      "z": 100.54,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.54,
+      "sump_elevation": 99.04,
+      "demand": 0.0,
+      "pressure_mca": 29.451764878134412
+    },
+    {
+      "id": "g24",
+      "x": 80.0,
+      "y": 80.0,
+      "z": 100.56,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.56,
+      "sump_elevation": 99.06,
+      "demand": 0.0,
+      "pressure_mca": 29.43125839513037
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Pipe - (1)",
+      "start_node_id": "g0",
+      "end_node_id": "g1",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.8,
+      "end_invert": 98.82,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (2)",
+      "start_node_id": "g0",
+      "end_node_id": "g5",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 98.8,
+      "end_invert": 98.92,
+      "design_flow": 0.006,
+      "flow_m3s": 0.006
+    },
+    {
+      "id": "Pipe - (3)",
+      "start_node_id": "g1",
+      "end_node_id": "g2",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.0010000000000005115,
+      "start_invert": 98.82,
+      "end_invert": 98.84,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (4)",
+      "start_node_id": "g5",
+      "end_node_id": "g6",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.92,
+      "end_invert": 98.94,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (5)",
+      "start_node_id": "g5",
+      "end_node_id": "g10",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.005999999999999517,
+      "start_invert": 98.92,
+      "end_invert": 99.03999999999999,
+      "design_flow": 0.004,
+      "flow_m3s": 0.004
+    },
+    {
+      "id": "Pipe - (6)",
+      "start_node_id": "g2",
+      "end_node_id": "g3",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.84,
+      "end_invert": 98.86,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (7)",
+      "start_node_id": "g6",
+      "end_node_id": "g7",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.0010000000000005115,
+      "start_invert": 98.94,
+      "end_invert": 98.96000000000001,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (8)",
+      "start_node_id": "g10",
+      "end_node_id": "g11",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.03999999999999,
+      "end_invert": 99.05999999999999,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (9)",
+      "start_node_id": "g10",
+      "end_node_id": "g15",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 99.03999999999999,
+      "end_invert": 99.16,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (10)",
+      "start_node_id": "g3",
+      "end_node_id": "g4",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.86,
+      "end_invert": 98.88,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (11)",
+      "start_node_id": "g7",
+      "end_node_id": "g8",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.96000000000001,
+      "end_invert": 98.98,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (12)",
+      "start_node_id": "g11",
+      "end_node_id": "g12",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.0010000000000005115,
+      "start_invert": 99.05999999999999,
+      "end_invert": 99.08,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (13)",
+      "start_node_id": "g15",
+      "end_node_id": "g16",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.16,
+      "end_invert": 99.17999999999999,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (14)",
+      "start_node_id": "g15",
+      "end_node_id": "g20",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 99.16,
+      "end_invert": 99.28,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (15)",
+      "start_node_id": "g8",
+      "end_node_id": "g9",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 98.98,
+      "end_invert": 99.0,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (16)",
+      "start_node_id": "g12",
+      "end_node_id": "g13",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.08,
+      "end_invert": 99.1,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (17)",
+      "start_node_id": "g16",
+      "end_node_id": "g17",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.0010000000000005115,
+      "start_invert": 99.17999999999999,
+      "end_invert": 99.2,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (18)",
+      "start_node_id": "g20",
+      "end_node_id": "g21",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.28,
+      "end_invert": 99.3,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (19)",
+      "start_node_id": "g13",
+      "end_node_id": "g14",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.1,
+      "end_invert": 99.11999999999999,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (20)",
+      "start_node_id": "g17",
+      "end_node_id": "g18",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.2,
+      "end_invert": 99.22,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (21)",
+      "start_node_id": "g21",
+      "end_node_id": "g22",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.0010000000000005115,
+      "start_invert": 99.3,
+      "end_invert": 99.32000000000001,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (22)",
+      "start_node_id": "g18",
+      "end_node_id": "g19",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.22,
+      "end_invert": 99.24,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (23)",
+      "start_node_id": "g22",
+      "end_node_id": "g23",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.32000000000001,
+      "end_invert": 99.34,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (24)",
+      "start_node_id": "g23",
+      "end_node_id": "g24",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.000999999999999801,
+      "start_invert": 99.34,
+      "end_invert": 99.36,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (25)",
+      "start_node_id": "g6",
+      "end_node_id": "g11",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.005999999999999517,
+      "start_invert": 98.94,
+      "end_invert": 99.05999999999999,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    },
+    {
+      "id": "Pipe - (26)",
+      "start_node_id": "g7",
+      "end_node_id": "g12",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.005999999999999517,
+      "start_invert": 98.96000000000001,
+      "end_invert": 99.08,
+      "design_flow": 0.002,
+      "flow_m3s": 0.002
+    }
+  ],
+  "score": {
+    "total_cost": 5356.000000000002,
+    "total_length": 520.0,
+    "total_excavation": 624.0000000000014,
+    "norm_violations": 26,
+    "pump_count": 0
+  },
+  "evaluate_only": {
+    "total_cost": 5356.000000000002,
+    "total_length": 520.0,
+    "total_excavation": 624.0000000000014,
+    "norm_violations": 26,
+    "pump_count": 0,
+    "details": {
+      "pipe_count": 26.0,
+      "node_count": 25.0,
+      "avg_excavation": 1.2000000000000026
+    }
+  },
+  "cost_formula": {
+    "w_length": 1.0,
+    "w_excavation": 1.5,
+    "w_violations": 150.0,
+    "expected_cost": 5356.000000000002
+  }
+}
