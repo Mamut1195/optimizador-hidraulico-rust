@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_water_supply_alternatives",
+  "description": "WaterSupplySolver alternatives fixture: 2 solutions for Yen k-paths parity. source=g0=(0,0), demand=[g15=(60,0)], num_alternatives=2, network_type=0. num_alternatives=2 (not 3) because on this uniform grid Yen produces a tied 3rd path; 2 alternatives gives MST (3-hop/60m) + next Yen (5-hop/100m) with pairwise-distinct total_costs, making ordering assertions non-vacuous.",
+  "solver_params": {
+    "source": [
+      0.0,
+      0.0
+    ],
+    "demand_points": [
+      [
+        60.0,
+        0.0
+      ]
+    ],
+    "source_head": 80.0,
+    "demand_per_node": 0.002,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 2,
+    "network_type": 0,
+    "diameter_offset": 0,
+    "loop_density": 0.0
+  },
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.006,
+    "slope_y": 0.001,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.02
+      ],
+      [
+        0.0,
+        40.0,
+        100.04
+      ],
+      [
+        0.0,
+        60.0,
+        100.06
+      ],
+      [
+        0.0,
+        80.0,
+        100.08
+      ],
+      [
+        20.0,
+        0.0,
+        100.12
+      ],
+      [
+        20.0,
+        20.0,
+        100.14
+      ],
+      [
+        20.0,
+        40.0,
+        100.16000000000001
+      ],
+      [
+        20.0,
+        60.0,
+        100.18
+      ],
+      [
+        20.0,
+        80.0,
+        100.2
+      ],
+      [
+        40.0,
+        0.0,
+        100.24
+      ],
+      [
+        40.0,
+        20.0,
+        100.25999999999999
+      ],
+      [
+        40.0,
+        40.0,
+        100.28
+      ],
+      [
+        40.0,
+        60.0,
+        100.3
+      ],
+      [
+        40.0,
+        80.0,
+        100.32
+      ],
+      [
+        60.0,
+        0.0,
+        100.36
+      ],
+      [
+        60.0,
+        20.0,
+        100.38
+      ],
+      [
+        60.0,
+        40.0,
+        100.4
+      ],
+      [
+        60.0,
+        60.0,
+        100.42
+      ],
+      [
+        60.0,
+        80.0,
+        100.44
+      ],
+      [
+        80.0,
+        0.0,
+        100.48
+      ],
+      [
+        80.0,
+        20.0,
+        100.5
+      ],
+      [
+        80.0,
+        40.0,
+        100.52000000000001
+      ],
+      [
+        80.0,
+        60.0,
+        100.54
+      ],
+      [
+        80.0,
+        80.0,
+        100.56
+      ]
+    ]
+  },
+  "num_alternatives_requested": 2,
+  "num_solutions_returned": 2,
+  "solutions": [
+    {
+      "rank": 1,
+      "total_cost": 1780.0000000000005,
+      "total_length": 100.0,
+      "norm_violations": 10,
+      "node_count": 6,
+      "pipe_count": 5
+    },
+    {
+      "rank": 2,
+      "total_cost": 8750.000000000002,
+      "total_length": 500.0,
+      "norm_violations": 49,
+      "node_count": 25,
+      "pipe_count": 25
+    }
+  ],
+  "distinct_costs": [
+    1780.0000000000005,
+    8750.000000000002
+  ]
+}

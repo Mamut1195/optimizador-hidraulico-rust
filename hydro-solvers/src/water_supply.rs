@@ -1,0 +1,1094 @@
+//! WaterSupplySolver — pressurized water distribution network design.
+//!
+//! Faithful port of `hydro_engine/solvers/water_supply.py` (WaterSupplySolver class).
+//!
+//! ## Algorithm
+//! 1. Build terrain graph from topography.
+//! 2. Find MST connecting all demand nodes to source (tank/reservoir).
+//! 3. BFS-orient edges source-outward.
+//! 4. Dimension pipes using Hazen-Williams equation.
+//! 5. Add cross-connections for loop redundancy.
+//! 6. Check pressure at all nodes (BFS from source).
+//! 7. Score: cost = 1.0*L + 1.5*excav + 150.0*violations.
+
+use std::collections::{HashMap, HashSet, VecDeque};
+
+use hydro_hydraulics::hazen_williams::{
+    head_loss, hw_coefficient, required_diameter_pressure, velocity,
+};
+use hydro_terrain::{CostFunction, CostWeights, TerrainGraph, TerrainModel};
+use hydro_types::{
+    response::SolutionMetadata, DesignConstraints, NetworkNode, NetworkPipe, NodeId, NodeType,
+    PipeId, PipeMaterial, PipeNetwork, Solution, SolutionScore,
+};
+use serde_json::Value;
+
+use crate::error::SolverError;
+use crate::solver::{Solver, SolverParams};
+
+// ── WaterSupplySolver ─────────────────────────────────────────────────────────
+
+/// Solver for pressurized water distribution networks (red de distribución).
+///
+/// Faithful port of Python `WaterSupplySolver`. Uses MST to connect demand nodes
+/// to a source (tank/reservoir), then adds cross-connections and dimensions pipes
+/// using Hazen-Williams.
+pub struct WaterSupplySolver {
+    pub terrain: TerrainModel,
+    pub constraints: DesignConstraints,
+}
+
+impl WaterSupplySolver {
+    /// Create a new WaterSupplySolver with the given terrain and design constraints.
+    pub fn new(terrain: TerrainModel, constraints: DesignConstraints) -> Self {
+        WaterSupplySolver {
+            terrain,
+            constraints,
+        }
+    }
+
+    /// Solve the water supply network design with explicit demand/source parameters.
+    ///
+    /// This is the domain-specific entry point (mirrors Python `solve()`).
+    /// The generic `Solver::solve()` delegates here.
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_water_supply(
+        &mut self,
+        demand_points: &[(f64, f64)],
+        source: (f64, f64),
+        source_head: f64,
+        network_name: &str,
+        demand_per_node: f64,
+        material: PipeMaterial,
+        params: &SolverParams,
+    ) -> Result<Vec<Solution>, SolverError> {
+        let cost_fn = CostFunction::new(
+            CostWeights {
+                w_length: 1.0,
+                w_excavation: 1.5,
+                w_slope_penalty: 0.5,
+                w_pump_penalty: 20.0,
+                w_crossing: 10.0,
+            },
+            self.constraints.min_slope,
+            self.constraints.max_slope,
+            self.constraints.min_cover,
+        );
+
+        let mut graph = TerrainGraph::new(cost_fn);
+        graph.from_grid(params.grid_resolution, &self.terrain);
+
+        // Snap source and demand points to nearest graph nodes
+        let source_node = graph
+            .nearest_node(source.0, source.1)
+            .map_err(|_| SolverError::NoOutlet)?;
+
+        let demand_nodes: Vec<String> = demand_points
+            .iter()
+            .map(|&(x, y)| {
+                graph
+                    .nearest_node(x, y)
+                    .map_err(|_| SolverError::InsufficientTerminals)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Validate: check that all demand nodes are reachable from source
+        let reachable = graph
+            .connected_component(&source_node)
+            .map_err(|e| SolverError::BuildFailed(e.to_string()))?;
+
+        let unreachable: Vec<&String> = demand_nodes
+            .iter()
+            .filter(|n| !reachable.contains(*n))
+            .collect();
+
+        if !unreachable.is_empty() {
+            return Err(SolverError::BuildFailed(format!(
+                "{} demand node(s) not reachable from source",
+                unreachable.len()
+            )));
+        }
+
+        let all_terminal_set: HashSet<String> = {
+            let mut s: HashSet<String> = demand_nodes.iter().cloned().collect();
+            s.insert(source_node.clone());
+            s
+        };
+
+        if all_terminal_set.len() < 2 {
+            return Err(SolverError::InsufficientTerminals);
+        }
+
+        // Get HW coefficient for material
+        let hw_c = hw_coefficient(material.as_str());
+
+        let mut solutions: Vec<Solution> = Vec::new();
+
+        // Alternative 1: MST-based network with loop additions
+        let mst_adj = graph
+            .minimum_spanning_tree(&source_node)
+            .map_err(|e| SolverError::BuildFailed(e.to_string()))?;
+
+        let network = self
+            .build_network_from_mst(
+                &graph,
+                &mst_adj,
+                &source_node,
+                &demand_nodes,
+                network_name,
+                demand_per_node,
+                material,
+                hw_c,
+                source_head,
+                params.diameter_offset,
+                if params.network_type >= 1 {
+                    params.loop_density
+                } else {
+                    0.0
+                },
+            )
+            .map_err(SolverError::BuildFailed)?;
+
+        let score = self.evaluate(&network)?;
+        solutions.push(Solution {
+            rank: 1,
+            network,
+            score,
+            metadata: SolutionMetadata::default(),
+        });
+
+        // Alternative 2+: variations using k-shortest paths from farthest demand node
+        if !demand_nodes.is_empty() && params.num_alternatives > 1 {
+            let distances: Vec<(String, f64)> = demand_nodes
+                .iter()
+                .filter(|n| *n != &source_node)
+                .filter_map(|nid| {
+                    graph
+                        .shortest_path_cost(nid, &source_node)
+                        .ok()
+                        .map(|c| (nid.clone(), c))
+                })
+                .collect();
+
+            if let Some((farthest, _)) = distances
+                .iter()
+                .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            {
+                let farthest = farthest.clone();
+                if let Ok(k_paths) =
+                    graph.k_shortest_paths(&source_node, &farthest, params.num_alternatives)
+                {
+                    for (i, path) in k_paths[1..].iter().enumerate() {
+                        let alt_name = format!("{}_alt{}", network_name, i + 2);
+                        if let Ok(net) = self.build_network_from_path(
+                            &graph,
+                            path,
+                            &demand_nodes,
+                            &source_node,
+                            &alt_name,
+                            demand_per_node,
+                            material,
+                            hw_c,
+                            source_head,
+                            params.diameter_offset,
+                        ) {
+                            if let Ok(sc) = self.evaluate(&net) {
+                                solutions.push(Solution {
+                                    rank: (i + 2) as i64,
+                                    network: net,
+                                    score: sc,
+                                    metadata: SolutionMetadata::default(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sort by total_cost ascending (best first), then re-rank
+        solutions.sort_by(|a, b| {
+            a.score
+                .total_cost
+                .partial_cmp(&b.score.total_cost)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        for (i, sol) in solutions.iter_mut().enumerate() {
+            sol.rank = (i + 1) as i64;
+        }
+
+        Ok(solutions)
+    }
+
+    // ── MST network builder ────────────────────────────────────────────────────
+
+    /// Convert an MST into a pressurized PipeNetwork.
+    ///
+    /// Faithful port of Python `_build_network_from_mst()`.
+    /// BFS orientation is SOURCE-OUTWARD (opposite of sewer's outlet-inward).
+    #[allow(clippy::too_many_arguments)]
+    fn build_network_from_mst(
+        &self,
+        graph: &TerrainGraph,
+        mst_adj: &HashMap<String, Vec<(String, f64)>>,
+        source_node: &str,
+        demand_nodes: &[String],
+        name: &str,
+        demand_per_node: f64,
+        material: PipeMaterial,
+        hw_c: f64,
+        source_head: f64,
+        diameter_offset: i32,
+        loop_density: f64,
+    ) -> Result<PipeNetwork, String> {
+        let demand_set: HashSet<String> = demand_nodes.iter().cloned().collect();
+
+        // BFS from source to orient flow directions SOURCE-OUTWARD
+        // Python: directed.add_edge(current, neighbor)  ← source → outward
+        let mut directed: HashMap<String, Vec<String>> = HashMap::new();
+        let mut visited: HashSet<String> = HashSet::new();
+        let mut queue: VecDeque<String> = VecDeque::new();
+
+        // Initialize all MST nodes
+        for nid in mst_adj.keys() {
+            directed.entry(nid.clone()).or_default();
+        }
+
+        queue.push_back(source_node.to_string());
+        visited.insert(source_node.to_string());
+
+        while let Some(current) = queue.pop_front() {
+            let neighbors: Vec<String> = mst_adj
+                .get(&current)
+                .map(|v| v.iter().map(|(n, _)| n.clone()).collect())
+                .unwrap_or_default();
+
+            for neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    // Edge goes FROM source outward: current → neighbor
+                    directed
+                        .entry(current.clone())
+                        .or_default()
+                        .push(neighbor.clone());
+                    visited.insert(neighbor.clone());
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+
+        // Create nodes for all nodes in the directed graph
+        let all_node_ids: Vec<String> = directed.keys().cloned().collect();
+        let mut nodes: Vec<NetworkNode> = Vec::new();
+        let mut node_map: HashMap<String, usize> = HashMap::new();
+
+        for nid in &all_node_ids {
+            let coord = graph
+                .get_node_coord(nid)
+                .ok_or_else(|| format!("node {} not found in graph", nid))?;
+            let z = graph
+                .get_node_elevation(nid)
+                .ok_or_else(|| format!("elevation for {} not found", nid))?;
+
+            let ntype = if nid == source_node {
+                NodeType::Tank
+            } else if demand_set.contains(nid) {
+                NodeType::Service
+            } else {
+                NodeType::Junction
+            };
+
+            let demand = if demand_set.contains(nid) {
+                demand_per_node * 1000.0
+            } else {
+                0.0
+            };
+
+            let idx = nodes.len();
+            node_map.insert(nid.clone(), idx);
+            let mut node = NetworkNode::new(nid.as_str(), coord.0, coord.1, z, ntype);
+            node.rim_elevation = z;
+            node.demand = demand;
+            nodes.push(node);
+        }
+
+        // Calculate accumulated demand per node (leaves to root, then dimension pipes)
+        // Topological sort of directed (source is root, leaves first in reverse-topo)
+        let topo_order = topological_sort_directed(&directed);
+
+        let mut demand_at_node: HashMap<String, f64> = HashMap::new();
+        for nid in &all_node_ids {
+            let base = if demand_set.contains(nid) {
+                demand_per_node
+            } else {
+                0.0
+            };
+            demand_at_node.insert(nid.clone(), base);
+        }
+
+        // Accumulate from leaves to source (reverse topo = source first, leaves last)
+        // Python: for nid in reversed(topo_order): for pred in directed.predecessors(nid):
+        //   demand_at_node[pred] += demand_at_node[nid]
+        // In our directed map, source is root (no predecessors), leaves have no successors.
+        // Reverse topo: leaves come first in topo → reversed = source first.
+        // We iterate in REVERSE of topo_order (= source first, leaves last in standard topo).
+        // Actually in Python nx.topological_sort returns in source-last order for a source-outward
+        // tree. Let's think:
+        //   - Source has out-edges to children → source is NOT a leaf → comes FIRST in topo.
+        //   - Leaves have no out-edges → come LAST in topo.
+        //   - reversed(topo_order) = leaves first, source last.
+        //   - For accumulation: we want demand to bubble UP toward source.
+        //   - For each node in reversed order (leaf first), add its demand to its predecessor.
+        //
+        // Since `directed` is source-outward (parent → child), predecessors of v are
+        // the nodes that have v in their children list. We need the inverse.
+        let mut predecessors: HashMap<String, Vec<String>> = HashMap::new();
+        for (parent, children) in &directed {
+            for child in children {
+                predecessors
+                    .entry(child.clone())
+                    .or_default()
+                    .push(parent.clone());
+            }
+        }
+
+        // Accumulate: reversed(topo_order) = source-outward tree reversed = leaves first
+        for nid in topo_order.iter().rev() {
+            let d = demand_at_node.get(nid).copied().unwrap_or(0.0);
+            for pred in predecessors.get(nid).cloned().unwrap_or_default() {
+                *demand_at_node.entry(pred).or_insert(0.0) += d;
+            }
+        }
+
+        // Create pipes with Hazen-Williams dimensioning
+        // NOTE: `network.total_length` grows as pipes are added — match Python's dynamic behavior
+        // by tracking running total_length ourselves.
+        let mut pipe_counter = 0usize;
+        let mut pipes: Vec<NetworkPipe> = Vec::new();
+        let mut running_total_length = 0.0_f64;
+
+        // Iterate in topological order (source first, leaves last) to match Python's BFS order
+        let mut sorted_edges: Vec<(String, String)> = Vec::new();
+        for u in &topo_order {
+            let succs = directed.get(u).cloned().unwrap_or_default();
+            for v in succs {
+                sorted_edges.push((u.clone(), v));
+            }
+        }
+
+        let mut available: Vec<f64> = self.constraints.available_diameters.clone();
+        available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        for (u, v) in &sorted_edges {
+            let start_idx = match node_map.get(u) {
+                Some(&i) => i,
+                None => continue,
+            };
+            let end_idx = match node_map.get(v) {
+                Some(&i) => i,
+                None => continue,
+            };
+
+            let length = {
+                let sn = &nodes[start_idx];
+                let en = &nodes[end_idx];
+                ((sn.x - en.x).powi(2) + (sn.y - en.y).powi(2)).sqrt()
+            };
+
+            if length < 0.1 {
+                continue;
+            }
+
+            // Flow through this pipe = accumulated demand downstream (at v)
+            let flow = demand_at_node
+                .get(v)
+                .copied()
+                .unwrap_or(demand_per_node)
+                .max(demand_per_node);
+
+            // Available head for this segment (dynamic: uses running_total_length)
+            // Python: available_head = max(source_head * (length / max(network.total_length, length)), 1.0)
+            let available_head =
+                (source_head * (length / running_total_length.max(length))).max(1.0);
+
+            let pressure_diameter =
+                required_diameter_pressure(flow, length, available_head, hw_c, &available);
+
+            let diameter = self.select_pressure_diameter(
+                flow,
+                length,
+                available_head,
+                hw_c,
+                Some(pressure_diameter),
+            );
+
+            let diameter = if diameter_offset > 0 {
+                if let Some(idx) = available.iter().position(|&d| (d - diameter).abs() < 1e-12) {
+                    let new_idx =
+                        (idx as i32 + diameter_offset).min((available.len() - 1) as i32) as usize;
+                    available[new_idx]
+                } else {
+                    diameter
+                }
+            } else {
+                diameter
+            };
+
+            let start_z = nodes[start_idx].z;
+            let end_z = nodes[end_idx].z;
+            let start_invert = start_z - self.constraints.min_cover;
+            let end_invert = end_z - self.constraints.min_cover;
+
+            pipe_counter += 1;
+            running_total_length += length;
+
+            let mut pipe_meta: HashMap<String, Value> = HashMap::new();
+            pipe_meta.insert("flow_m3s".to_string(), Value::from(flow));
+
+            pipes.push(NetworkPipe {
+                id: PipeId::new(format!("Pipe - ({})", pipe_counter)),
+                start_node_id: NodeId::new(u.as_str()),
+                end_node_id: NodeId::new(v.as_str()),
+                length,
+                effective_length: length,
+                diameter,
+                material,
+                roughness: material.manning_n(),
+                start_invert,
+                end_invert,
+                slope: if length > 0.0 {
+                    (start_invert - end_invert) / length
+                } else {
+                    0.0
+                },
+                design_flow: flow,
+                waypoints: vec![],
+                metadata: pipe_meta,
+            });
+        }
+
+        // Build partial network (nodes + pipes so far) so we can add loop connections
+        let mut network = PipeNetwork::new(name, nodes, pipes);
+
+        // Add cross-connections for loop redundancy
+        self.add_loop_connections(
+            graph,
+            &mut network,
+            &directed,
+            demand_per_node,
+            material,
+            hw_c,
+            loop_density,
+        )?;
+
+        // Check pressures at all nodes (BFS from source)
+        self.check_pressures(&mut network, source_node, source_head, hw_c);
+
+        Ok(network)
+    }
+
+    // ── Loop connections ───────────────────────────────────────────────────────
+
+    /// Add short cross-connections to create loops for redundancy.
+    ///
+    /// Faithful port of Python `_add_loop_connections()`.
+    #[allow(clippy::too_many_arguments)]
+    fn add_loop_connections(
+        &self,
+        graph: &TerrainGraph,
+        network: &mut PipeNetwork,
+        directed: &HashMap<String, Vec<String>>,
+        demand_per_node: f64,
+        material: PipeMaterial,
+        hw_c: f64,
+        loop_density: f64,
+    ) -> Result<(), String> {
+        // Build tree_edges (both directions) from directed (source-outward)
+        let mut tree_edges: HashSet<(String, String)> = HashSet::new();
+        for (u, children) in directed {
+            for v in children {
+                tree_edges.insert((u.clone(), v.clone()));
+                tree_edges.insert((v.clone(), u.clone()));
+            }
+        }
+
+        let tree_nodes: HashSet<String> = directed.keys().cloned().collect();
+
+        let base_max = 3usize.max(tree_nodes.len() / 5);
+        let max_loops = 1usize.max((base_max as f64 * loop_density) as usize);
+
+        // Candidate edges: in full graph, between tree nodes, not in tree
+        let all_edges = graph.all_edges();
+        let mut candidates: Vec<(String, String, f64)> = all_edges
+            .into_iter()
+            .filter_map(|(u, v, w, _)| {
+                if tree_nodes.contains(&u)
+                    && tree_nodes.contains(&v)
+                    && !tree_edges.contains(&(u.clone(), v.clone()))
+                {
+                    Some((u, v, w))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Sort by weight (prefer short/cheap connections)
+        candidates.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
+
+        let mut available: Vec<f64> = self.constraints.available_diameters.clone();
+        available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        let mut added = 0usize;
+        let mut pipe_counter = network.pipe_count();
+
+        for (u, v, _) in candidates {
+            if added >= max_loops {
+                break;
+            }
+
+            let start_node = match network.get_node(&NodeId::new(u.as_str())) {
+                Some(n) => n.clone(),
+                None => continue,
+            };
+            let end_node = match network.get_node(&NodeId::new(v.as_str())) {
+                Some(n) => n.clone(),
+                None => continue,
+            };
+
+            let length = {
+                let dx = start_node.x - end_node.x;
+                let dy = start_node.y - end_node.y;
+                (dx * dx + dy * dy).sqrt()
+            };
+
+            if length < 0.1 {
+                continue;
+            }
+
+            pipe_counter += 1;
+
+            let pressure_diameter =
+                required_diameter_pressure(demand_per_node, length, 10.0, hw_c, &available);
+
+            let diameter = self.select_pressure_diameter(
+                demand_per_node,
+                length,
+                10.0,
+                hw_c,
+                Some(pressure_diameter),
+            );
+
+            let start_invert = start_node.z - self.constraints.min_cover;
+            let end_invert = end_node.z - self.constraints.min_cover;
+
+            let mut pipe_meta: HashMap<String, Value> = HashMap::new();
+            pipe_meta.insert("flow_m3s".to_string(), Value::from(demand_per_node));
+
+            let new_pipe = NetworkPipe {
+                id: PipeId::new(format!("Pipe - ({})", pipe_counter)),
+                start_node_id: NodeId::new(u.as_str()),
+                end_node_id: NodeId::new(v.as_str()),
+                length,
+                effective_length: length,
+                diameter,
+                material,
+                roughness: material.manning_n(),
+                start_invert,
+                end_invert,
+                slope: if length > 0.0 {
+                    (start_invert - end_invert) / length
+                } else {
+                    0.0
+                },
+                design_flow: demand_per_node,
+                waypoints: vec![],
+                metadata: pipe_meta,
+            };
+
+            // Rebuild network with the new pipe added
+            let all_nodes = network.nodes.clone();
+            let mut all_pipes = network.pipes.clone();
+            all_pipes.push(new_pipe);
+            *network = PipeNetwork::new(network.name.clone(), all_nodes, all_pipes);
+
+            added += 1;
+        }
+
+        Ok(())
+    }
+
+    // ── Pressure check ─────────────────────────────────────────────────────────
+
+    /// Calculate pressure at each node by BFS from source.
+    ///
+    /// Faithful port of Python `_check_pressures()`.
+    /// Energy balance: P_node = P_upstream - hf - dz
+    /// Stores pressure in node.metadata["pressure_mca"].
+    fn check_pressures(
+        &self,
+        network: &mut PipeNetwork,
+        source_node: &str,
+        source_head: f64,
+        hw_c: f64,
+    ) {
+        let source_id = NodeId::new(source_node);
+
+        // Find source node index
+        let src_idx = match network.nodes.iter().position(|n| n.id == source_id) {
+            Some(i) => i,
+            None => return,
+        };
+
+        // Set source pressure
+        network.nodes[src_idx]
+            .metadata
+            .insert("pressure_mca".to_string(), Value::from(source_head));
+
+        let mut pressures: HashMap<String, f64> = HashMap::new();
+        pressures.insert(source_node.to_string(), source_head);
+
+        // BFS from source through pipes (undirected adjacency)
+        let mut visited: HashSet<String> = HashSet::new();
+        visited.insert(source_node.to_string());
+        let mut queue: VecDeque<String> = VecDeque::new();
+        queue.push_back(source_node.to_string());
+
+        while let Some(current_id_str) = queue.pop_front() {
+            let current_id = NodeId::new(current_id_str.as_str());
+            let current_pressure = match pressures.get(&current_id_str) {
+                Some(&p) => p,
+                None => continue,
+            };
+
+            // Get current node's z
+            let current_z = match network.nodes.iter().find(|n| n.id == current_id) {
+                Some(n) => n.z,
+                None => continue,
+            };
+
+            // Get adjacency for this node (list of (neighbor_id, pipe_index))
+            let adjacency = network
+                .adjacency
+                .get(&current_id)
+                .cloned()
+                .unwrap_or_default();
+
+            for (neighbor_id, pipe_idx) in adjacency {
+                let neighbor_id_str = neighbor_id.0.clone();
+                if visited.contains(&neighbor_id_str) {
+                    continue;
+                }
+
+                let pipe = &network.pipes[pipe_idx];
+
+                // Get flow from metadata — fallback uses neighbor.demand
+                // Python: max(neighbor.demand, 1.0) / 1000.0
+                let neighbor_demand = network
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == neighbor_id)
+                    .map(|n| n.demand)
+                    .unwrap_or(0.0);
+
+                let flow = pipe
+                    .metadata
+                    .get("flow_m3s")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or_else(|| neighbor_demand.max(1.0) / 1000.0);
+
+                let hf = head_loss(flow, pipe.diameter, pipe.length, hw_c);
+
+                // Get neighbor z
+                let neighbor_z = match network.nodes.iter().find(|n| n.id == neighbor_id) {
+                    Some(n) => n.z,
+                    None => continue,
+                };
+
+                let dz = neighbor_z - current_z;
+                let pressure = current_pressure - hf - dz;
+
+                pressures.insert(neighbor_id_str.clone(), pressure);
+
+                // Store pressure in neighbor's metadata
+                if let Some(n_idx) = network.nodes.iter().position(|n| n.id == neighbor_id) {
+                    network.nodes[n_idx]
+                        .metadata
+                        .insert("pressure_mca".to_string(), Value::from(pressure));
+                }
+
+                visited.insert(neighbor_id_str.clone());
+                queue.push_back(neighbor_id_str);
+            }
+        }
+    }
+
+    // ── Path network builder ───────────────────────────────────────────────────
+
+    /// Build a network along a single path (for alternative routes).
+    ///
+    /// Faithful port of Python `_build_network_from_path()`.
+    #[allow(clippy::too_many_arguments)]
+    fn build_network_from_path(
+        &self,
+        graph: &TerrainGraph,
+        path: &[String],
+        demand_nodes: &[String],
+        source_node: &str,
+        name: &str,
+        demand_per_node: f64,
+        material: PipeMaterial,
+        hw_c: f64,
+        source_head: f64,
+        diameter_offset: i32,
+    ) -> Result<PipeNetwork, String> {
+        let demand_set: HashSet<String> = demand_nodes.iter().cloned().collect();
+
+        // Create nodes along path
+        let mut nodes: Vec<NetworkNode> = Vec::new();
+        let mut node_map: HashMap<String, usize> = HashMap::new();
+
+        for nid in path {
+            let coord = graph
+                .get_node_coord(nid)
+                .ok_or_else(|| format!("node {} not found in graph", nid))?;
+            let z = graph
+                .get_node_elevation(nid)
+                .ok_or_else(|| format!("elevation for {} not found", nid))?;
+
+            let ntype = if nid == source_node {
+                NodeType::Tank
+            } else if demand_set.contains(nid) {
+                NodeType::Service
+            } else {
+                NodeType::Junction
+            };
+
+            let demand = if demand_set.contains(nid) {
+                demand_per_node * 1000.0
+            } else {
+                0.0
+            };
+
+            let idx = nodes.len();
+            node_map.insert(nid.clone(), idx);
+            let mut node = NetworkNode::new(nid.as_str(), coord.0, coord.1, z, ntype);
+            node.rim_elevation = z;
+            node.demand = demand;
+            nodes.push(node);
+        }
+
+        let mut available: Vec<f64> = self.constraints.available_diameters.clone();
+        available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Create pipes along path (source outward: path[i] → path[i+1])
+        let mut pipes: Vec<NetworkPipe> = Vec::new();
+
+        for i in 0..path.len().saturating_sub(1) {
+            let u = &path[i];
+            let v = &path[i + 1];
+
+            let start_idx = match node_map.get(u) {
+                Some(&idx) => idx,
+                None => continue,
+            };
+            let end_idx = match node_map.get(v) {
+                Some(&idx) => idx,
+                None => continue,
+            };
+
+            let length = {
+                let sn = &nodes[start_idx];
+                let en = &nodes[end_idx];
+                ((sn.x - en.x).powi(2) + (sn.y - en.y).powi(2)).sqrt()
+            };
+
+            if length < 0.1 {
+                continue;
+            }
+
+            let flow = demand_per_node.max(0.001);
+            // Python: available_head = max(source_head * 0.3, 1.0)
+            let available_head = (source_head * 0.3_f64).max(1.0);
+
+            let pressure_diameter =
+                required_diameter_pressure(flow, length, available_head, hw_c, &available);
+
+            let diameter = self.select_pressure_diameter(
+                flow,
+                length,
+                available_head,
+                hw_c,
+                Some(pressure_diameter),
+            );
+
+            let diameter = if diameter_offset > 0 {
+                if let Some(idx) = available.iter().position(|&d| (d - diameter).abs() < 1e-12) {
+                    let new_idx =
+                        (idx as i32 + diameter_offset).min((available.len() - 1) as i32) as usize;
+                    available[new_idx]
+                } else {
+                    diameter
+                }
+            } else {
+                diameter
+            };
+
+            let start_z = nodes[start_idx].z;
+            let end_z = nodes[end_idx].z;
+            let start_invert = start_z - self.constraints.min_cover;
+            let end_invert = end_z - self.constraints.min_cover;
+
+            let mut pipe_meta: HashMap<String, Value> = HashMap::new();
+            pipe_meta.insert("flow_m3s".to_string(), Value::from(flow));
+
+            pipes.push(NetworkPipe {
+                id: PipeId::new(format!("Pipe - ({})", i + 1)),
+                start_node_id: NodeId::new(u.as_str()),
+                end_node_id: NodeId::new(v.as_str()),
+                length,
+                effective_length: length,
+                diameter,
+                material,
+                roughness: material.manning_n(),
+                start_invert,
+                end_invert,
+                slope: if length > 0.0 {
+                    (start_invert - end_invert) / length
+                } else {
+                    0.0
+                },
+                design_flow: flow,
+                waypoints: vec![],
+                metadata: pipe_meta,
+            });
+        }
+
+        let mut network = PipeNetwork::new(name, nodes, pipes);
+
+        // Check pressures
+        self.check_pressures(&mut network, source_node, source_head, hw_c);
+
+        Ok(network)
+    }
+
+    // ── Diameter selection ─────────────────────────────────────────────────────
+
+    /// Select a pressure pipe diameter that also respects velocity limits.
+    ///
+    /// Faithful port of Python `_select_pressure_diameter()`.
+    fn select_pressure_diameter(
+        &self,
+        flow: f64,
+        length: f64,
+        available_head: f64,
+        hw_c: f64,
+        minimum: Option<f64>,
+    ) -> f64 {
+        let mut available: Vec<f64> = self
+            .constraints
+            .available_diameters
+            .iter()
+            .filter(|&&d| d >= self.constraints.min_diameter)
+            .copied()
+            .collect();
+        available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        let candidates: Vec<f64> = if let Some(min_d) = minimum {
+            let c: Vec<f64> = available.iter().filter(|&&d| d >= min_d).copied().collect();
+            if c.is_empty() {
+                available.clone()
+            } else {
+                c
+            }
+        } else {
+            available.clone()
+        };
+
+        // First: find diameters where hf <= available_head AND velocity is in [min, max]
+        let feasible: Vec<f64> = candidates
+            .iter()
+            .filter(|&&d| {
+                let hf = head_loss(flow, d, length, hw_c);
+                let v = velocity(flow, d);
+                hf <= available_head
+                    && v >= self.constraints.min_velocity
+                    && v <= self.constraints.max_velocity
+            })
+            .copied()
+            .collect();
+
+        if !feasible.is_empty() {
+            return feasible[0];
+        }
+
+        // Fallback: find diameters that are pressure-safe (hf <= available_head)
+        let pressure_safe: Vec<f64> = available
+            .iter()
+            .filter(|&&d| head_loss(flow, d, length, hw_c) <= available_head)
+            .copied()
+            .collect();
+
+        let search = if pressure_safe.is_empty() {
+            &available
+        } else {
+            &pressure_safe
+        };
+
+        // Among search, pick the one closest to velocity limits
+        search
+            .iter()
+            .min_by(|&&da, &&db| {
+                let va = velocity(flow, da);
+                let vb = velocity(flow, db);
+                let min_v = self.constraints.min_velocity;
+                let max_v = self.constraints.max_velocity;
+                let score_a = (va - min_v).abs().min((va - max_v).abs());
+                let score_b = (vb - min_v).abs().min((vb - max_v).abs());
+                score_a
+                    .partial_cmp(&score_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .copied()
+            .unwrap_or_else(|| available.last().copied().unwrap_or(0.1))
+    }
+}
+
+// ── Solver trait impl ─────────────────────────────────────────────────────────
+
+impl Solver for WaterSupplySolver {
+    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // The generic solve() has no demand_points/source — return error to guide callers.
+        Err(SolverError::BuildFailed(
+            "Use WaterSupplySolver::solve_water_supply() with explicit source and demand_points"
+                .to_string(),
+        ))
+    }
+
+    fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {
+        let total_length = network.total_length;
+        let mut total_excavation = 0.0_f64;
+        let mut violations = 0i64;
+
+        // Get HW coefficient from first pipe material (all same material)
+        // (not used in velocity calculation, but kept for future pressure re-check)
+        let _hw_c = network
+            .pipes
+            .first()
+            .map(|p| hw_coefficient(p.material.as_str()))
+            .unwrap_or(150.0);
+
+        for pipe in &network.pipes {
+            let start_node = network.get_node(&pipe.start_node_id);
+            let end_node = network.get_node(&pipe.end_node_id);
+
+            if let (Some(sn), Some(en)) = (start_node, end_node) {
+                // Average excavation depth
+                let depth_start = self.terrain.elevation_at(sn.x, sn.y) - pipe.start_invert;
+                let depth_end = self.terrain.elevation_at(en.x, en.y) - pipe.end_invert;
+                let avg_depth = ((depth_start + depth_end) / 2.0).max(0.0);
+                total_excavation += avg_depth * pipe.length;
+
+                // Check velocity bounds
+                // Python: flow = float(pipe.metadata.get("flow_m3s", max(start_node.demand, 0.001) / 1000.0))
+                let flow = pipe
+                    .metadata
+                    .get("flow_m3s")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or_else(|| sn.demand.max(0.001) / 1000.0);
+
+                let v = velocity(flow, pipe.diameter);
+                if v < self.constraints.min_velocity {
+                    violations += 1;
+                }
+                if v > self.constraints.max_velocity {
+                    violations += 1;
+                }
+            }
+        }
+
+        // Check pressure at all non-source nodes
+        for node in &network.nodes {
+            if matches!(node.node_type, NodeType::Tank | NodeType::Reservoir) {
+                continue;
+            }
+            let pressure = node
+                .metadata
+                .get("pressure_mca")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            if pressure < self.constraints.min_pressure {
+                violations += 1;
+            }
+            if pressure > self.constraints.max_pressure {
+                violations += 1;
+            }
+        }
+
+        // Cost formula: 1.0*L + 1.5*excav + 150.0*violations
+        let cost = 1.0 * total_length + 1.5 * total_excavation + 150.0 * violations as f64;
+
+        let avg_excavation = total_excavation / total_length.max(1.0);
+
+        Ok(SolutionScore {
+            total_cost: cost,
+            total_length,
+            total_excavation,
+            norm_violations: violations,
+            pump_count: 0,
+            details: serde_json::json!({
+                "pipe_count": network.pipe_count(),
+                "node_count": network.node_count(),
+                "avg_excavation": avg_excavation,
+            }),
+        })
+    }
+}
+
+// ── Private helpers ───────────────────────────────────────────────────────────
+
+/// Topological sort of a source-outward directed adjacency map.
+///
+/// Returns nodes in topological order (source first, leaves last).
+fn topological_sort_directed(adj: &HashMap<String, Vec<String>>) -> Vec<String> {
+    // Compute in-degrees
+    let mut in_degree: HashMap<String, usize> = HashMap::new();
+    for nid in adj.keys() {
+        in_degree.entry(nid.clone()).or_insert(0);
+    }
+    for children in adj.values() {
+        for v in children {
+            *in_degree.entry(v.clone()).or_insert(0) += 1;
+        }
+    }
+
+    // Kahn's algorithm
+    let mut queue: VecDeque<String> = in_degree
+        .iter()
+        .filter(|(_, &d)| d == 0)
+        .map(|(k, _)| k.clone())
+        .collect();
+
+    let mut queue_vec: Vec<String> = queue.drain(..).collect();
+    queue_vec.sort();
+    queue.extend(queue_vec);
+
+    let mut order: Vec<String> = Vec::new();
+    while let Some(node) = queue.pop_front() {
+        order.push(node.clone());
+        let children = adj.get(&node).cloned().unwrap_or_default();
+        let mut new_sources: Vec<String> = Vec::new();
+        for v in children {
+            let deg = in_degree.entry(v.clone()).or_insert(0);
+            if *deg > 0 {
+                *deg -= 1;
+            }
+            if *deg == 0 {
+                new_sources.push(v);
+            }
+        }
+        new_sources.sort();
+        queue.extend(new_sources);
+    }
+
+    order
+}

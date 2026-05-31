@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_conveyance_golden",
+  "description": "ConveyanceSolver primary fixture: 5x5 grid (20m spacing), z=100.0+0.006*x (monotonic), source=g0=(0,0), dest=g20=(80,0). route_variant=0, num_alternatives=1. structure_count=0 (no peaks/valleys). All coords at on-grid nodes for EXACT elevation queries.",
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "slope_x": 0.006,
+    "slope_y": 0.0,
+    "base_z": 100.0,
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.0
+      ],
+      [
+        0.0,
+        40.0,
+        100.0
+      ],
+      [
+        0.0,
+        60.0,
+        100.0
+      ],
+      [
+        0.0,
+        80.0,
+        100.0
+      ],
+      [
+        20.0,
+        0.0,
+        100.12
+      ],
+      [
+        20.0,
+        20.0,
+        100.12
+      ],
+      [
+        20.0,
+        40.0,
+        100.12
+      ],
+      [
+        20.0,
+        60.0,
+        100.12
+      ],
+      [
+        20.0,
+        80.0,
+        100.12
+      ],
+      [
+        40.0,
+        0.0,
+        100.24
+      ],
+      [
+        40.0,
+        20.0,
+        100.24
+      ],
+      [
+        40.0,
+        40.0,
+        100.24
+      ],
+      [
+        40.0,
+        60.0,
+        100.24
+      ],
+      [
+        40.0,
+        80.0,
+        100.24
+      ],
+      [
+        60.0,
+        0.0,
+        100.36
+      ],
+      [
+        60.0,
+        20.0,
+        100.36
+      ],
+      [
+        60.0,
+        40.0,
+        100.36
+      ],
+      [
+        60.0,
+        60.0,
+        100.36
+      ],
+      [
+        60.0,
+        80.0,
+        100.36
+      ],
+      [
+        80.0,
+        0.0,
+        100.48
+      ],
+      [
+        80.0,
+        20.0,
+        100.48
+      ],
+      [
+        80.0,
+        40.0,
+        100.48
+      ],
+      [
+        80.0,
+        60.0,
+        100.48
+      ],
+      [
+        80.0,
+        80.0,
+        100.48
+      ]
+    ]
+  },
+  "solver_params": {
+    "source": [
+      0.0,
+      0.0
+    ],
+    "destination": [
+      80.0,
+      0.0
+    ],
+    "design_flow": 0.01,
+    "source_head": 30.0,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 1,
+    "route_variant": 0,
+    "cover_factor": 1.0,
+    "valve_spacing": 500.0
+  },
+  "node_count": 5,
+  "pipe_count": 4,
+  "total_length": 80.0,
+  "nodes": [
+    {
+      "id": "g0",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "TANK",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5,
+      "pressure_mca": 30.0,
+      "valve_type": null
+    },
+    {
+      "id": "g5",
+      "x": 20.0,
+      "y": 0.0,
+      "z": 100.12,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.12,
+      "sump_elevation": 98.62,
+      "pressure_mca": 29.870021682366776,
+      "valve_type": null
+    },
+    {
+      "id": "g10",
+      "x": 40.0,
+      "y": 0.0,
+      "z": 100.24,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.24,
+      "sump_elevation": 98.74,
+      "pressure_mca": 29.740043364733566,
+      "valve_type": null
+    },
+    {
+      "id": "g15",
+      "x": 60.0,
+      "y": 0.0,
+      "z": 100.36,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.36,
+      "sump_elevation": 98.86,
+      "pressure_mca": 29.610065047100342,
+      "valve_type": null
+    },
+    {
+      "id": "g20",
+      "x": 80.0,
+      "y": 0.0,
+      "z": 100.48,
+      "node_type": "RESERVOIR",
+      "rim_elevation": 100.48,
+      "sump_elevation": 98.98,
+      "pressure_mca": 29.480086729467118,
+      "valve_type": null
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Pipe - (1)",
+      "start_node_id": "g0",
+      "end_node_id": "g5",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 98.8,
+      "end_invert": 98.92,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (2)",
+      "start_node_id": "g5",
+      "end_node_id": "g10",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.005999999999999517,
+      "start_invert": 98.92,
+      "end_invert": 99.03999999999999,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (3)",
+      "start_node_id": "g10",
+      "end_node_id": "g15",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 99.03999999999999,
+      "end_invert": 99.16,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (4)",
+      "start_node_id": "g15",
+      "end_node_id": "g20",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.006000000000000227,
+      "start_invert": 99.16,
+      "end_invert": 99.28,
+      "design_flow": 0.01
+    }
+  ],
+  "score": {
+    "total_cost": 1112.0000000000005,
+    "total_length": 80.0,
+    "total_excavation": 96.00000000000023,
+    "norm_violations": 4,
+    "pump_count": 0
+  },
+  "evaluate_only": {
+    "total_cost": 1112.0000000000005,
+    "total_length": 80.0,
+    "total_excavation": 96.00000000000023,
+    "norm_violations": 4,
+    "pump_count": 0,
+    "details": {
+      "pipe_count": 4.0,
+      "node_count": 5.0,
+      "structure_count": 0.0,
+      "avg_excavation": 1.2000000000000028
+    }
+  },
+  "cost_formula": {
+    "w_length": 1.5,
+    "w_excavation": 2.0,
+    "w_violations": 200.0,
+    "w_structures": 500.0,
+    "expected_cost": 1112.0000000000005
+  }
+}

@@ -14,3 +14,7 @@ pub mod open_channel;
 pub mod pump_curves;
 
 pub use error::HydraulicsError;
+pub use hazen_williams::{
+    head_loss as hw_head_loss, hw_coefficient, required_diameter_pressure, velocity as hw_velocity,
+    HW_COEFFICIENTS,
+};

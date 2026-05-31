@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "fixture_name": "solvers_conveyance_valves",
+  "description": "ConveyanceSolver valve-placement fixture: terrain with peak at g10=(40,0) and valley at g15=(60,0). valve_spacing=1.0 to place both structures. structure_count > 0, VALVE node_types present.",
+  "terrain": {
+    "grid_res": 20.0,
+    "x_min": 0.0,
+    "x_max": 80.0,
+    "y_min": 0.0,
+    "y_max": 80.0,
+    "z_for_x": {
+      "0.0": 100.0,
+      "20.0": 100.4,
+      "40.0": 101.0,
+      "60.0": 100.2,
+      "80.0": 100.8
+    },
+    "points": [
+      [
+        0.0,
+        0.0,
+        100.0
+      ],
+      [
+        0.0,
+        20.0,
+        100.0
+      ],
+      [
+        0.0,
+        40.0,
+        100.0
+      ],
+      [
+        0.0,
+        60.0,
+        100.0
+      ],
+      [
+        0.0,
+        80.0,
+        100.0
+      ],
+      [
+        20.0,
+        0.0,
+        100.4
+      ],
+      [
+        20.0,
+        20.0,
+        100.4
+      ],
+      [
+        20.0,
+        40.0,
+        100.4
+      ],
+      [
+        20.0,
+        60.0,
+        100.4
+      ],
+      [
+        20.0,
+        80.0,
+        100.4
+      ],
+      [
+        40.0,
+        0.0,
+        101.0
+      ],
+      [
+        40.0,
+        20.0,
+        101.0
+      ],
+      [
+        40.0,
+        40.0,
+        101.0
+      ],
+      [
+        40.0,
+        60.0,
+        101.0
+      ],
+      [
+        40.0,
+        80.0,
+        101.0
+      ],
+      [
+        60.0,
+        0.0,
+        100.2
+      ],
+      [
+        60.0,
+        20.0,
+        100.2
+      ],
+      [
+        60.0,
+        40.0,
+        100.2
+      ],
+      [
+        60.0,
+        60.0,
+        100.2
+      ],
+      [
+        60.0,
+        80.0,
+        100.2
+      ],
+      [
+        80.0,
+        0.0,
+        100.8
+      ],
+      [
+        80.0,
+        20.0,
+        100.8
+      ],
+      [
+        80.0,
+        40.0,
+        100.8
+      ],
+      [
+        80.0,
+        60.0,
+        100.8
+      ],
+      [
+        80.0,
+        80.0,
+        100.8
+      ]
+    ]
+  },
+  "solver_params": {
+    "source": [
+      0.0,
+      0.0
+    ],
+    "destination": [
+      80.0,
+      0.0
+    ],
+    "design_flow": 0.01,
+    "source_head": 30.0,
+    "material": "PVC",
+    "grid_resolution": 20.0,
+    "num_alternatives": 1,
+    "route_variant": 0,
+    "cover_factor": 1.0,
+    "valve_spacing": 1.0
+  },
+  "node_count": 5,
+  "pipe_count": 4,
+  "total_length": 80.0,
+  "structure_count": 2,
+  "valve_nodes": [
+    {
+      "id": "g10",
+      "node_type": "VALVE",
+      "valve_type": "air_valve",
+      "x": 40.0,
+      "y": 0.0,
+      "z": 101.0
+    },
+    {
+      "id": "g15",
+      "node_type": "VALVE",
+      "valve_type": "blowoff_valve",
+      "x": 60.0,
+      "y": 0.0,
+      "z": 100.2
+    }
+  ],
+  "nodes": [
+    {
+      "id": "g0",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 100.0,
+      "node_type": "TANK",
+      "rim_elevation": 100.0,
+      "sump_elevation": 98.5,
+      "pressure_mca": 30.0,
+      "valve_type": null
+    },
+    {
+      "id": "g5",
+      "x": 20.0,
+      "y": 0.0,
+      "z": 100.4,
+      "node_type": "JUNCTION",
+      "rim_elevation": 100.4,
+      "sump_elevation": 98.9,
+      "pressure_mca": 29.590021682366775,
+      "valve_type": null
+    },
+    {
+      "id": "g10",
+      "x": 40.0,
+      "y": 0.0,
+      "z": 101.0,
+      "node_type": "VALVE",
+      "rim_elevation": 101.0,
+      "sump_elevation": 99.5,
+      "pressure_mca": 28.98004336473356,
+      "valve_type": "air_valve"
+    },
+    {
+      "id": "g15",
+      "x": 60.0,
+      "y": 0.0,
+      "z": 100.2,
+      "node_type": "VALVE",
+      "rim_elevation": 100.2,
+      "sump_elevation": 98.7,
+      "pressure_mca": 29.77006504710034,
+      "valve_type": "blowoff_valve"
+    },
+    {
+      "id": "g20",
+      "x": 80.0,
+      "y": 0.0,
+      "z": 100.8,
+      "node_type": "RESERVOIR",
+      "rim_elevation": 100.8,
+      "sump_elevation": 99.3,
+      "pressure_mca": 29.160086729467125,
+      "valve_type": null
+    }
+  ],
+  "pipes": [
+    {
+      "id": "Pipe - (1)",
+      "start_node_id": "g0",
+      "end_node_id": "g5",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.020000000000000285,
+      "start_invert": 98.8,
+      "end_invert": 99.2,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (2)",
+      "start_node_id": "g5",
+      "end_node_id": "g10",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.029999999999999714,
+      "start_invert": 99.2,
+      "end_invert": 99.8,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (3)",
+      "start_node_id": "g10",
+      "end_node_id": "g15",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": 0.039999999999999855,
+      "start_invert": 99.8,
+      "end_invert": 99.0,
+      "design_flow": 0.01
+    },
+    {
+      "id": "Pipe - (4)",
+      "start_node_id": "g15",
+      "end_node_id": "g20",
+      "length": 20.0,
+      "diameter": 0.2,
+      "slope": -0.029999999999999714,
+      "start_invert": 99.0,
+      "end_invert": 99.6,
+      "design_flow": 0.01
+    }
+  ],
+  "score": {
+    "total_cost": 2112.0000000000005,
+    "total_length": 80.0,
+    "total_excavation": 96.00000000000023,
+    "norm_violations": 4,
+    "pump_count": 0
+  },
+  "evaluate_only": {
+    "total_cost": 2112.0000000000005,
+    "total_length": 80.0,
+    "total_excavation": 96.00000000000023,
+    "norm_violations": 4,
+    "pump_count": 0,
+    "details": {
+      "pipe_count": 4.0,
+      "node_count": 5.0,
+      "structure_count": 2.0,
+      "avg_excavation": 1.2000000000000028
+    }
+  },
+  "cost_formula": {
+    "w_length": 1.5,
+    "w_excavation": 2.0,
+    "w_violations": 200.0,
+    "w_structures": 500.0,
+    "expected_cost": 2112.0000000000005
+  }
+}

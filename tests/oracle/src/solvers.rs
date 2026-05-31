@@ -150,6 +150,387 @@ pub fn try_load_sewer_golden() -> Result<SewerGolden, OracleError> {
     load_fixture::<SewerGolden>("solvers_sewer_golden")
 }
 
+// ── WaterSupplySolver fixture structs ────────────────────────────────────────
+
+/// Terrain parameters embedded in the water supply fixture.
+///
+/// z(x, y) = base_z + slope_x * x + slope_y * y
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    pub slope_x: f64,
+    #[serde(default)]
+    pub slope_y: f64,
+    pub base_z: f64,
+    /// All terrain points as [x, y, z] triples.
+    pub points: Vec<[f64; 3]>,
+}
+
+/// Solver input parameters embedded in the water supply fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsSolverParams {
+    pub source: [f64; 2],
+    pub demand_points: Vec<[f64; 2]>,
+    pub source_head: f64,
+    pub demand_per_node: f64,
+    pub material: String,
+    pub grid_resolution: f64,
+    pub num_alternatives: u32,
+    pub network_type: u32,
+    pub diameter_offset: i32,
+    pub loop_density: f64,
+}
+
+/// One node in the oracle-built water supply network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+    pub demand: f64,
+    pub pressure_mca: Option<f64>,
+}
+
+/// One pipe in the oracle-built water supply network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsPipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+    pub flow_m3s: f64,
+}
+
+/// Oracle score values for water supply.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict fields for water supply.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsDetailsGolden {
+    pub pipe_count: f64,
+    pub node_count: f64,
+    pub avg_excavation: f64,
+}
+
+/// Evaluate-only sub-fixture for water supply.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: WsDetailsGolden,
+}
+
+/// Cost formula parameters for water supply.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsCostFormula {
+    pub w_length: f64,
+    pub w_excavation: f64,
+    pub w_violations: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_water_supply_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: WsTerrainParams,
+    pub solver_params: WsSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<WsNodeGolden>,
+    pub pipes: Vec<WsPipeGolden>,
+    pub score: WsScoreGolden,
+    pub evaluate_only: WsEvaluateOnlyGolden,
+    pub cost_formula: WsCostFormula,
+}
+
+/// One alternative solution entry in the alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub norm_violations: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+}
+
+/// Root fixture struct for `solvers_water_supply_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub solver_params: WsSolverParams,
+    pub terrain: WsTerrainParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<WsAltSolution>,
+    /// Pairwise-distinct oracle costs (one per solution).
+    /// All entries are strictly distinct (|costs[i] - costs[j]| >= 1e-3 for i != j).
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── WaterSupplySolver loaders ─────────────────────────────────────────────────
+
+/// Load `solvers_water_supply_golden.json` (panics in tests if missing/malformed).
+pub fn load_water_supply_golden() -> WsGolden {
+    load_fixture::<WsGolden>("solvers_water_supply_golden").expect(
+        "solvers_water_supply_golden.json must be present; regenerate with generate_solvers_water_supply.py",
+    )
+}
+
+/// Load `solvers_water_supply_golden.json` as `Result` (non-panicking).
+pub fn try_load_water_supply_golden() -> Result<WsGolden, OracleError> {
+    load_fixture::<WsGolden>("solvers_water_supply_golden")
+}
+
+/// Load `solvers_water_supply_alternatives.json` (panics in tests if missing).
+pub fn load_water_supply_alternatives() -> WsAlternativesGolden {
+    load_fixture::<WsAlternativesGolden>("solvers_water_supply_alternatives").expect(
+        "solvers_water_supply_alternatives.json must be present; regenerate with generate_solvers_water_supply.py",
+    )
+}
+
+// ── ConveyanceSolver fixture structs ─────────────────────────────────────────
+
+/// Solver input parameters for conveyance fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvSolverParams {
+    pub source: [f64; 2],
+    pub destination: [f64; 2],
+    pub design_flow: f64,
+    pub source_head: f64,
+    pub material: String,
+    pub grid_resolution: f64,
+    pub num_alternatives: u32,
+    pub route_variant: u32,
+    pub cover_factor: f64,
+    pub valve_spacing: f64,
+}
+
+/// Terrain parameters for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    #[serde(default)]
+    pub slope_x: f64,
+    #[serde(default)]
+    pub slope_y: f64,
+    #[serde(default)]
+    pub base_z: f64,
+    pub points: Vec<[f64; 3]>,
+}
+
+/// One node in a conveyance oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvNodeGolden {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub node_type: String,
+    pub rim_elevation: f64,
+    pub sump_elevation: f64,
+    pub pressure_mca: Option<f64>,
+    pub valve_type: Option<String>,
+}
+
+/// One pipe in a conveyance oracle network.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvPipeGolden {
+    pub id: String,
+    pub start_node_id: String,
+    pub end_node_id: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub slope: f64,
+    pub start_invert: f64,
+    pub end_invert: f64,
+    pub design_flow: f64,
+}
+
+/// Score for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvScoreGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+}
+
+/// Details dict for conveyance fixtures.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvDetailsGolden {
+    pub pipe_count: f64,
+    pub node_count: f64,
+    pub avg_excavation: f64,
+    #[serde(default)]
+    pub structure_count: f64,
+}
+
+/// Evaluate-only sub-fixture for conveyance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvEvaluateOnlyGolden {
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub details: ConvDetailsGolden,
+}
+
+/// Cost formula for conveyance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvCostFormula {
+    pub w_length: f64,
+    pub w_excavation: f64,
+    pub w_violations: f64,
+    pub w_structures: f64,
+    pub expected_cost: f64,
+}
+
+/// Root fixture struct for `solvers_conveyance_golden.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub nodes: Vec<ConvNodeGolden>,
+    pub pipes: Vec<ConvPipeGolden>,
+    pub score: ConvScoreGolden,
+    pub evaluate_only: ConvEvaluateOnlyGolden,
+    pub cost_formula: ConvCostFormula,
+}
+
+/// One valve node in the valve-placement fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValveNodeGolden {
+    pub id: String,
+    pub node_type: String,
+    pub valve_type: Option<String>,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+/// Valve terrain params (with z_for_x map).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValveTerrainParams {
+    pub grid_res: f64,
+    pub x_min: f64,
+    pub x_max: f64,
+    pub y_min: f64,
+    pub y_max: f64,
+    pub points: Vec<[f64; 3]>,
+}
+
+/// Root fixture struct for `solvers_conveyance_valves.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvValvesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvValveTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub node_count: usize,
+    pub pipe_count: usize,
+    pub total_length: f64,
+    pub structure_count: usize,
+    pub valve_nodes: Vec<ConvValveNodeGolden>,
+    pub nodes: Vec<ConvNodeGolden>,
+    pub pipes: Vec<ConvPipeGolden>,
+    pub score: ConvScoreGolden,
+    pub evaluate_only: ConvEvaluateOnlyGolden,
+    pub cost_formula: ConvCostFormula,
+}
+
+/// One alternative solution in the alternatives fixture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvAltSolution {
+    pub rank: i64,
+    pub total_cost: f64,
+    pub total_length: f64,
+    pub total_excavation: f64,
+    pub norm_violations: i64,
+    pub pump_count: i64,
+    pub node_count: usize,
+    pub pipe_count: usize,
+}
+
+/// Root fixture struct for `solvers_conveyance_alternatives.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConvAlternativesGolden {
+    pub schema_version: u32,
+    pub fixture_name: String,
+    pub description: String,
+    pub terrain: ConvTerrainParams,
+    pub solver_params: ConvSolverParams,
+    pub num_alternatives_requested: u32,
+    pub num_solutions_returned: usize,
+    pub solutions: Vec<ConvAltSolution>,
+    pub distinct_costs: Vec<f64>,
+}
+
+// ── ConveyanceSolver loaders ──────────────────────────────────────────────────
+
+/// Load `solvers_conveyance_golden.json` (panics in tests if missing/malformed).
+pub fn load_conveyance_golden() -> ConvGolden {
+    load_fixture::<ConvGolden>("solvers_conveyance_golden").expect(
+        "solvers_conveyance_golden.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
+/// Load `solvers_conveyance_valves.json` (panics in tests if missing/malformed).
+pub fn load_conveyance_valves() -> ConvValvesGolden {
+    load_fixture::<ConvValvesGolden>("solvers_conveyance_valves").expect(
+        "solvers_conveyance_valves.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
+/// Load `solvers_conveyance_alternatives.json` (panics in tests if missing).
+pub fn load_conveyance_alternatives() -> ConvAlternativesGolden {
+    load_fixture::<ConvAlternativesGolden>("solvers_conveyance_alternatives").expect(
+        "solvers_conveyance_alternatives.json must be present; regenerate with generate_solvers_conveyance.py",
+    )
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -197,5 +578,107 @@ mod tests {
         let gravity_count = f.pipes.iter().filter(|p| !p.bypassed_by_pump).count();
         assert!(pump_pipe_count > 0, "fixture must have pump-bypassed pipes");
         assert!(gravity_count > 0, "fixture must have gravity pipes");
+    }
+
+    // ── WaterSupply golden fixture self-tests ─────────────────────────────────
+
+    #[test]
+    fn ws_golden_loads_and_has_correct_shape() {
+        let f = load_water_supply_golden();
+        assert_eq!(f.schema_version, 1);
+        assert!(f.node_count > 0, "must have nodes");
+        assert!(f.pipe_count > 0, "must have pipes");
+        assert_eq!(
+            f.nodes.len(),
+            f.node_count,
+            "nodes array matches node_count"
+        );
+        assert_eq!(
+            f.pipes.len(),
+            f.pipe_count,
+            "pipes array matches pipe_count"
+        );
+        assert_eq!(
+            f.cost_formula.w_violations, 150.0,
+            "WS cost formula uses 150.0"
+        );
+        assert_eq!(
+            f.evaluate_only.pump_count, 0,
+            "WS networks have pump_count == 0"
+        );
+    }
+
+    #[test]
+    fn ws_golden_cost_formula_is_consistent() {
+        let f = load_water_supply_golden();
+        let cf = &f.cost_formula;
+        let eo = &f.evaluate_only;
+        let expected = cf.w_length * eo.total_length
+            + cf.w_excavation * eo.total_excavation
+            + cf.w_violations * eo.norm_violations as f64;
+        assert!(
+            (expected - cf.expected_cost).abs() < 1e-4,
+            "WS cost formula inconsistent: computed={expected:.6} oracle={:.6}",
+            cf.expected_cost
+        );
+    }
+
+    #[test]
+    fn ws_golden_has_tank_source_node() {
+        let f = load_water_supply_golden();
+        let source_id = f.solver_params.source;
+        // The source node should be of type TANK
+        let source_node = f
+            .nodes
+            .iter()
+            .find(|n| (n.x - source_id[0]).abs() < 0.1 && (n.y - source_id[1]).abs() < 0.1);
+        assert!(
+            source_node.is_some(),
+            "source node must be in fixture nodes"
+        );
+        assert_eq!(
+            source_node.unwrap().node_type,
+            "TANK",
+            "source node must be TANK type"
+        );
+    }
+
+    #[test]
+    fn ws_alternatives_loads_and_has_multiple_solutions() {
+        let f = load_water_supply_alternatives();
+        assert_eq!(f.schema_version, 1);
+        assert!(
+            f.num_solutions_returned >= 2,
+            "must have at least two alternatives"
+        );
+        assert_eq!(
+            f.distinct_costs.len(),
+            f.num_solutions_returned,
+            "distinct_costs must have one entry per solution"
+        );
+        // Solutions sorted by total_cost strictly ascending (pairwise gap >= 1e-3)
+        for i in 0..f.solutions.len().saturating_sub(1) {
+            assert!(
+                f.solutions[i + 1].total_cost - f.solutions[i].total_cost >= 1e-3,
+                "solutions must be strictly ascending: costs[{}]={:.6} costs[{}]={:.6}",
+                i,
+                f.solutions[i].total_cost,
+                i + 1,
+                f.solutions[i + 1].total_cost
+            );
+        }
+        // distinct_costs are pairwise strictly distinct
+        for i in 0..f.distinct_costs.len() {
+            for j in (i + 1)..f.distinct_costs.len() {
+                assert!(
+                    (f.distinct_costs[i] - f.distinct_costs[j]).abs() >= 1e-3,
+                    "distinct_costs[{}]={:.6} and distinct_costs[{}]={:.6} must differ",
+                    i,
+                    f.distinct_costs[i],
+                    j,
+                    f.distinct_costs[j]
+                );
+            }
+        }
     }
 }
