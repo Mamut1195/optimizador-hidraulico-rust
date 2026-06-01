@@ -21,7 +21,7 @@ pub(crate) mod config;
 pub(crate) mod constraints;
 pub(crate) mod encoding;
 pub(crate) mod errors;
-pub mod nsga3;
+pub(crate) mod nsga3;
 pub(crate) mod objective;
 pub(crate) mod progress;
 pub(crate) mod rng;
