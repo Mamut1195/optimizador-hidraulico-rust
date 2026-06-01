@@ -413,7 +413,7 @@ fn test_todini_ir_formula_matches_oracle() {
 
     // Oracle-computed expected deficit
     let ir_expected = 0.05_f64 / 0.17_f64; // ≈ 0.294117...
-    let deficit_expected = 1.0 - ir_expected.min(1.0).max(0.0);
+    let deficit_expected = 1.0 - ir_expected.clamp(0.0, 1.0);
 
     assert!(
         (objectives[4] - deficit_expected).abs() < 1e-6,

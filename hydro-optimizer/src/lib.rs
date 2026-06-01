@@ -20,6 +20,7 @@
 pub(crate) mod config;
 pub(crate) mod encoding;
 pub(crate) mod errors;
+pub(crate) mod objective;
 pub(crate) mod progress;
 pub(crate) mod rng;
 
@@ -28,12 +29,13 @@ pub use config::OptimizationConfig;
 pub use errors::OptimizationError;
 pub use progress::ProgressEvent;
 
-// ── Integration-test surface (types consumed by tests/pr8a_*.rs) ─────────────
+// ── Integration-test surface (types consumed by tests/pr8a_*.rs and pr8b_*.rs)
 // These re-exports make internal types reachable at the crate root for
 // integration tests without exposing full module paths as part of the
 // public API surface.
 pub use config::{ExistingNetwork, ForbiddenZone, MandatoryRoute};
 pub use encoding::{gene_specs, GeneSpec, GeneType, Individual, IndividualEncoder, SolverType};
+pub use objective::{ExistingNetworkSpec, ObjectiveFunction};
 pub use rng::{child_rng, root_rng};
 
 #[cfg(test)]
