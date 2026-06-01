@@ -34,6 +34,7 @@ spade = "2"
 
 # Random and parallel
 rand = { version = "0.8", features = ["small_rng"] }
+rand_chacha = "0.3"
 rayon = "1"
 
 # CLI
