@@ -18,6 +18,7 @@
 
 // ── Internal modules ──────────────────────────────────────────────────────────
 pub(crate) mod config;
+pub(crate) mod constraints;
 pub(crate) mod encoding;
 pub(crate) mod errors;
 pub(crate) mod objective;
@@ -34,6 +35,10 @@ pub use progress::ProgressEvent;
 // integration tests without exposing full module paths as part of the
 // public API surface.
 pub use config::{ExistingNetwork, ForbiddenZone, MandatoryRoute};
+pub use constraints::{
+    ConstraintChecker, ConstraintReport, ConstraintViolation, ConstraintViolationKind,
+    DesignConstraints, ExistingNetworkEntry,
+};
 pub use encoding::{gene_specs, GeneSpec, GeneType, Individual, IndividualEncoder, SolverType};
 pub use objective::{ExistingNetworkSpec, ObjectiveFunction};
 pub use rng::{child_rng, root_rng};
