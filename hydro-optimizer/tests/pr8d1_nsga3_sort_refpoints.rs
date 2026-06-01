@@ -31,7 +31,11 @@ fn test_nondom_sort_known_3point_2obj() {
 
     assert!(front0.contains(&0), "A must be in front 0");
     assert!(front0.contains(&1), "B must be in front 0");
-    assert_eq!(front0.len(), 2, "front 0 must contain exactly 2 individuals");
+    assert_eq!(
+        front0.len(),
+        2,
+        "front 0 must contain exactly 2 individuals"
+    );
     assert!(front1.contains(&2), "C must be in front 1");
     assert_eq!(front1.len(), 1, "front 1 must contain exactly 1 individual");
 }
@@ -96,7 +100,11 @@ fn test_nondom_sort_all_indices_covered() {
     let fronts = nondom_sort::fast_nondominated_sort(fitnesses);
     let mut all_indices: Vec<usize> = fronts.iter().flatten().copied().collect();
     all_indices.sort_unstable();
-    assert_eq!(all_indices, vec![0, 1, 2, 3, 4], "all 5 indices must appear");
+    assert_eq!(
+        all_indices,
+        vec![0, 1, 2, 3, 4],
+        "all 5 indices must appear"
+    );
 }
 
 // ── REQ-006: Das-Dennis reference points ─────────────────────────────────────
@@ -105,7 +113,11 @@ fn test_nondom_sort_all_indices_covered() {
 #[test]
 fn test_ref_points_count_5obj_p4() {
     let pts = reference_points::uniform_reference_points(5, 4);
-    assert_eq!(pts.len(), 70, "nobj=5 p=4 must produce 70 reference points (C(8,4))");
+    assert_eq!(
+        pts.len(),
+        70,
+        "nobj=5 p=4 must produce 70 reference points (C(8,4))"
+    );
 }
 
 /// REQ-006 Scenario: each reference point sums to 1.0 (tolerance 1e-9).
@@ -141,7 +153,12 @@ fn test_ref_points_correct_dimensionality() {
     let nobj = 5_usize;
     let pts = reference_points::uniform_reference_points(nobj, 4);
     for (i, pt) in pts.iter().enumerate() {
-        assert_eq!(pt.len(), nobj, "point[{i}] has {} coords, expected {nobj}", pt.len());
+        assert_eq!(
+            pt.len(),
+            nobj,
+            "point[{i}] has {} coords, expected {nobj}",
+            pt.len()
+        );
     }
 }
 
@@ -164,5 +181,9 @@ fn test_ref_points_count_3obj_p2() {
 #[test]
 fn test_ref_points_count_5obj_p1() {
     let pts = reference_points::uniform_reference_points(5, 1);
-    assert_eq!(pts.len(), 5, "nobj=5 p=1 must produce 5 corner reference points");
+    assert_eq!(
+        pts.len(),
+        5,
+        "nobj=5 p=1 must produce 5 corner reference points"
+    );
 }
