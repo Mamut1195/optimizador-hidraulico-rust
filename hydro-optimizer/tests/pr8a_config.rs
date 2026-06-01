@@ -2,9 +2,7 @@
 //!
 //! RED → GREEN → REFACTOR per strict-tdd.md.
 
-use hydro_optimizer::config::OptimizationConfig;
-use hydro_optimizer::errors::OptimizationError;
-use hydro_optimizer::rng::{child_rng, root_rng};
+use hydro_optimizer::{child_rng, root_rng, OptimizationConfig, OptimizationError};
 
 // ── OptimizationConfig ────────────────────────────────────────────────────────
 

@@ -8,7 +8,7 @@
 //! # Public API (REQ-014)
 //! - `OptimizationConfig` — hyperparameters and constraint flags.
 //! - `OptimizationError` — typed errors.
-//! - `ProgressEvent` / `ProgressCallback` — per-generation reporting.
+//! - `ProgressEvent` — per-generation reporting.
 //!
 //! All other items are `pub(crate)` or private.
 //!
@@ -17,18 +17,24 @@
 //! `thread_rng`. See `rng` module for child-RNG derivation strategy.
 
 // ── Internal modules ──────────────────────────────────────────────────────────
-pub mod rng;
-
-// PR-8a modules (public for tests)
-pub mod config;
-pub mod encoding;
-pub mod errors;
-pub mod progress;
+pub(crate) mod config;
+pub(crate) mod encoding;
+pub(crate) mod errors;
+pub(crate) mod progress;
+pub(crate) mod rng;
 
 // ── Public re-exports (REQ-014) ───────────────────────────────────────────────
 pub use config::OptimizationConfig;
 pub use errors::OptimizationError;
 pub use progress::ProgressEvent;
+
+// ── Integration-test surface (types consumed by tests/pr8a_*.rs) ─────────────
+// These re-exports make internal types reachable at the crate root for
+// integration tests without exposing full module paths as part of the
+// public API surface.
+pub use config::{ExistingNetwork, ForbiddenZone, MandatoryRoute};
+pub use encoding::{gene_specs, GeneSpec, GeneType, Individual, IndividualEncoder, SolverType};
+pub use rng::{child_rng, root_rng};
 
 #[cfg(test)]
 mod tests {

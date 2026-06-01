@@ -3,8 +3,9 @@
 //! RED → GREEN → REFACTOR per strict-tdd.md.
 //! References production code in `hydro_optimizer::{encoding, errors}`.
 
-use hydro_optimizer::encoding::{gene_specs, GeneType, Individual, IndividualEncoder, SolverType};
-use hydro_optimizer::errors::OptimizationError;
+use hydro_optimizer::{
+    gene_specs, GeneType, Individual, IndividualEncoder, OptimizationError, SolverType,
+};
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 
