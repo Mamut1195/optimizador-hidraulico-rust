@@ -68,7 +68,11 @@ fn test_build_terrain_model_happy_path() {
         result.err()
     );
     let terrain = result.unwrap();
-    assert_eq!(terrain.point_count(), 5, "expected 5 points in terrain model");
+    assert_eq!(
+        terrain.point_count(),
+        5,
+        "expected 5 points in terrain model"
+    );
 }
 
 /// Empty terrain_points returns Err (TerrainError::EmptyTerrain → ValidationError).
@@ -111,10 +115,7 @@ fn test_build_optimization_config_seed_override_applied() {
 fn test_build_optimization_config_uses_req_seed_when_no_override() {
     let req = make_sewer_request(); // req.seed = Some(99)
     let cfg = build_optimization_config(&req, None);
-    assert_eq!(
-        cfg.seed, 99,
-        "no seed_override — must use req.seed = 99"
-    );
+    assert_eq!(cfg.seed, 99, "no seed_override — must use req.seed = 99");
 }
 
 /// REQ-005: without seed_override and req.seed is None, falls back to 42.
