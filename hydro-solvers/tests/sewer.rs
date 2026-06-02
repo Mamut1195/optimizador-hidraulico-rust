@@ -112,7 +112,22 @@ fn sewer_evaluate_formula_exact() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = SewerSolver::new(terrain, constraints);
+    let service_points: Vec<(f64, f64)> = f
+        .solver_params
+        .service_points
+        .iter()
+        .map(|sp| (sp[0], sp[1]))
+        .collect();
+    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+    let solver = SewerSolver::new(
+        terrain,
+        constraints,
+        service_points,
+        outlet,
+        f.solver_params.flow_per_service,
+        PipeMaterial::Pvc,
+        "SewerTest".to_string(),
+    );
     let network = reconstruct_network(&f);
 
     let score = solver
@@ -150,7 +165,22 @@ fn sewer_score_formula_exact() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = SewerSolver::new(terrain, constraints);
+    let service_points: Vec<(f64, f64)> = f
+        .solver_params
+        .service_points
+        .iter()
+        .map(|sp| (sp[0], sp[1]))
+        .collect();
+    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+    let solver = SewerSolver::new(
+        terrain,
+        constraints,
+        service_points,
+        outlet,
+        f.solver_params.flow_per_service,
+        PipeMaterial::Pvc,
+        "SewerTest".to_string(),
+    );
     let network = reconstruct_network(&f);
 
     let score = solver.evaluate(&network).expect("evaluate must not error");
@@ -188,7 +218,22 @@ fn sewer_network_topology_structural() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = SewerSolver::new(terrain, constraints);
+    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+    let service_points: Vec<(f64, f64)> = f
+        .solver_params
+        .service_points
+        .iter()
+        .map(|sp| (sp[0], sp[1]))
+        .collect();
+    let mut solver = SewerSolver::new(
+        terrain,
+        constraints,
+        service_points.clone(),
+        outlet,
+        f.solver_params.flow_per_service,
+        PipeMaterial::Pvc,
+        "SewerTest".to_string(),
+    );
 
     let params = SolverParams {
         route_variant: f.solver_params.route_variant,
@@ -202,9 +247,6 @@ fn sewer_network_topology_structural() {
         ..SolverParams::default()
     };
 
-    // We need to pass service_points and outlet — they are in solver_params field
-    // For this test, we inject them via a solve-direct call (see SewerSolverExt below)
-    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
     let service_points: Vec<(f64, f64)> = f
         .solver_params
         .service_points
@@ -294,8 +336,6 @@ fn sewer_invert_and_cover_domain_invariants() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = SewerSolver::new(terrain, constraints.clone());
-
     let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
     let service_points: Vec<(f64, f64)> = f
         .solver_params
@@ -303,6 +343,15 @@ fn sewer_invert_and_cover_domain_invariants() {
         .iter()
         .map(|sp| (sp[0], sp[1]))
         .collect();
+    let mut solver = SewerSolver::new(
+        terrain,
+        constraints.clone(),
+        service_points.clone(),
+        outlet,
+        f.solver_params.flow_per_service,
+        PipeMaterial::Pvc,
+        "SewerTest".to_string(),
+    );
 
     let params = SolverParams::default();
     let solutions = solver
@@ -375,7 +424,22 @@ fn sewer_solve_end_to_end_parity() {
     let f = load_sewer_golden();
     let terrain = make_fixture_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = SewerSolver::new(terrain, constraints.clone());
+    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+    let service_points: Vec<(f64, f64)> = f
+        .solver_params
+        .service_points
+        .iter()
+        .map(|sp| (sp[0], sp[1]))
+        .collect();
+    let mut solver = SewerSolver::new(
+        terrain,
+        constraints.clone(),
+        service_points.clone(),
+        outlet,
+        f.solver_params.flow_per_service,
+        PipeMaterial::Pvc,
+        "SewerTest".to_string(),
+    );
 
     let params = SolverParams {
         route_variant: f.solver_params.route_variant,
@@ -388,14 +452,6 @@ fn sewer_solve_end_to_end_parity() {
         design_flow: f.solver_params.flow_per_service,
         ..SolverParams::default()
     };
-
-    let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
-    let service_points: Vec<(f64, f64)> = f
-        .solver_params
-        .service_points
-        .iter()
-        .map(|sp| (sp[0], sp[1]))
-        .collect();
 
     let solutions = solver
         .solve_sewer(

@@ -35,14 +35,43 @@ use crate::solver::{Solver, SolverParams};
 pub struct SewerSolver {
     pub terrain: TerrainModel,
     pub constraints: DesignConstraints,
+    /// Service point coordinates injected at construction time (used by `Solver::solve`).
+    pub service_points: Vec<(f64, f64)>,
+    /// Outlet coordinate injected at construction time (used by `Solver::solve`).
+    pub outlet: (f64, f64),
+    /// Per-service flow rate injected at construction time (used by `Solver::solve`).
+    pub flow_per_service: f64,
+    /// Pipe material injected at construction time (used by `Solver::solve`).
+    pub material: PipeMaterial,
+    /// Network name injected at construction time (used by `Solver::solve`).
+    pub network_name: String,
 }
 
 impl SewerSolver {
-    /// Create a new SewerSolver with the given terrain and design constraints.
-    pub fn new(terrain: TerrainModel, constraints: DesignConstraints) -> Self {
+    /// Create a new SewerSolver with all project-context fields required by
+    /// `Solver::solve`.
+    ///
+    /// Field order: `(terrain, constraints, service_points, outlet, flow_per_service,
+    /// material, network_name)`. GA-driven values are provided at solve time via
+    /// `SolverParams`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        terrain: TerrainModel,
+        constraints: DesignConstraints,
+        service_points: Vec<(f64, f64)>,
+        outlet: (f64, f64),
+        flow_per_service: f64,
+        material: PipeMaterial,
+        network_name: String,
+    ) -> Self {
         SewerSolver {
             terrain,
             constraints,
+            service_points,
+            outlet,
+            flow_per_service,
+            material,
+            network_name,
         }
     }
 
@@ -828,13 +857,33 @@ impl SewerSolver {
 // ── Solver trait impl ─────────────────────────────────────────────────────────
 
 impl Solver for SewerSolver {
-    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
-        // The generic solve() has no service_points/outlet — return error to guide callers.
-        // Callers should use solve_sewer() directly for full functionality.
-        // This enables the MockSolver test to work with the trait.
-        Err(SolverError::BuildFailed(
-            "Use SewerSolver::solve_sewer() with explicit outlet and service_points".to_string(),
-        ))
+    fn solve(&mut self, params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // Guard: no service points → no network can be built.
+        if self.service_points.is_empty() {
+            return Err(SolverError::InsufficientTerminals);
+        }
+
+        // Clone fields that need a borrow release before the &mut self call.
+        let service_points = self.service_points.clone();
+        let network_name = self.network_name.clone();
+        let outlet = self.outlet;
+        let flow_per_service = self.flow_per_service;
+        let material = self.material; // PipeMaterial is Copy
+
+        let result = self.solve_sewer(
+            &service_points,
+            outlet,
+            &network_name,
+            flow_per_service,
+            material,
+            params,
+        )?;
+
+        // REQ-007: empty Ok MUST become Err(NoFeasibleSolution).
+        if result.is_empty() {
+            return Err(SolverError::NoFeasibleSolution);
+        }
+        Ok(result)
     }
 
     fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {
