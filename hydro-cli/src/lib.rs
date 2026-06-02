@@ -5,11 +5,14 @@
 //! - [`CliError`] — typed error enum with [`CliError::exit_code`] (REQ-003)
 //! - [`run`] — full optimization dispatch (all 6 solvers, WU-4/WU-5)
 //! - [`validate_request`] — structural + solver-specific validation stub (WU-2)
+//! - [`compute_audit_hash`] — SHA-256 canonical hash of request + seed + version (WU-8)
 //!
 //! All items are re-exported at the crate root so integration tests can call
 //! them directly without spawning a subprocess (REQ-010).
 
 use std::time::Instant;
+
+use sha2::{Digest, Sha256};
 
 use hydro_optimizer::{GeneticOptimizer, OptimizationConfig, OptimizationError, SolverType};
 use hydro_solvers::{
@@ -352,6 +355,72 @@ fn assemble_design_result(
     }
 }
 
+// ── WU-8: audit_hash ─────────────────────────────────────────────────────────
+
+/// Compute the SHA-256 audit hash for a `DesignRequest` and effective seed.
+///
+/// # Canonical form (design §3)
+///
+/// The hash is computed over a single byte string assembled as:
+/// ```text
+/// request_json | effective_seed_decimal | engine_version
+/// ```
+/// where `|` is a single ASCII byte `0x7C`.
+///
+/// | Component          | Source                                | Encoding       |
+/// |--------------------|---------------------------------------|----------------|
+/// | `request_json`     | `serde_json::to_string(&req)` compact | UTF-8          |
+/// | `effective_seed`   | `format!("{}", seed)` decimal         | ASCII          |
+/// | `engine_version`   | `env!("CARGO_PKG_VERSION")` (compile) | ASCII          |
+///
+/// # Returns
+/// A 64-character lowercase hex string (SHA-256 digest). No `0x` prefix, no
+/// whitespace. The output is always exactly 64 bytes when encoded as UTF-8.
+///
+/// # Panics
+/// Does not panic. `serde_json::to_string` only fails for types that contain
+/// maps with non-string keys or un-serializable values; `DesignRequest` has
+/// neither. If serialization ever fails (should be unreachable), the function
+/// returns a sentinel error hash (see implementation comment).
+pub fn compute_audit_hash(req: &DesignRequest, seed: u64) -> String {
+    // Serialize the request to compact JSON using serde's default field order.
+    // DO NOT sort fields or normalise whitespace — field order is part of the
+    // canonical form (design §3: "do NOT sort").
+    let request_json = match serde_json::to_string(req) {
+        Ok(s) => s,
+        Err(e) => {
+            // Extremely unlikely for an in-memory DesignRequest, but if it
+            // happens the sentinel distinguishes it from a real hash (64 zeros
+            // is not a valid SHA-256 output for any realistic input).
+            // Callers that care about correctness should treat this as a bug.
+            eprintln!("audit_hash: serde_json::to_string failed: {e}");
+            return "0".repeat(64);
+        }
+    };
+
+    // Effective seed encoded as decimal ASCII (design §3, "format!("{}", n)").
+    let seed_str = format!("{seed}");
+
+    // Engine version from the hydro-cli crate version at compile time.
+    let engine_version = env!("CARGO_PKG_VERSION");
+
+    // Concatenate with single-byte `|` (0x7C) separators.
+    // Use a single allocation: pre-size and extend (avoids three intermediate Strings).
+    let canonical_len = request_json.len() + 1 + seed_str.len() + 1 + engine_version.len();
+    let mut canonical = Vec::with_capacity(canonical_len);
+    canonical.extend_from_slice(request_json.as_bytes());
+    canonical.push(b'|');
+    canonical.extend_from_slice(seed_str.as_bytes());
+    canonical.push(b'|');
+    canonical.extend_from_slice(engine_version.as_bytes());
+
+    // SHA-256 digest → lowercase hex string.
+    let digest = Sha256::digest(&canonical);
+
+    // Format as 64 lowercase hex chars using the standard `{:02x}` pattern.
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 // ── Public run() ─────────────────────────────────────────────────────────────
 
 /// Run the full optimization pipeline for the given `DesignRequest`.
@@ -366,21 +435,26 @@ fn assemble_design_result(
 /// - `Ok(DesignResult)` on success — `solutions` non-empty, `success == true`.
 /// - `Err(CliError)` — see [`CliError`] exit-code table.
 ///
-/// # Implementation note (WU-4 / WU-5)
+/// # Implementation note (WU-4 / WU-5 / WU-8)
 /// WU-4 implemented the `sewer` dispatch arm. WU-5 implements the remaining
 /// 5 project_types: `water_supply`, `conveyance`, `distribution`,
-/// `pump_station`, and `intake`. All 6 arms are now live.
+/// `pump_station`, and `intake`. WU-8 wires in `compute_audit_hash` after
+/// every successful dispatch arm (design §3, REQ-005).
 pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResult, CliError> {
     let start = Instant::now();
 
     // REQ-002: structural + solver-specific validation first.
     validate_request(&req)?;
 
+    // Resolve effective seed once; used by both the optimizer config and the
+    // audit hash canonical form (design §3: same seed must appear in both).
+    let effective_seed = seed_override.unwrap_or_else(|| req.seed.unwrap_or(42));
+
     // Build shared optimizer inputs from the validated request.
     let opt_config = build_optimization_config(&req, seed_override);
     let base_params = build_solver_params(&req);
 
-    match req.project_type.as_str() {
+    let mut result = match req.project_type.as_str() {
         // ── WU-4: Sewer dispatch ──────────────────────────────────────────
         //
         // REQ-004: monomorphized arm — no Box<dyn Solver>.
@@ -658,7 +732,13 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
         other => Err(CliError::InternalError(format!(
             "unknown project_type: {other}"
         ))),
-    }
+    }?;
+
+    // WU-8: inject audit_hash AFTER optimization, BEFORE returning (design §3, §5).
+    // compute_audit_hash is a pure function of (request, effective_seed, engine_version).
+    result.diagnostics.audit_hash = compute_audit_hash(&req, effective_seed);
+
+    Ok(result)
 }
 
 /// Validate a `DesignRequest` without running the optimizer.

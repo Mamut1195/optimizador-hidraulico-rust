@@ -26,7 +26,7 @@
 //! - `result.solutions` is non-empty
 //! - `result.solutions[0].score.total_cost > 0.0`
 //! - `result.elapsed_seconds > 0.0`
-//! - `result.diagnostics.audit_hash` is empty string (WU-8 fills it)
+//! - `result.diagnostics.audit_hash` is a 64-char lowercase SHA-256 hex string (WU-8)
 
 use hydro_cli::run;
 use hydro_types::request::{DesignRequest, PointXY, PointXYZ, ProjectTypeStr};
@@ -128,8 +128,19 @@ fn test_run_intake_dispatch() {
         result.elapsed_seconds > 0.0,
         "elapsed_seconds must be > 0.0 after a real optimization run"
     );
+    // WU-8: audit_hash is now a 64-char lowercase SHA-256 hex string (REQ-005).
     assert_eq!(
-        result.diagnostics.audit_hash, "",
-        "audit_hash must be empty string in WU-5 (WU-8 fills it)"
+        result.diagnostics.audit_hash.len(),
+        64,
+        "audit_hash must be exactly 64 chars after WU-8"
+    );
+    assert!(
+        result
+            .diagnostics
+            .audit_hash
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()),
+        "audit_hash must be lowercase hex [0-9a-f], got: '{}'",
+        result.diagnostics.audit_hash
     );
 }

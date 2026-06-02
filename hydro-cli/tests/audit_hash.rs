@@ -43,7 +43,11 @@ fn sewer_request() -> DesignRequest {
         .terrain
         .points
         .iter()
-        .map(|p| PointXYZ { x: p[0], y: p[1], z: p[2] })
+        .map(|p| PointXYZ {
+            x: p[0],
+            y: p[1],
+            z: p[2],
+        })
         .collect();
 
     let service_points: Vec<PointXY> = f
@@ -120,7 +124,8 @@ fn test_compute_audit_hash_known_value() {
         hash.len()
     );
     assert!(
-        hash.chars().all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()),
+        hash.chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()),
         "audit_hash must be lowercase hex [0-9a-f], got: '{hash}'"
     );
 
@@ -153,7 +158,8 @@ fn test_run_audit_hash_non_empty() {
         h.len()
     );
     assert!(
-        h.chars().all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()),
+        h.chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()),
         "audit_hash must be lowercase hex [0-9a-f], got: '{h}'"
     );
 }
