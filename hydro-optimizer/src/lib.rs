@@ -33,6 +33,8 @@ pub(crate) mod optimizer;
 pub(crate) mod progress;
 pub(crate) mod results;
 pub(crate) mod rng;
+/// PathSmoother routing module (REQ-012). Opt-in via `enable_path_smoothing`.
+pub(crate) mod routing;
 
 // ── Public re-exports (REQ-014 — exactly 6 items) ────────────────────────────
 /// Configuration for one optimization run (REQ-002).
