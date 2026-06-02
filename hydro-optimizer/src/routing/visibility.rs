@@ -45,28 +45,159 @@ pub(crate) fn build_visibility_graph(
     forbidden: &[ForbiddenZone],
     clearance: f64,
 ) -> (Vec<VNode>, Vec<VEdge>) {
-    todo!("implement build_visibility_graph")
+    // Collect all nodes: start (0), end (1), then polygon vertices
+    let mut nodes: Vec<VNode> = vec![VNode { pos: start }, VNode { pos: end }];
+
+    // Collect polygon vertex arrays for intersection tests
+    let polygons: Vec<Vec<[f64; 2]>> = forbidden.iter().map(|z| z.vertices.clone()).collect();
+
+    // Add polygon vertices as nodes
+    for z in forbidden {
+        for &v in &z.vertices {
+            nodes.push(VNode { pos: v });
+        }
+    }
+
+    let n = nodes.len();
+    let mut edges: Vec<VEdge> = Vec::new();
+
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let a = nodes[i].pos;
+            let b = nodes[j].pos;
+
+            if is_edge_visible(a, b, &polygons, clearance) {
+                let w = euclidean(a, b);
+                edges.push((i, j, w));
+                edges.push((j, i, w)); // undirected
+            }
+        }
+    }
+
+    (nodes, edges)
 }
 
-/// Return true iff segment `a→b` intersects the polygon edge `p→q` (proper
-/// intersection only — touching at a shared endpoint is not an intersection).
-pub(crate) fn segments_intersect(
-    a: [f64; 2],
-    b: [f64; 2],
-    p: [f64; 2],
-    q: [f64; 2],
-) -> bool {
-    todo!("implement segments_intersect")
+/// Return `true` iff the segment `a→b` is a valid visibility edge:
+/// - it does not intersect any polygon edge (proper crossing), AND
+/// - it stays at least `clearance` metres from every polygon edge.
+fn is_edge_visible(a: [f64; 2], b: [f64; 2], polygons: &[Vec<[f64; 2]>], clearance: f64) -> bool {
+    for poly in polygons {
+        let m = poly.len();
+        if m < 2 {
+            continue;
+        }
+        for k in 0..m {
+            let p = poly[k];
+            let q = poly[(k + 1) % m];
+
+            // A crossing through the polygon edge blocks visibility
+            if segments_intersect(a, b, p, q) {
+                return false;
+            }
+        }
+        // Check clearance against each polygon edge
+        if clearance > 0.0 && segment_too_close(a, b, poly, clearance) {
+            return false;
+        }
+    }
+    true
+}
+
+/// Return true iff segment `a→b` properly intersects segment `p→q`.
+///
+/// "Proper" means both segments straddle each other. Touching at a shared
+/// endpoint (e.g. `b == p`) is NOT counted as a blocking intersection so
+/// that paths can use polygon vertices as waypoints.
+pub(crate) fn segments_intersect(a: [f64; 2], b: [f64; 2], p: [f64; 2], q: [f64; 2]) -> bool {
+    // Cross-product sign test (2-D orientation)
+    let d1 = cross(p, q, a);
+    let d2 = cross(p, q, b);
+    let d3 = cross(a, b, p);
+    let d4 = cross(a, b, q);
+
+    // Segments properly straddle each other
+    if ((d1 > 0.0 && d2 < 0.0) || (d1 < 0.0 && d2 > 0.0))
+        && ((d3 > 0.0 && d4 < 0.0) || (d3 < 0.0 && d4 > 0.0))
+    {
+        return true;
+    }
+
+    // Collinear / touching cases: treat shared-endpoint touching as non-blocking
+    // (allows paths through polygon corners).
+    if d1.abs() < 1e-12 && on_segment(p, q, a) && a != p && a != q {
+        return true;
+    }
+    if d2.abs() < 1e-12 && on_segment(p, q, b) && b != p && b != q {
+        return true;
+    }
+    if d3.abs() < 1e-12 && on_segment(a, b, p) && p != a && p != b {
+        return true;
+    }
+    if d4.abs() < 1e-12 && on_segment(a, b, q) && q != a && q != b {
+        return true;
+    }
+
+    false
+}
+
+/// 2-D cross product of vectors (o→a) × (o→b).
+#[inline]
+fn cross(o: [f64; 2], a: [f64; 2], b: [f64; 2]) -> f64 {
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+}
+
+/// Return true iff point `p` lies on segment `a→b` (assuming collinear).
+#[inline]
+fn on_segment(a: [f64; 2], b: [f64; 2], p: [f64; 2]) -> bool {
+    p[0] >= a[0].min(b[0])
+        && p[0] <= a[0].max(b[0])
+        && p[1] >= a[1].min(b[1])
+        && p[1] <= a[1].max(b[1])
 }
 
 /// Return true iff segment `a→b` passes within `d` of any edge of `polygon`.
-pub(crate) fn segment_too_close(
-    a: [f64; 2],
-    b: [f64; 2],
-    polygon: &[[f64; 2]],
-    d: f64,
-) -> bool {
-    todo!("implement segment_too_close")
+pub(crate) fn segment_too_close(a: [f64; 2], b: [f64; 2], polygon: &[[f64; 2]], d: f64) -> bool {
+    let m = polygon.len();
+    if m < 2 {
+        return false;
+    }
+    for k in 0..m {
+        let p = polygon[k];
+        let q = polygon[(k + 1) % m];
+        // Minimum distance between two line segments
+        if segment_segment_min_dist(a, b, p, q) < d {
+            return true;
+        }
+    }
+    false
+}
+
+/// Minimum Euclidean distance between line segments `a→b` and `p→q`.
+fn segment_segment_min_dist(a: [f64; 2], b: [f64; 2], p: [f64; 2], q: [f64; 2]) -> f64 {
+    // If the segments intersect, distance is 0
+    if segments_intersect(a, b, p, q) {
+        return 0.0;
+    }
+    // Otherwise, min over all 4 point-to-segment distances
+    let d1 = point_to_segment_dist(a, p, q);
+    let d2 = point_to_segment_dist(b, p, q);
+    let d3 = point_to_segment_dist(p, a, b);
+    let d4 = point_to_segment_dist(q, a, b);
+    d1.min(d2).min(d3).min(d4)
+}
+
+/// Perpendicular (minimum) distance from point `pt` to segment `a→b`.
+fn point_to_segment_dist(pt: [f64; 2], a: [f64; 2], b: [f64; 2]) -> f64 {
+    let dx = b[0] - a[0];
+    let dy = b[1] - a[1];
+    let len_sq = dx * dx + dy * dy;
+    if len_sq < 1e-28 {
+        return euclidean(pt, a);
+    }
+    let t = ((pt[0] - a[0]) * dx + (pt[1] - a[1]) * dy) / len_sq;
+    let t = t.clamp(0.0, 1.0);
+    let proj = [a[0] + t * dx, a[1] + t * dy];
+    euclidean(pt, proj)
 }
 
 /// Euclidean distance between two 2-D points.
@@ -141,30 +272,15 @@ mod tests {
     /// for any positive clearance.
     #[test]
     fn test_segment_too_close_coincident() {
-        let polygon = vec![
-            [0.0, 0.0],
-            [10.0, 0.0],
-            [10.0, 10.0],
-            [0.0, 10.0],
-        ];
+        let polygon = vec![[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0]];
         // Segment along bottom edge y=0
-        assert!(segment_too_close(
-            [0.0, 0.0],
-            [10.0, 0.0],
-            &polygon,
-            0.1
-        ));
+        assert!(segment_too_close([0.0, 0.0], [10.0, 0.0], &polygon, 0.1));
     }
 
     /// Segment far from all polygon edges is NOT too close.
     #[test]
     fn test_segment_not_too_close_distant() {
-        let polygon = vec![
-            [0.0, 0.0],
-            [5.0, 0.0],
-            [5.0, 5.0],
-            [0.0, 5.0],
-        ];
+        let polygon = vec![[0.0, 0.0], [5.0, 0.0], [5.0, 5.0], [0.0, 5.0]];
         // Segment far away at y = 100
         assert!(!segment_too_close(
             [0.0, 100.0],
@@ -182,9 +298,15 @@ mod tests {
         let start = [0.0, 0.0];
         let end = [10.0, 0.0];
         let (nodes, edges) = build_visibility_graph(start, end, &[], 0.5);
-        assert_eq!(nodes.len(), 2, "no vertices besides start/end when no zones");
+        assert_eq!(
+            nodes.len(),
+            2,
+            "no vertices besides start/end when no zones"
+        );
         // Direct edge must exist
-        let has_direct = edges.iter().any(|&(a, b, _)| (a == 0 && b == 1) || (a == 1 && b == 0));
+        let has_direct = edges
+            .iter()
+            .any(|&(a, b, _)| (a == 0 && b == 1) || (a == 1 && b == 0));
         assert!(has_direct, "start→end edge must exist when no obstacles");
     }
 
@@ -208,7 +330,9 @@ mod tests {
         let (nodes, edges) = build_visibility_graph(start, end, &[zone], 0.1);
         // The direct start(0)→end(1) edge passes through the centre — must NOT exist
         let _ = nodes;
-        let has_direct = edges.iter().any(|&(a, b, _)| (a == 0 && b == 1) || (a == 1 && b == 0));
+        let has_direct = edges
+            .iter()
+            .any(|&(a, b, _)| (a == 0 && b == 1) || (a == 1 && b == 0));
         assert!(!has_direct, "no direct edge through obstacle must exist");
     }
 

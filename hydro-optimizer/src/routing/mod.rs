@@ -79,12 +79,44 @@ impl PathSmoother {
         end: [f64; 2],
         forbidden_zones: &[ForbiddenZone],
     ) -> Vec<[f64; 2]> {
-        todo!("implement PathSmoother::smooth")
+        // Trivial case: start == end
+        if (start[0] - end[0]).abs() < 1e-12 && (start[1] - end[1]).abs() < 1e-12 {
+            return vec![start];
+        }
+
+        // Build visibility graph
+        let (nodes, edges) = build_visibility_graph(start, end, forbidden_zones, self.clearance);
+
+        // Convert edges to adjacency list (nodes.len() entries)
+        let n = nodes.len();
+        let mut adj: Vec<Vec<(usize, f64)>> = vec![Vec::new(); n];
+        for (a, b, w) in edges {
+            adj[a].push((b, w));
+        }
+
+        // Run A* from start (0) to end (1)
+        let raw_path = match astar(&nodes, &adj, 0, 1) {
+            Some(indices) => indices
+                .into_iter()
+                .map(|i| nodes[i].pos)
+                .collect::<Vec<_>>(),
+            None => {
+                // Fallback: direct segment (constraint checker will flag violations)
+                vec![start, end]
+            }
+        };
+
+        // Apply RDP simplification
+        rdp_simplify(&raw_path, self.rdp_epsilon)
     }
 
     /// Total Euclidean length of a polyline.
+    #[allow(dead_code)] // Used in #[cfg(test)] and available for Phase 7 callers.
     pub(crate) fn path_length(path: &[[f64; 2]]) -> f64 {
-        todo!("implement path_length")
+        if path.len() < 2 {
+            return 0.0;
+        }
+        path.windows(2).map(|seg| euclidean(seg[0], seg[1])).sum()
     }
 }
 
@@ -118,7 +150,7 @@ mod tests {
         // Direct segment passes through the obstacle.
         let smoother = PathSmoother::new(0.1, 0.5);
         let zone = square_zone(10.0, 5.0, 3.0);
-        let path = smoother.smooth([0.0, 5.0], [20.0, 5.0], &[zone.clone()]);
+        let path = smoother.smooth([0.0, 5.0], [20.0, 5.0], std::slice::from_ref(&zone));
 
         // Path must not be empty
         assert!(!path.is_empty(), "smoother must return a non-empty path");

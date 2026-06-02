@@ -14,14 +14,68 @@
 /// Returns the simplified polyline (subset of the input points).
 /// If fewer than 2 points are provided, returns the input unchanged.
 pub(crate) fn rdp_simplify(points: &[[f64; 2]], epsilon: f64) -> Vec<[f64; 2]> {
-    todo!("implement RDP simplification")
+    if points.len() < 2 {
+        return points.to_vec();
+    }
+    // Recursive inner function — works on index ranges.
+    fn rdp_inner(
+        points: &[[f64; 2]],
+        start: usize,
+        end: usize,
+        epsilon: f64,
+        keep: &mut Vec<bool>,
+    ) {
+        if end <= start + 1 {
+            return;
+        }
+        let a = points[start];
+        let b = points[end];
+
+        let mut max_dist = 0.0_f64;
+        let mut max_idx = start;
+        for (offset, point) in points[(start + 1)..end].iter().enumerate() {
+            let d = perp_distance(*point, a, b);
+            if d > max_dist {
+                max_dist = d;
+                max_idx = start + 1 + offset;
+            }
+        }
+
+        if max_dist > epsilon {
+            keep[max_idx] = true;
+            rdp_inner(points, start, max_idx, epsilon, keep);
+            rdp_inner(points, max_idx, end, epsilon, keep);
+        }
+    }
+
+    let n = points.len();
+    let mut keep = vec![false; n];
+    keep[0] = true;
+    keep[n - 1] = true;
+
+    rdp_inner(points, 0, n - 1, epsilon, &mut keep);
+
+    points
+        .iter()
+        .zip(keep.iter())
+        .filter_map(|(p, &k)| if k { Some(*p) } else { None })
+        .collect()
 }
 
 /// Perpendicular distance from point `p` to the line through `a` and `b`.
 ///
 /// Returns 0.0 if `a == b` (degenerate segment).
 pub(crate) fn perp_distance(p: [f64; 2], a: [f64; 2], b: [f64; 2]) -> f64 {
-    todo!("implement perp_distance")
+    let dx = b[0] - a[0];
+    let dy = b[1] - a[1];
+    let len_sq = dx * dx + dy * dy;
+    if len_sq < 1e-28 {
+        // Degenerate segment: a == b
+        return 0.0;
+    }
+    // Area of parallelogram / base = perpendicular height
+    let area2 = ((b[0] - a[0]) * (a[1] - p[1]) - (a[0] - p[0]) * (b[1] - a[1])).abs();
+    area2 / len_sq.sqrt()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,7 +158,10 @@ mod tests {
     #[test]
     fn test_perp_distance_on_line() {
         let d = perp_distance([5.0, 0.0], [0.0, 0.0], [10.0, 0.0]);
-        assert!(d.abs() < 1e-12, "point on line must have 0 distance, got {d}");
+        assert!(
+            d.abs() < 1e-12,
+            "point on line must have 0 distance, got {d}"
+        );
     }
 
     /// Perpendicular case matches Euclidean geometry.
