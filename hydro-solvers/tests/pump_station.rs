@@ -154,7 +154,22 @@ fn pump_station_golden_loads_and_has_correct_shape() {
 fn pump_station_evaluate_formula_exact() {
     let f = load_pump_station_golden();
     let constraints = DesignConstraints::default();
-    let solver = PumpStationSolver::new(None, constraints);
+    let solver = PumpStationSolver::new(
+        None,
+        constraints,
+        f.solver_params.suction_elevation,
+        f.solver_params.discharge_elevation,
+        f.solver_params.suction_pipe_length,
+        f.solver_params.discharge_pipe_length,
+        f.solver_params.suction_diameter,
+        f.solver_params.discharge_diameter,
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
     let network = reconstruct_pump_network(&f);
 
     let score = solver
@@ -260,7 +275,22 @@ fn pump_station_cost_formula_constants() {
 fn pump_station_solve_end_to_end_parity() {
     let f = load_pump_station_golden();
     let constraints = DesignConstraints::default();
-    let solver = PumpStationSolver::new(None, constraints);
+    let solver = PumpStationSolver::new(
+        None,
+        constraints,
+        f.solver_params.suction_elevation,
+        f.solver_params.discharge_elevation,
+        f.solver_params.suction_pipe_length,
+        f.solver_params.discharge_pipe_length,
+        f.solver_params.suction_diameter,
+        f.solver_params.discharge_diameter,
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
 
     let solutions = solver
         .solve_pump_station(
@@ -419,7 +449,22 @@ fn pump_station_solve_end_to_end_parity() {
 fn pump_station_network_layout_invariants() {
     let f = load_pump_station_golden();
     let constraints = DesignConstraints::default();
-    let solver = PumpStationSolver::new(None, constraints);
+    let solver = PumpStationSolver::new(
+        None,
+        constraints,
+        f.solver_params.suction_elevation,
+        f.solver_params.discharge_elevation,
+        f.solver_params.suction_pipe_length,
+        f.solver_params.discharge_pipe_length,
+        f.solver_params.suction_diameter,
+        f.solver_params.discharge_diameter,
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
 
     let solutions = solver
         .solve_pump_station(
@@ -510,7 +555,22 @@ fn pump_station_network_layout_invariants() {
 fn pump_station_alternatives_pairwise_distinct() {
     let f = load_pump_station_alternatives();
     let constraints = DesignConstraints::default();
-    let solver = PumpStationSolver::new(None, constraints);
+    let solver = PumpStationSolver::new(
+        None,
+        constraints,
+        f.solver_params.suction_elevation,
+        f.solver_params.discharge_elevation,
+        f.solver_params.suction_pipe_length,
+        f.solver_params.discharge_pipe_length,
+        f.solver_params.suction_diameter,
+        f.solver_params.discharge_diameter,
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
 
     let solutions = solver
         .solve_pump_station(
@@ -613,7 +673,24 @@ fn pump_station_alternatives_pairwise_distinct() {
 #[test]
 fn pump_station_tdh_abs_static_lift_trap() {
     let constraints = DesignConstraints::default();
-    let solver = PumpStationSolver::new(None, constraints);
+    // Struct fields are not used by solve_pump_station (all geometry passed explicitly).
+    // Use representative values matching the inline call args below.
+    let solver = PumpStationSolver::new(
+        None,
+        constraints,
+        100.0, // suction_elevation (matches first solve_pump_station call below)
+        95.0,  // discharge_elevation
+        10.0,  // suction_pipe_length
+        50.0,  // discharge_pipe_length
+        0.3,   // suction_diameter
+        0.25,  // discharge_diameter
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
 
     // Discharge BELOW suction → static_lift = 95.0 - 100.0 = -5.0 (negative)
     // abs(-5.0) = 5.0 should be used, not -5.0
@@ -685,19 +762,42 @@ fn pump_station_tdh_abs_static_lift_trap() {
     );
 }
 
-// ── T-5.4b.h: Solver trait default method returns error ──────────────────────
+// ── T-5.4b.h: Solver trait delegates to solve_pump_station ───────────────────
 
-/// T-5.4b.h: PumpStationSolver::solve() (Solver trait) returns an error.
-/// Use solve_pump_station() instead.
+/// T-5.4b.h: PumpStationSolver::solve() (Solver trait) now delegates correctly.
+/// The old stub that returned Err has been replaced by a real delegation wrapper.
+/// With default SolverParams (design_flow=0.002, num_alternatives=3) and valid
+/// struct fields, Solver::solve must return Ok with at least one solution.
 #[test]
 fn pump_station_solver_trait_default_errors() {
     let constraints = DesignConstraints::default();
-    let mut solver = PumpStationSolver::new(None, constraints);
+    let mut solver = PumpStationSolver::new(
+        None,
+        constraints,
+        100.0,
+        115.0,
+        10.0,
+        50.0,
+        0.3,
+        0.25,
+        PipeMaterial::Steel,
+        1.0,
+        5.0,
+        None,
+        None,
+        None,
+    );
     let params = SolverParams::default();
     let result = solver.solve(&params);
+    // Delegation is now live: default params produce a valid pump station design.
     assert!(
-        result.is_err(),
-        "Solver::solve() must return Err — use solve_pump_station()"
+        result.is_ok(),
+        "Solver::solve() must return Ok after wiring — got: {:?}",
+        result.err()
+    );
+    assert!(
+        !result.unwrap().is_empty(),
+        "Solver::solve() must return at least one solution (REQ-007)"
     );
 }
 
@@ -733,9 +833,11 @@ fn pump_station_solve_via_trait_roundtrip() {
         None, // discharge_d_idx
     );
 
-    let mut params = SolverParams::default();
-    params.design_flow = f.solver_params.design_flow;
-    params.num_alternatives = f.solver_params.num_alternatives;
+    let params = SolverParams {
+        design_flow: f.solver_params.design_flow,
+        num_alternatives: f.solver_params.num_alternatives,
+        ..SolverParams::default()
+    };
 
     let result = solver.solve(&params);
     assert!(
@@ -772,17 +874,19 @@ fn pump_station_solve_via_trait_roundtrip() {
         None,
         None,
     );
-    let mut params2 = SolverParams::default();
-    params2.design_flow = 0.0;
-    params2.num_alternatives = 1;
+    let params2 = SolverParams {
+        design_flow: 0.0,
+        num_alternatives: 1,
+        ..SolverParams::default()
+    };
 
     let result2 = solver2.solve(&params2);
     // Must not be Ok(vec![]) — either Err or Ok with solutions.len() >= 1.
-    match &result2 {
-        Ok(sols) => assert!(
+    if let Ok(sols) = &result2 {
+        assert!(
             !sols.is_empty(),
             "Solver::solve with design_flow=0.0 must NOT return Ok(vec![]) (REQ-007)"
-        ),
-        Err(_) => {} // Err is acceptable
+        );
     }
+    // Err is also acceptable — just not Ok(vec![])
 }
