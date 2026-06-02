@@ -115,7 +115,19 @@ fn conv_evaluate_formula_exact() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
     let network = reconstruct_conv_network(&f);
 
     let score = solver
@@ -168,7 +180,19 @@ fn conv_pump_count_is_always_zero() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
     let network = reconstruct_conv_network(&f);
 
     let score = solver.evaluate(&network).expect("evaluate");
@@ -189,7 +213,19 @@ fn conv_solve_primary_end_to_end_parity() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -201,12 +237,6 @@ fn conv_solve_primary_end_to_end_parity() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -279,7 +309,19 @@ fn conv_primary_structure_count_is_zero() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -291,12 +333,6 @@ fn conv_primary_structure_count_is_zero() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -337,7 +373,19 @@ fn conv_per_pipe_diameter_and_inverts() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -349,12 +397,6 @@ fn conv_per_pipe_diameter_and_inverts() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -399,7 +441,19 @@ fn conv_per_node_pressure_parity() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -411,12 +465,6 @@ fn conv_per_node_pressure_parity() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -466,7 +514,19 @@ fn conv_domain_invariants() {
     let f = load_conveyance_golden();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -478,12 +538,6 @@ fn conv_domain_invariants() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -546,7 +600,19 @@ fn conv_valve_placement_structure_count() {
     let f = load_conveyance_valves();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceValves".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -558,12 +624,6 @@ fn conv_valve_placement_structure_count() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -651,7 +711,19 @@ fn conv_valve_evaluate_parity() {
     let f = load_conveyance_valves();
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceValves".to_string(),
+    );
     let network = reconstruct_conv_network_valves(&f);
 
     let score = solver
@@ -678,7 +750,19 @@ fn conv_alternatives_yen_integration() {
 
     let terrain = make_conv_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let mut solver = ConveyanceSolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let destination = (
+        f.solver_params.destination[0],
+        f.solver_params.destination[1],
+    );
+    let mut solver = ConveyanceSolver::new(
+        terrain,
+        constraints,
+        source,
+        destination,
+        PipeMaterial::Pvc,
+        "ConveyanceAlt".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -690,12 +774,6 @@ fn conv_alternatives_yen_integration() {
         valve_spacing: f.solver_params.valve_spacing,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let destination = (
-        f.solver_params.destination[0],
-        f.solver_params.destination[1],
-    );
 
     let solutions = solver
         .solve_conveyance(
@@ -824,9 +902,8 @@ fn conveyance_solve_via_trait_roundtrip() {
         );
         let solutions = result.unwrap();
         assert!(
-            solutions.len() >= 1,
-            "Solver::solve must return at least one solution, got {}",
-            solutions.len()
+            !solutions.is_empty(),
+            "Solver::solve must return at least one solution, got 0"
         );
         assert!(
             solutions[0].score.total_cost > 0.0,
