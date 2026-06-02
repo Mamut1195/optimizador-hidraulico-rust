@@ -45,14 +45,38 @@ use crate::solver::{Solver, SolverParams};
 pub struct ConveyanceSolver {
     pub terrain: TerrainModel,
     pub constraints: DesignConstraints,
+    /// Source coordinate injected at construction time (used by `Solver::solve`).
+    pub source: (f64, f64),
+    /// Destination coordinate injected at construction time (used by `Solver::solve`).
+    pub destination: (f64, f64),
+    /// Pipe material injected at construction time (used by `Solver::solve`).
+    pub material: PipeMaterial,
+    /// Network name injected at construction time (used by `Solver::solve`).
+    pub network_name: String,
 }
 
 impl ConveyanceSolver {
-    /// Create a new ConveyanceSolver.
-    pub fn new(terrain: TerrainModel, constraints: DesignConstraints) -> Self {
+    /// Create a new ConveyanceSolver with all project-context fields required by
+    /// `Solver::solve`.
+    ///
+    /// Field order: `(terrain, constraints, source, destination, material, network_name)`.
+    /// GA-driven values (`design_flow`, `source_head`) are provided at solve time via
+    /// `SolverParams`.
+    pub fn new(
+        terrain: TerrainModel,
+        constraints: DesignConstraints,
+        source: (f64, f64),
+        destination: (f64, f64),
+        material: PipeMaterial,
+        network_name: String,
+    ) -> Self {
         ConveyanceSolver {
             terrain,
             constraints,
+            source,
+            destination,
+            material,
+            network_name,
         }
     }
 
@@ -478,11 +502,29 @@ impl ConveyanceSolver {
 // ── Solver trait impl ─────────────────────────────────────────────────────────
 
 impl Solver for ConveyanceSolver {
-    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
-        Err(SolverError::BuildFailed(
-            "Use ConveyanceSolver::solve_conveyance() with explicit source and destination"
-                .to_string(),
-        ))
+    /// Delegate to `solve_conveyance`, sourcing GA-driven values from `params` and
+    /// project-context values from struct fields (REQ-001, REQ-007).
+    ///
+    /// Returns `Err(SolverError::NoFeasibleSolution)` if `solve_conveyance` returns an
+    /// empty `Vec<Solution>` (REQ-007 empty-Ok guard).
+    fn solve(&mut self, params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // Clone network_name to release the shared borrow before the &mut self call.
+        let network_name = self.network_name.clone();
+        let result = self.solve_conveyance(
+            self.source,
+            self.destination,
+            params.design_flow,
+            params.source_head,
+            &network_name,
+            self.material,
+            params,
+        )?;
+
+        // REQ-007: empty Ok MUST become Err(NoFeasibleSolution).
+        if result.is_empty() {
+            return Err(SolverError::NoFeasibleSolution);
+        }
+        Ok(result)
     }
 
     fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {

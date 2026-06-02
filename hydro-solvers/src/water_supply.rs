@@ -36,14 +36,43 @@ use crate::solver::{Solver, SolverParams};
 pub struct WaterSupplySolver {
     pub terrain: TerrainModel,
     pub constraints: DesignConstraints,
+    /// Demand point coordinates injected at construction time (used by `Solver::solve`).
+    pub demand_points: Vec<(f64, f64)>,
+    /// Source (tank/reservoir) coordinate injected at construction time (used by `Solver::solve`).
+    pub source: (f64, f64),
+    /// Per-node demand flow rate injected at construction time (used by `Solver::solve`).
+    pub demand_per_node: f64,
+    /// Pipe material injected at construction time (used by `Solver::solve`).
+    pub material: PipeMaterial,
+    /// Network name injected at construction time (used by `Solver::solve`).
+    pub network_name: String,
 }
 
 impl WaterSupplySolver {
-    /// Create a new WaterSupplySolver with the given terrain and design constraints.
-    pub fn new(terrain: TerrainModel, constraints: DesignConstraints) -> Self {
+    /// Create a new WaterSupplySolver with all project-context fields required by
+    /// `Solver::solve`.
+    ///
+    /// Field order: `(terrain, constraints, demand_points, source, demand_per_node,
+    /// material, network_name)`. GA-driven values (`source_head`) are provided at
+    /// solve time via `SolverParams`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        terrain: TerrainModel,
+        constraints: DesignConstraints,
+        demand_points: Vec<(f64, f64)>,
+        source: (f64, f64),
+        demand_per_node: f64,
+        material: PipeMaterial,
+        network_name: String,
+    ) -> Self {
         WaterSupplySolver {
             terrain,
             constraints,
+            demand_points,
+            source,
+            demand_per_node,
+            material,
+            network_name,
         }
     }
 
@@ -956,12 +985,34 @@ impl WaterSupplySolver {
 // ── Solver trait impl ─────────────────────────────────────────────────────────
 
 impl Solver for WaterSupplySolver {
-    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
-        // The generic solve() has no demand_points/source — return error to guide callers.
-        Err(SolverError::BuildFailed(
-            "Use WaterSupplySolver::solve_water_supply() with explicit source and demand_points"
-                .to_string(),
-        ))
+    fn solve(&mut self, params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // Guard: no demand points → no network can be built.
+        if self.demand_points.is_empty() {
+            return Err(SolverError::InsufficientTerminals);
+        }
+
+        // Clone fields that need a borrow release before the &mut self call.
+        let demand_points = self.demand_points.clone();
+        let network_name = self.network_name.clone();
+        let source = self.source;
+        let demand_per_node = self.demand_per_node;
+        let material = self.material; // PipeMaterial is Copy
+
+        let result = self.solve_water_supply(
+            &demand_points,
+            source,
+            params.source_head,
+            &network_name,
+            demand_per_node,
+            material,
+            params,
+        )?;
+
+        // REQ-007: empty Ok MUST become Err(NoFeasibleSolution).
+        if result.is_empty() {
+            return Err(SolverError::NoFeasibleSolution);
+        }
+        Ok(result)
     }
 
     fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {

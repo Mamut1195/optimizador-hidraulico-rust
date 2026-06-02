@@ -58,14 +58,94 @@ pub struct IntakeSolver {
     #[allow(dead_code)]
     pub terrain: Option<TerrainModel>,
     pub constraints: DesignConstraints,
+    /// Source type identifier — solve_intake arg 2.
+    /// Valid values: "river", "lake", "spring", "groundwater", "canal", "reservoir".
+    pub source_type: String,
+    /// Source water surface elevation (m a.s.l.) — solve_intake arg 3.
+    pub source_elevation: f64,
+    /// Intake pipe invert elevation (m a.s.l.) — solve_intake arg 4.
+    pub pipe_elevation: f64,
+    /// Channel longitudinal slope (m/m) — solve_intake arg 5.
+    pub channel_slope: f64,
+    /// Pipe material for the conveyance pipe transition — solve_intake arg 6.
+    pub material: PipeMaterial,
+    /// Width multiplier for the settling channel — solve_intake arg 8.
+    pub channel_width_factor: f64,
+    /// Slope multiplier applied to channel_slope — solve_intake arg 9.
+    pub channel_slope_factor: f64,
+    /// Weir type: 0 = rectangular, 1 = v-notch — solve_intake arg 10.
+    pub weir_type: i32,
+    /// Screen velocity correction factor — solve_intake arg 11.
+    pub screen_velocity_factor: f64,
+    /// Reference screen approach velocity (m/s) — solve_intake arg 12.
+    pub screen_velocity: f64,
+    /// Clear spacing between bars (m) — solve_intake arg 13.
+    pub bar_spacing: f64,
+    /// Bar cross-section thickness (m) — solve_intake arg 14.
+    pub bar_thickness: f64,
+    /// Manning roughness coefficient for the settling channel — solve_intake arg 15.
+    pub channel_roughness: f64,
 }
 
+/// Known valid source type identifiers for water intake structures.
+///
+/// Any `source_type` string not in this list will cause `Solver::solve` to
+/// return `Err(SolverError::BuildFailed(...))`. This mirrors the Python oracle's
+/// validation gate: passing an unrecognised type indicates a configuration error
+/// rather than an infeasible hydraulic design.
+const VALID_SOURCE_TYPES: &[&str] = &[
+    "river",
+    "lake",
+    "spring",
+    "groundwater",
+    "canal",
+    "reservoir",
+];
+
 impl IntakeSolver {
-    /// Create a new `IntakeSolver`. `terrain` is accepted but never used.
-    pub fn new(terrain: Option<TerrainModel>, constraints: DesignConstraints) -> Self {
+    /// Create a new `IntakeSolver` with all project-context fields required by
+    /// `Solver::solve`.
+    ///
+    /// Field order: `(terrain, constraints, source_type, source_elevation,
+    /// pipe_elevation, channel_slope, material, channel_width_factor,
+    /// channel_slope_factor, weir_type, screen_velocity_factor, screen_velocity,
+    /// bar_spacing, bar_thickness, channel_roughness)`. GA-driven values
+    /// (`design_flow`, `num_alternatives`) are provided at solve time via
+    /// `SolverParams`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        terrain: Option<TerrainModel>,
+        constraints: DesignConstraints,
+        source_type: String,
+        source_elevation: f64,
+        pipe_elevation: f64,
+        channel_slope: f64,
+        material: PipeMaterial,
+        channel_width_factor: f64,
+        channel_slope_factor: f64,
+        weir_type: i32,
+        screen_velocity_factor: f64,
+        screen_velocity: f64,
+        bar_spacing: f64,
+        bar_thickness: f64,
+        channel_roughness: f64,
+    ) -> Self {
         IntakeSolver {
             terrain,
             constraints,
+            source_type,
+            source_elevation,
+            pipe_elevation,
+            channel_slope,
+            material,
+            channel_width_factor,
+            channel_slope_factor,
+            weir_type,
+            screen_velocity_factor,
+            screen_velocity,
+            bar_spacing,
+            bar_thickness,
+            channel_roughness,
         }
     }
 
@@ -684,10 +764,44 @@ impl IntakeSolver {
 // ── Solver trait impl ─────────────────────────────────────────────────────────
 
 impl Solver for IntakeSolver {
-    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
-        Err(SolverError::BuildFailed(
-            "Use IntakeSolver::solve_intake() with explicit flow/elevation params".to_string(),
-        ))
+    fn solve(&mut self, params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // Validate source_type before delegating. An unrecognised type indicates
+        // a configuration error — not a hydraulic infeasibility — so we return
+        // BuildFailed rather than NoFeasibleSolution.
+        if !VALID_SOURCE_TYPES.contains(&self.source_type.as_str()) {
+            return Err(SolverError::BuildFailed(format!(
+                "unknown source_type '{}': expected one of {:?}",
+                self.source_type, VALID_SOURCE_TYPES
+            )));
+        }
+
+        // Pull project-context values from struct fields; GA-driven values from params.
+        // solve_intake takes &self, which is valid when called from &mut self.
+        let material = self.material; // PipeMaterial is Copy
+
+        let result = self.solve_intake(
+            params.design_flow,          // GA gene — arg 1
+            &self.source_type.clone(),   // struct field — arg 2 (clone to release borrow)
+            self.source_elevation,       // struct field — arg 3
+            self.pipe_elevation,         // struct field — arg 4
+            self.channel_slope,          // struct field — arg 5
+            material,                    // struct field (Copy) — arg 6
+            params.num_alternatives,     // GA gene — arg 7
+            self.channel_width_factor,   // struct field — arg 8
+            self.channel_slope_factor,   // struct field — arg 9
+            self.weir_type,              // struct field — arg 10
+            self.screen_velocity_factor, // struct field — arg 11
+            self.screen_velocity,        // struct field — arg 12
+            self.bar_spacing,            // struct field — arg 13
+            self.bar_thickness,          // struct field — arg 14
+            self.channel_roughness,      // struct field — arg 15
+        )?;
+
+        // REQ-007: empty Ok MUST become Err(NoFeasibleSolution).
+        if result.is_empty() {
+            return Err(SolverError::NoFeasibleSolution);
+        }
+        Ok(result)
     }
 
     fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {

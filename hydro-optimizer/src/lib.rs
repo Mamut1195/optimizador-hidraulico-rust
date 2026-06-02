@@ -50,6 +50,17 @@ pub use progress::ProgressEvent;
 /// Top-level Pareto results (REQ-011).
 pub use results::ParetoResults;
 
+// ── Integration-test surface (doc-hidden, not part of the 6-item REQ-014 API) ──
+// `SolverType` is `pub(crate)` in `encoding`, but `GeneticOptimizer::new` takes it
+// as a parameter. Integration tests in `hydro-optimizer/tests/` can only call
+// `new` if `SolverType` is accessible from outside the crate. This re-export is
+// `#[doc(hidden)]` so it stays invisible to downstream library users while still
+// satisfying the Rust visibility rules for integration tests.
+// REQ-014 counts the 6 mandated API items listed above; this helper export does
+// not add to that public contract.
+#[doc(hidden)]
+pub use encoding::SolverType;
+
 // ── cfg(test) internal surface ────────────────────────────────────────────────
 // Integration-test helpers are gated behind #[cfg(test)] so they NEVER leak
 // into the public API surface (REQ-014 stays at exactly 6 pub items).

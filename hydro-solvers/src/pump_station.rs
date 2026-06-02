@@ -57,14 +57,73 @@ pub struct PumpStationSolver {
     #[allow(dead_code)]
     pub terrain: Option<TerrainModel>,
     pub constraints: DesignConstraints,
+    /// Suction-side elevation (m) — solve_pump_station arg 2.
+    pub suction_elevation: f64,
+    /// Discharge-side elevation (m) — solve_pump_station arg 3.
+    pub discharge_elevation: f64,
+    /// Suction pipe length (m) — solve_pump_station arg 4.
+    pub suction_pipe_length: f64,
+    /// Discharge pipe length (m) — solve_pump_station arg 5.
+    pub discharge_pipe_length: f64,
+    /// Suction pipe diameter (m) — solve_pump_station arg 6.
+    pub suction_diameter: f64,
+    /// Discharge pipe diameter (m) — solve_pump_station arg 7.
+    pub discharge_diameter: f64,
+    /// Pipe material — solve_pump_station arg 8.
+    pub material: PipeMaterial,
+    /// Wet well volume scaling factor — solve_pump_station arg 13.
+    pub wet_well_factor: f64,
+    /// Retention time (minutes) — solve_pump_station arg 14.
+    pub retention_minutes: f64,
+    /// Fixed number of pumps; `None` lets num_alternatives drive the range — arg 10.
+    pub num_pumps: Option<u32>,
+    /// Index override for suction pipe diameter in PUMP_DIAMETERS — arg 11.
+    pub suction_d_idx: Option<i32>,
+    /// Index override for discharge pipe diameter in PUMP_DIAMETERS — arg 12.
+    pub discharge_d_idx: Option<i32>,
 }
 
 impl PumpStationSolver {
-    /// Create a new `PumpStationSolver`. `terrain` is accepted but never used.
-    pub fn new(terrain: Option<TerrainModel>, constraints: DesignConstraints) -> Self {
+    /// Create a new `PumpStationSolver` with all project-context fields required by
+    /// `Solver::solve`.
+    ///
+    /// Field order: `(terrain, constraints, suction_elevation, discharge_elevation,
+    /// suction_pipe_length, discharge_pipe_length, suction_diameter, discharge_diameter,
+    /// material, wet_well_factor, retention_minutes, num_pumps, suction_d_idx,
+    /// discharge_d_idx)`. GA-driven values (`design_flow`, `num_alternatives`) are
+    /// provided at solve time via `SolverParams`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        terrain: Option<TerrainModel>,
+        constraints: DesignConstraints,
+        suction_elevation: f64,
+        discharge_elevation: f64,
+        suction_pipe_length: f64,
+        discharge_pipe_length: f64,
+        suction_diameter: f64,
+        discharge_diameter: f64,
+        material: PipeMaterial,
+        wet_well_factor: f64,
+        retention_minutes: f64,
+        num_pumps: Option<u32>,
+        suction_d_idx: Option<i32>,
+        discharge_d_idx: Option<i32>,
+    ) -> Self {
         PumpStationSolver {
             terrain,
             constraints,
+            suction_elevation,
+            discharge_elevation,
+            suction_pipe_length,
+            discharge_pipe_length,
+            suction_diameter,
+            discharge_diameter,
+            material,
+            wet_well_factor,
+            retention_minutes,
+            num_pumps,
+            suction_d_idx,
+            discharge_d_idx,
         }
     }
 
@@ -536,11 +595,33 @@ impl PumpStationSolver {
 // ── Solver trait impl ─────────────────────────────────────────────────────────
 
 impl Solver for PumpStationSolver {
-    fn solve(&mut self, _params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
-        Err(SolverError::BuildFailed(
-            "Use PumpStationSolver::solve_pump_station() with explicit flow/elevation params"
-                .to_string(),
-        ))
+    fn solve(&mut self, params: &SolverParams) -> Result<Vec<Solution>, SolverError> {
+        // Pull project-context values from struct fields; GA-driven values from params.
+        // solve_pump_station takes &self, which is valid when called from &mut self.
+        let material = self.material; // PipeMaterial is Copy
+
+        let result = self.solve_pump_station(
+            params.design_flow,         // GA gene — arg 1
+            self.suction_elevation,     // struct field — arg 2
+            self.discharge_elevation,   // struct field — arg 3
+            self.suction_pipe_length,   // struct field — arg 4
+            self.discharge_pipe_length, // struct field — arg 5
+            self.suction_diameter,      // struct field — arg 6
+            self.discharge_diameter,    // struct field — arg 7
+            material,                   // struct field (Copy) — arg 8
+            params.num_alternatives,    // GA gene — arg 9
+            self.num_pumps,             // struct field — arg 10
+            self.suction_d_idx,         // struct field — arg 11
+            self.discharge_d_idx,       // struct field — arg 12
+            self.wet_well_factor,       // struct field — arg 13
+            self.retention_minutes,     // struct field — arg 14
+        )?;
+
+        // REQ-007: empty Ok MUST become Err(NoFeasibleSolution).
+        if result.is_empty() {
+            return Err(SolverError::NoFeasibleSolution);
+        }
+        Ok(result)
     }
 
     fn evaluate(&self, network: &PipeNetwork) -> Result<SolutionScore, SolverError> {
