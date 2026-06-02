@@ -23,6 +23,7 @@ pub(crate) mod encoding;
 pub(crate) mod errors;
 pub(crate) mod nsga3;
 pub(crate) mod objective;
+pub(crate) mod operators;
 pub(crate) mod progress;
 pub(crate) mod rng;
 
