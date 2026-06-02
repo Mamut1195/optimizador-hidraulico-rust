@@ -858,16 +858,137 @@ fn intake_alternatives_pairwise_distinct() {
 
 // ── T-5.4c.j: Solver trait default method returns error ──────────────────────
 
-/// T-5.4c.j: IntakeSolver::solve() (Solver trait) returns an error.
-/// Use solve_intake() instead.
+/// T-5.4c.j: IntakeSolver::solve() (Solver trait) now delegates to solve_intake.
+/// The old stub that returned Err has been replaced by a real delegation wrapper.
+/// With the wired fields and valid golden-fixture params, Solver::solve must return Ok.
 #[test]
 fn intake_solver_trait_default_errors() {
     let constraints = DesignConstraints::default();
-    let mut solver = IntakeSolver::new(None, constraints);
-    let params = SolverParams::default();
-    let result = solver.solve(&params);
-    assert!(
-        result.is_err(),
-        "Solver::solve() must return Err — use solve_intake()"
+    let mut solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        120.0,
+        118.0,
+        0.005,
+        PipeMaterial::Concrete,
+        1.0,
+        1.0,
+        0,
+        1.0,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
     );
+    let params = SolverParams {
+        design_flow: 0.05,
+        num_alternatives: 1,
+        ..SolverParams::default()
+    };
+    let result = solver.solve(&params);
+    // Delegation is now live: valid params produce a real intake design.
+    assert!(
+        result.is_ok(),
+        "Solver::solve() must return Ok after wiring — got: {:?}",
+        result.err()
+    );
+    assert!(
+        !result.unwrap().is_empty(),
+        "Solver::solve() must return at least one solution (REQ-007)"
+    );
+}
+
+// ── T-6.5.F: intake_solve_via_trait_roundtrip ─────────────────────────────────
+
+/// T-6.5.F (RED → GREEN via PR-F): `Solver::solve` delegates to `solve_intake`
+/// and returns a feasible solution for the golden fixture.
+///
+/// Scenario 1 — happy path: construct with all 13 fixture fields, call
+/// `Solver::solve`, assert `Ok(solutions)` with `len >= 1` and `total_cost > 0.0`.
+///
+/// Scenario 2 — invalid source_type: construct with `source_type = "unknown_type"`,
+/// call `Solver::solve`, assert `Err(_)` — NOT `Ok(vec![])`.
+#[test]
+fn intake_solve_via_trait_roundtrip() {
+    let f = load_intake_golden();
+
+    // ── Scenario 1: happy path via trait ─────────────────────────────────────
+    {
+        let constraints = DesignConstraints::default();
+        let mut solver = IntakeSolver::new(
+            None,
+            constraints,
+            "river".to_string(),                           // source_type
+            f.solver_params.source_elevation,              // source_elevation
+            f.solver_params.pipe_elevation,                // pipe_elevation
+            f.solver_params.channel_slope,                 // channel_slope
+            PipeMaterial::Concrete,                        // material
+            f.solver_params.channel_width_factor,          // channel_width_factor
+            f.solver_params.channel_slope_factor,          // channel_slope_factor
+            f.solver_params.weir_type,                     // weir_type
+            f.solver_params.screen_velocity_factor,        // screen_velocity_factor
+            0.15,                                          // screen_velocity default
+            0.025,                                         // bar_spacing default
+            0.010,                                         // bar_thickness default
+            0.015,                                         // channel_roughness default
+        );
+
+        let params = SolverParams {
+            design_flow: f.solver_params.design_flow,
+            num_alternatives: f.solver_params.num_alternatives,
+            ..SolverParams::default()
+        };
+
+        let result = Solver::solve(&mut solver, &params);
+        assert!(
+            result.is_ok(),
+            "Solver::solve (happy path) must return Ok — got {:?}",
+            result
+        );
+        let solutions = result.unwrap();
+        assert!(
+            !solutions.is_empty(),
+            "Solver::solve must return at least one solution, got 0"
+        );
+        assert!(
+            solutions[0].score.total_cost > 0.0,
+            "solutions[0].score.total_cost must be > 0.0, got {}",
+            solutions[0].score.total_cost
+        );
+    }
+
+    // ── Scenario 2: invalid source_type must yield Err ────────────────────────
+    {
+        let constraints = DesignConstraints::default();
+        let mut solver = IntakeSolver::new(
+            None,
+            constraints,
+            "unknown_type".to_string(),             // invalid source_type
+            f.solver_params.source_elevation,
+            f.solver_params.pipe_elevation,
+            f.solver_params.channel_slope,
+            PipeMaterial::Concrete,
+            f.solver_params.channel_width_factor,
+            f.solver_params.channel_slope_factor,
+            f.solver_params.weir_type,
+            f.solver_params.screen_velocity_factor,
+            0.15,
+            0.025,
+            0.010,
+            0.015,
+        );
+
+        let params = SolverParams {
+            design_flow: f.solver_params.design_flow,
+            num_alternatives: f.solver_params.num_alternatives,
+            ..SolverParams::default()
+        };
+
+        let result = Solver::solve(&mut solver, &params);
+        assert!(
+            result.is_err(),
+            "Solver::solve with unknown_type must return Err, got Ok"
+        );
+    }
 }
