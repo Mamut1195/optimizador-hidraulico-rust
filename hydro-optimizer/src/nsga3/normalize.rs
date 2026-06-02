@@ -146,6 +146,8 @@ fn compute_intercepts(extreme_points: &[[f64; 5]; 5], translated: &[[f64; 5]]) -
     }
 
     // Gaussian elimination with partial pivoting.
+    // Reason: genuine index-based algorithm; col/row indices are used simultaneously
+    // for partial pivoting (a[row][col]) and back-substitution, not expressible as an iterator.
     #[allow(clippy::needless_range_loop)]
     for col in 0..5 {
         // Find pivot row (partial pivoting).
