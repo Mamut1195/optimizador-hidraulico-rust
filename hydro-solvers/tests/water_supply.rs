@@ -107,7 +107,22 @@ fn ws_evaluate_formula_exact() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
     let network = reconstruct_ws_network(&f);
 
     let score = solver
@@ -144,7 +159,22 @@ fn ws_cost_formula_constants() {
 
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
     let network = reconstruct_ws_network(&f);
     let score = solver.evaluate(&network).expect("evaluate");
 
@@ -167,7 +197,22 @@ fn ws_pump_count_is_always_zero() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
     let network = reconstruct_ws_network(&f);
 
     let score = solver.evaluate(&network).expect("evaluate");
@@ -187,7 +232,22 @@ fn ws_solve_end_to_end_parity() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let mut solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -199,14 +259,6 @@ fn ws_solve_end_to_end_parity() {
         loop_density: f.solver_params.loop_density,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let demand_points: Vec<(f64, f64)> = f
-        .solver_params
-        .demand_points
-        .iter()
-        .map(|dp| (dp[0], dp[1]))
-        .collect();
 
     let solutions = solver
         .solve_water_supply(
@@ -280,7 +332,22 @@ fn ws_domain_invariants() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let mut solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -292,14 +359,6 @@ fn ws_domain_invariants() {
         loop_density: f.solver_params.loop_density,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let demand_points: Vec<(f64, f64)> = f
-        .solver_params
-        .demand_points
-        .iter()
-        .map(|dp| (dp[0], dp[1]))
-        .collect();
 
     let solutions = solver
         .solve_water_supply(
@@ -374,7 +433,22 @@ fn ws_network_structure_matches_oracle() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let mut solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let mut solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -386,14 +460,6 @@ fn ws_network_structure_matches_oracle() {
         loop_density: f.solver_params.loop_density,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let demand_points: Vec<(f64, f64)> = f
-        .solver_params
-        .demand_points
-        .iter()
-        .map(|dp| (dp[0], dp[1]))
-        .collect();
 
     let solutions = solver
         .solve_water_supply(
@@ -450,7 +516,22 @@ fn ws_alternatives_yen_integration() {
         .expect("build WS alternatives grid");
 
     let constraints = DesignConstraints::default();
-    let mut solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let mut solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyAlt".to_string(),
+    );
 
     let params = SolverParams {
         source_head: f.solver_params.source_head,
@@ -462,14 +543,6 @@ fn ws_alternatives_yen_integration() {
         loop_density: f.solver_params.loop_density,
         ..SolverParams::default()
     };
-
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let demand_points: Vec<(f64, f64)> = f
-        .solver_params
-        .demand_points
-        .iter()
-        .map(|dp| (dp[0], dp[1]))
-        .collect();
 
     let solutions = solver
         .solve_water_supply(
@@ -602,7 +675,22 @@ fn ws_pipe_metadata_flow_roundtrip() {
     let f = load_water_supply_golden();
     let terrain = make_ws_terrain(&f);
     let constraints = DesignConstraints::default();
-    let solver = WaterSupplySolver::new(terrain, constraints);
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let solver = WaterSupplySolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "WaterSupplyTest".to_string(),
+    );
     let network = reconstruct_ws_network(&f);
 
     // All pipes must have flow_m3s in metadata
@@ -701,8 +789,13 @@ fn water_supply_solve_via_trait_roundtrip() {
             ..SolverParams::default()
         };
 
-        let solutions = solver.solve(&params).expect("Solver::solve must succeed on valid fixture");
-        assert!(!solutions.is_empty(), "Solver::solve must return at least one solution");
+        let solutions = solver
+            .solve(&params)
+            .expect("Solver::solve must succeed on valid fixture");
+        assert!(
+            !solutions.is_empty(),
+            "Solver::solve must return at least one solution"
+        );
         assert!(
             solutions[0].score.total_cost > 0.0,
             "solutions[0].score.total_cost must be positive, got {}",
