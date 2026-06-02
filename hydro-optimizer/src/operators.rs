@@ -1,7 +1,9 @@
 //! Genetic operators: SBX crossover, polynomial mutation, varOr, adaptive eta.
 //!
-//! Ports DEAP `tools.cxSimulatedBinaryBounded`, `tools.mutPolynomialBounded`,
-//! and `algorithms.varOr` faithfully, including the adaptive-eta linear schedule.
+//! Semantically equivalent to DEAP `tools.cxSimulatedBinaryBounded`,
+//! `tools.mutPolynomialBounded`, and `algorithms.varOr`, including the
+//! adaptive-eta linear schedule. SBX/polynomial mutation are byte-level
+//! compatible; `var_or` has a documented divergence (see its docstring).
 //!
 //! Design §5 / REQ-008, REQ-014, REQ-015:
 //! - All functions take `&mut ChaCha20Rng` — no thread-local RNGs.
@@ -31,6 +33,7 @@ use crate::encoding::{GeneSpec, Individual};
 /// ```
 ///
 /// REQ-008: pure deterministic function, no RNG.
+// Reason: consumed by optimizer.rs main loop in PR-8f.
 #[allow(dead_code)]
 pub(crate) fn adaptive_eta_value(generation: u32, max_gen: u32, eta_min: f64, eta_max: f64) -> f64 {
     let progress = generation as f64 / max_gen.max(1) as f64;
@@ -46,6 +49,7 @@ pub(crate) fn adaptive_eta_value(generation: u32, max_gen: u32, eta_min: f64, et
 ///
 /// Integer genes: the raw float chromosome value is operated on by SBX (same
 /// as DEAP — integers are stored as floats in the chromosome and decoded later).
+// Reason: consumed by optimizer.rs main loop in PR-8f.
 #[allow(dead_code)]
 pub(crate) fn sbx_crossover(
     parent1: &mut Individual,
@@ -126,7 +130,11 @@ fn sbx_betaq(u: f64, alpha: f64, eta: f64) -> f64 {
 ///
 /// Ports `deap.tools.mutPolynomialBounded` (Deb, 2001).
 /// Each gene is mutated independently with probability `indpb = 1 / num_genes`.
-/// Operates in-place, invalidating `fitness` when at least one gene is changed.
+/// Operates in-place, invalidating `fitness` ONLY when at least one gene was
+/// actually changed. This is an intentional improvement over DEAP, which
+/// always clears fitness after `mutate()` — sparing one redundant evaluation
+/// per untouched individual. PR-8f evaluates only individuals with `fitness == None`.
+// Reason: consumed by optimizer.rs main loop in PR-8f.
 #[allow(dead_code)]
 pub(crate) fn polynomial_mutation(
     individual: &mut Individual,
@@ -189,18 +197,22 @@ fn poly_mutation_delta(u: f64, x: f64, lb: f64, ub: f64, eta: f64, dx: f64) -> f
 
 /// μ+λ offspring production operator.
 ///
-/// Ports `deap.algorithms.varOr` exactly:
+/// Semantically equivalent to `deap.algorithms.varOr` (NOT byte-identical):
 /// - For each offspring slot:
-///   - With probability `cxpb`: pick two parents, clone, apply SBX, add both (may
-///     overshoot by 1 if lambda is odd — DEAP pads to exactly `lambda_`).
+///   - With probability `cxpb`: pick two parents, clone, apply SBX, push BOTH
+///     children when there is room (saves one redundant SBX call vs. DEAP,
+///     which only retains child1 and discards child2 per crossover step).
 ///   - With probability `mutpb`: clone one parent, apply polynomial mutation.
 ///   - Otherwise: clone one parent unchanged (reproduction).
 ///
-/// Produces exactly `lambda_` offspring.
+/// Produces exactly `lambda_` offspring (same as DEAP). The RNG consumption
+/// sequence and per-step diversity pattern differ slightly from canonical DEAP;
+/// PR-8f parity tests (HV/IGD+ ±10%) validate end-to-end equivalence.
 /// Invalidated individuals have `fitness = None`.
 ///
 /// # Panics (debug)
 /// Panics if `cxpb + mutpb > 1.0` or `population` is empty.
+// Reason: consumed by optimizer.rs main loop in PR-8f.
 #[allow(dead_code)]
 pub(crate) fn var_or(
     population: &[Individual],
@@ -263,6 +275,7 @@ pub(crate) fn var_or(
 /// `fitness` is `None` on all returned individuals.
 ///
 /// Mirrors `toolbox.population(n=self.config.population_size)` in the oracle.
+// Reason: consumed by optimizer.rs main loop in PR-8f.
 #[allow(dead_code)]
 pub(crate) fn init_population(
     solver_type: crate::encoding::SolverType,
