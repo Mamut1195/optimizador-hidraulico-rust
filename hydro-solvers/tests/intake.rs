@@ -208,7 +208,23 @@ fn intake_golden_loads_and_has_correct_shape() {
 fn intake_evaluate_formula_exact() {
     let f = load_intake_golden();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
     let network = reconstruct_intake_network(&f);
 
     let score = solver
@@ -304,7 +320,23 @@ fn intake_cost_formula_constants() {
 fn intake_solve_end_to_end_parity() {
     let f = load_intake_golden();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -465,7 +497,23 @@ fn intake_solve_end_to_end_parity() {
 fn intake_network_layout_invariants() {
     let f = load_intake_golden();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -566,7 +614,23 @@ fn intake_network_layout_invariants() {
 #[test]
 fn intake_channel_velocity_is_rounded_in_metadata() {
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        120.0,
+        118.0,
+        0.005,
+        PipeMaterial::Concrete,
+        1.0,
+        1.0,
+        0,
+        1.0,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -621,7 +685,23 @@ fn intake_channel_velocity_is_rounded_in_metadata() {
 fn intake_rectangular_weir_formula() {
     let f = load_intake_golden();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -684,7 +764,23 @@ fn intake_rectangular_weir_formula() {
 fn intake_v_notch_weir_formula() {
     let f = load_intake_alternatives();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -760,7 +856,23 @@ fn intake_v_notch_weir_formula() {
 fn intake_alternatives_pairwise_distinct() {
     let f = load_intake_alternatives();
     let constraints = DesignConstraints::default();
-    let solver = IntakeSolver::new(None, constraints);
+    let solver = IntakeSolver::new(
+        None,
+        constraints,
+        "river".to_string(),
+        f.solver_params.source_elevation,
+        f.solver_params.pipe_elevation,
+        f.solver_params.channel_slope,
+        PipeMaterial::Concrete,
+        f.solver_params.channel_width_factor,
+        f.solver_params.channel_slope_factor,
+        f.solver_params.weir_type,
+        f.solver_params.screen_velocity_factor,
+        0.15,
+        0.025,
+        0.010,
+        0.015,
+    );
 
     let solutions = solver
         .solve_intake(
@@ -919,19 +1031,19 @@ fn intake_solve_via_trait_roundtrip() {
         let mut solver = IntakeSolver::new(
             None,
             constraints,
-            "river".to_string(),                           // source_type
-            f.solver_params.source_elevation,              // source_elevation
-            f.solver_params.pipe_elevation,                // pipe_elevation
-            f.solver_params.channel_slope,                 // channel_slope
-            PipeMaterial::Concrete,                        // material
-            f.solver_params.channel_width_factor,          // channel_width_factor
-            f.solver_params.channel_slope_factor,          // channel_slope_factor
-            f.solver_params.weir_type,                     // weir_type
-            f.solver_params.screen_velocity_factor,        // screen_velocity_factor
-            0.15,                                          // screen_velocity default
-            0.025,                                         // bar_spacing default
-            0.010,                                         // bar_thickness default
-            0.015,                                         // channel_roughness default
+            "river".to_string(),                    // source_type
+            f.solver_params.source_elevation,       // source_elevation
+            f.solver_params.pipe_elevation,         // pipe_elevation
+            f.solver_params.channel_slope,          // channel_slope
+            PipeMaterial::Concrete,                 // material
+            f.solver_params.channel_width_factor,   // channel_width_factor
+            f.solver_params.channel_slope_factor,   // channel_slope_factor
+            f.solver_params.weir_type,              // weir_type
+            f.solver_params.screen_velocity_factor, // screen_velocity_factor
+            0.15,                                   // screen_velocity default
+            0.025,                                  // bar_spacing default
+            0.010,                                  // bar_thickness default
+            0.015,                                  // channel_roughness default
         );
 
         let params = SolverParams {
@@ -964,7 +1076,7 @@ fn intake_solve_via_trait_roundtrip() {
         let mut solver = IntakeSolver::new(
             None,
             constraints,
-            "unknown_type".to_string(),             // invalid source_type
+            "unknown_type".to_string(), // invalid source_type
             f.solver_params.source_elevation,
             f.solver_params.pipe_elevation,
             f.solver_params.channel_slope,
