@@ -141,7 +141,10 @@ fn test_binary_exits_zero_for_valid_sewer_json() {
     let input_path = write_temp_json(&req_json, "valid_sewer_input");
     let output_path = {
         let mut p = std::env::temp_dir();
-        p.push(format!("hydro_cli_smoke_{}_valid_sewer_output.json", std::process::id()));
+        p.push(format!(
+            "hydro_cli_smoke_{}_valid_sewer_output.json",
+            std::process::id()
+        ));
         p
     };
 
@@ -161,7 +164,8 @@ fn test_binary_exits_zero_for_valid_sewer_json() {
 
     let exit_code = output.status.code().unwrap_or(-1);
     assert_eq!(
-        exit_code, 0,
+        exit_code,
+        0,
         "binary must exit 0 for a valid sewer request; got {exit_code}\nstderr: {}",
         String::from_utf8_lossy(&output.stderr)
     );
@@ -184,7 +188,10 @@ fn test_binary_exits_zero_for_valid_sewer_json() {
         "DesignResult.success must be true; full result: {result}"
     );
     assert!(
-        result["solutions"].as_array().map(|a| !a.is_empty()).unwrap_or(false),
+        result["solutions"]
+            .as_array()
+            .map(|a| !a.is_empty())
+            .unwrap_or(false),
         "DesignResult.solutions must be non-empty; full result: {result}"
     );
 }
@@ -211,7 +218,8 @@ fn test_binary_exits_one_for_malformed_json_stdin() {
 
     let exit_code = output.status.code().unwrap_or(-1);
     assert_eq!(
-        exit_code, 1,
+        exit_code,
+        1,
         "binary must exit 1 for malformed JSON; got {exit_code}\nstderr: {}",
         String::from_utf8_lossy(&output.stderr)
     );
@@ -248,7 +256,8 @@ fn test_binary_exits_one_validate_only_for_bad_request() {
 
     let exit_code = output.status.code().unwrap_or(-1);
     assert_eq!(
-        exit_code, 1,
+        exit_code,
+        1,
         "binary must exit 1 for --validate-only with missing outlet; got {exit_code}\nstderr: {}",
         String::from_utf8_lossy(&output.stderr)
     );
