@@ -37,14 +37,14 @@ pub(crate) mod rng;
 pub use config::OptimizationConfig;
 /// Typed errors (REQ-013).
 pub use errors::OptimizationError;
+/// Optimization diagnostics (re-export from hydro-types for downstream use).
+pub use hydro_types::response::Diagnostics;
 /// Main optimizer struct (REQ-009).
 pub use optimizer::GeneticOptimizer;
 /// Per-generation progress event (REQ-009).
 pub use progress::ProgressEvent;
 /// Top-level Pareto results (REQ-011).
 pub use results::ParetoResults;
-/// Optimization diagnostics (re-export from hydro-types for downstream use).
-pub use hydro_types::response::Diagnostics;
 
 // ── cfg(test) internal surface ────────────────────────────────────────────────
 // Integration-test helpers are gated behind #[cfg(test)] so they NEVER leak

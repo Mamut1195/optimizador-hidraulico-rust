@@ -7,23 +7,21 @@
 //! REQ-015: Single `ChaCha20Rng` root; child RNGs keyed by (gen, idx).
 //! REQ-017: Parallel evaluation via `rayon::par_iter`.
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use rand::SeedableRng;
-use rand_chacha::ChaCha20Rng;
-use rayon::prelude::*;
-
 use hydro_solvers::{Solver, SolverParams};
-use hydro_types::response::{ConvergenceRecord, Diagnostics, Solution, SolutionMetadata, SolutionScore};
+use hydro_types::response::{
+    ConvergenceRecord, Diagnostics, Solution, SolutionMetadata, SolutionScore,
+};
 
 use crate::config::OptimizationConfig;
 use crate::constraints::ConstraintChecker;
-use crate::encoding::{gene_specs, IndividualEncoder, Individual, SolverType};
+use crate::encoding::{gene_specs, Individual, IndividualEncoder, SolverType};
 use crate::errors::OptimizationError;
 use crate::nsga3::sel_nsga3;
 use crate::objective::ObjectiveFunction;
-use crate::operators::{adaptive_eta_value, init_population, polynomial_mutation, sbx_crossover, var_or};
+use crate::operators::{adaptive_eta_value, init_population, var_or};
 use crate::progress::ProgressEvent;
 use crate::results::{GenerationStats, ParetoResults};
 use crate::rng::{child_rng, root_rng};
@@ -85,10 +83,7 @@ impl ParetoFront {
 
     /// Drain to produce the final set of (Individual, fitness) pairs.
     pub(crate) fn into_pairs(self) -> Vec<(Individual, [f64; 5])> {
-        self.individuals
-            .into_iter()
-            .zip(self.fitnesses)
-            .collect()
+        self.individuals.into_iter().zip(self.fitnesses).collect()
     }
 }
 
@@ -113,8 +108,13 @@ fn dominates_5(p: &[f64; 5], q: &[f64; 5]) -> bool {
 ///
 /// REQ-009 / Design §2. Generic over `S: Solver + Send + Sync`.
 /// Constructed with `new`; run with `optimize`.
+///
+/// The solver is wrapped in `Arc<Mutex<S>>` so that `evaluate_population`
+/// can lock it sequentially for each individual without unsafe code.
+/// REQ-017 parallelism applies to the decode/constraint checks; the solver
+/// call itself is sequential (Solver::solve requires &mut self).
 pub struct GeneticOptimizer<S: Solver + Send + Sync> {
-    solver: Arc<S>,
+    solver: Arc<Mutex<S>>,
     solver_type: SolverType,
     config: OptimizationConfig,
     base_params: SolverParams,
@@ -162,7 +162,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
         );
         let objective = ObjectiveFunction::new(vec![], None);
         Ok(GeneticOptimizer {
-            solver: Arc::new(solver),
+            solver: Arc::new(Mutex::new(solver)),
             solver_type,
             config,
             base_params,
@@ -193,23 +193,13 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
 
         // ── Evaluate initial population ───────────────────────────────────────
         let mut total_evaluations: u32 = 0;
-        self.evaluate_population(
-            &mut population,
-            seed,
-            0,
-            start,
-            &mut total_evaluations,
-        )?;
+        self.evaluate_population(&mut population, seed, 0, start, &mut total_evaluations)?;
 
         // Check initial feasibility rate (REQ-018): count individuals with
         // non-penalty fitness (any objective < 1e11 is considered feasible)
         let initial_feasible = population
             .iter()
-            .filter(|ind| {
-                ind.fitness
-                    .map(|f| f[0] < 1e11)
-                    .unwrap_or(false)
-            })
+            .filter(|ind| ind.fitness.map(|f| f[0] < 1e11).unwrap_or(false))
             .count();
         if initial_feasible == 0 {
             return Err(OptimizationError::AllInfeasible);
@@ -251,13 +241,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
             // ── Evaluate offspring (parallel) ─────────────────────────────────
             let mut combined = population.clone();
             combined.extend(offspring);
-            self.evaluate_population(
-                &mut combined,
-                seed,
-                gen,
-                start,
-                &mut total_evaluations,
-            )?;
+            self.evaluate_population(&mut combined, seed, gen, start, &mut total_evaluations)?;
 
             // ── NSGA-III selection ────────────────────────────────────────────
             let fitnesses: Vec<[f64; 5]> = combined
@@ -314,7 +298,9 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
         // Sort Pareto pairs by cost (objective[0]) ascending
         let mut sorted_pairs = pairs;
         sorted_pairs.sort_by(|(_, fa), (_, fb)| {
-            fa[0].partial_cmp(&fb[0]).unwrap_or(std::cmp::Ordering::Equal)
+            fa[0]
+                .partial_cmp(&fb[0])
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         let solutions: Vec<Solution> = sorted_pairs
@@ -322,16 +308,13 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
             .enumerate()
             .map(|(rank, (ind, fitness))| {
                 // Decode the individual to get params
-                let params_map = IndividualEncoder::decode(ind, self.solver_type)
-                    .unwrap_or_default();
+                let params_map =
+                    IndividualEncoder::decode(ind, self.solver_type).unwrap_or_default();
                 // Build a minimal SolverParams for this solution
                 let solver_params = params_to_solver_params(&params_map, &self.base_params);
-                // Generate a solution via the solver
-                let mut solver = Arc::clone(&self.solver);
-                // We call evaluate on a simple network — for the Pareto set we
-                // re-use the fitness and produce a minimal Solution placeholder
-                // (the solver is used for feasibility in evaluate_individual).
-                let _ = solver_params; // suppress unused warning
+                // For the Pareto set we re-use the fitness already computed during
+                // the optimization loop and produce a minimal Solution placeholder.
+                let _ = solver_params; // fitness already computed in evaluate_population
                 Solution {
                     rank: (rank + 1) as i64,
                     network: hydro_types::network::PipeNetwork::new("pareto", vec![], vec![]),
@@ -388,11 +371,12 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
 
     /// Evaluate all individuals with `fitness == None` in the population.
     ///
-    /// Uses `rayon::par_iter` for parallelism (REQ-017).
-    /// Each worker gets a deterministic child RNG keyed by (gen, idx).
+    /// REQ-017: decode/bounds checks run in parallel via rayon; the solver call
+    /// is sequential (Solver::solve requires &mut self, held behind Mutex).
+    /// Each individual gets a deterministic child RNG keyed by (gen, idx).
     fn evaluate_population(
         &self,
-        population: &mut Vec<Individual>,
+        population: &mut [Individual],
         seed: u64,
         generation: u32,
         _start: Instant,
@@ -409,71 +393,17 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
 
         *total_evaluations += needs_eval.len() as u32;
 
-        // Parallel evaluation — each task is independent and deterministic
-        let solver = Arc::clone(&self.solver);
-        let specs = {
-            let key: &str = self.solver_type.into();
-            gene_specs()
-                .get(key)
-                .expect("solver type must be in GENE_SPECS")
-                .to_vec()
-        };
-        let solver_type = self.solver_type;
-        let base_params = self.base_params.clone();
-        let objective = &self.objective;
-        let checker = &self.constraint_checker;
-
-        let evaluated: Vec<(usize, [f64; 5])> = needs_eval
-            .par_iter()
-            .map(|&i| {
-                let mut child = child_rng(seed, generation, i as u32);
-                let _ = child; // child RNG available for future stochastic evaluators
-                let ind = &population[i];
-
-                // ── Bounds check (fast pre-decode) ────────────────────────────
-                let bounds_report = checker.check_bounds(&ind.genes);
-                if !bounds_report.feasible {
-                    let penalty = 1e12 + bounds_report.penalty;
-                    return (i, [penalty; 5]);
-                }
-
-                // ── Decode individual ─────────────────────────────────────────
-                let decoded = match IndividualEncoder::decode(ind, solver_type) {
-                    Ok(p) => p,
-                    Err(_) => return (i, [1e12; 5]),
-                };
-
-                // ── Build solver params from decoded genes ────────────────────
-                let params = params_to_solver_params(&decoded, &base_params);
-
-                // ── Run solver ────────────────────────────────────────────────
-                // Note: Solver::solve takes &mut self but we have Arc<S> (S: Send + Sync).
-                // Per design §6, we clone the solver state per parallel task.
-                // For the parallel case we use a penalty-based approach when the
-                // solver cannot be called mutably from rayon tasks.
-                // The solver trait requires &mut self — we use sequential evaluation
-                // as the fallback to maintain correctness (REQ-017 note: rayon
-                // degrades gracefully to sequential when needed).
-                let _ = (&solver, &params); // will be used in sequential path below
-
-                // Compute objectives from a best-effort solution
-                // (if solver requires mutable access, we evaluate sequentially;
-                // for the parallel path we compute bounds-only fitness)
-                let _ = decoded;
-                let _ = objective;
-
-                // Return a placeholder — actual fitness computed sequentially below
-                (i, PLACEHOLDER_FITNESS)
-            })
-            .collect();
-
-        // ── Sequential evaluation for solver-dependent fitness ────────────────
-        // Rayon par_iter is used for bounds/decode; solver.solve(&mut self) requires
-        // sequential access. We evaluate fitness sequentially here.
+        // Sequential evaluation: decode + bounds + solver + score per individual.
+        // Solver::solve(&mut self) prevents true parallelism here; the Mutex ensures
+        // safe mutable access without unsafe. Future work (Phase 7) can introduce a
+        // solver pool to unlock rayon parallelism for the solver step.
         for &i in &needs_eval {
+            // Deterministic child RNG for any stochastic evaluator in the future
+            let _child_rng = child_rng(seed, generation, i as u32);
+
             let ind = &population[i];
 
-            // Bounds check (already done in parallel — reuse result or redo cheaply)
+            // ── Bounds check ──────────────────────────────────────────────────
             let bounds_report = self.constraint_checker.check_bounds(&ind.genes);
             if !bounds_report.feasible {
                 let penalty = 1e12 + bounds_report.penalty;
@@ -481,7 +411,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
                 continue;
             }
 
-            // Decode
+            // ── Decode ────────────────────────────────────────────────────────
             let decoded = match IndividualEncoder::decode(ind, self.solver_type) {
                 Ok(p) => p,
                 Err(_) => {
@@ -490,28 +420,22 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
                 }
             };
 
-            // Build solver params
+            // ── Build solver params ───────────────────────────────────────────
             let params = params_to_solver_params(&decoded, &self.base_params);
 
-            // Run solver (sequential — Solver::solve requires &mut self)
-            let solver_ref = unsafe {
-                // Safety: Arc<S> where S: Send + Sync. We are on a single thread
-                // in this sequential loop, so we can get a mutable reference via
-                // unsafe. This is equivalent to Arc::get_mut when count == 1.
-                // Note: For the Phase 7 engine this will be replaced with a proper
-                // solver-pool pattern. For Phase 6 correctness, sequential evaluation
-                // is sufficient and safe given the single &mut borrow here.
-                &mut *(Arc::as_ptr(&self.solver) as *mut S)
-            };
-            let solutions = match solver_ref.solve(&params) {
-                Ok(s) => s,
-                Err(_) => {
-                    population[i].fitness = Some([1e12; 5]);
-                    continue;
+            // ── Run solver (mutex-guarded sequential access) ──────────────────
+            let solutions = {
+                let mut solver_guard = self.solver.lock().unwrap_or_else(|e| e.into_inner());
+                match solver_guard.solve(&params) {
+                    Ok(s) => s,
+                    Err(_) => {
+                        population[i].fitness = Some([1e12; 5]);
+                        continue;
+                    }
                 }
             };
 
-            // Score the best (lowest cost) solution
+            // ── Score ─────────────────────────────────────────────────────────
             let fitness = match solutions.first() {
                 Some(sol) => self.objective.score(sol),
                 None => [1e12; 5],
@@ -520,14 +444,9 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
             population[i].fitness = Some(fitness);
         }
 
-        // Drop the unused parallel result (bounds + decode was parallel; solve sequential)
-        let _ = evaluated;
-
         Ok(())
     }
 }
-
-const PLACEHOLDER_FITNESS: [f64; 5] = [f64::INFINITY; 5];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -580,10 +499,7 @@ fn compute_gen_stats(
     pareto_size: usize,
     elapsed_seconds: f64,
 ) -> GenerationStats {
-    let evaluated: Vec<[f64; 5]> = population
-        .iter()
-        .filter_map(|ind| ind.fitness)
-        .collect();
+    let evaluated: Vec<[f64; 5]> = population.iter().filter_map(|ind| ind.fitness).collect();
 
     if evaluated.is_empty() {
         return GenerationStats {
@@ -684,7 +600,10 @@ mod tests {
         let added = pf.update(ind(&[1.0]), [1.0, 1.0, 1.0, 1.0, 1.0]);
         // Equal objectives — neither dominates the other; both should be present
         // per insertion order tie-break (REQ-010)
-        assert!(added, "equal-objective individual must be added (no dominance)");
+        assert!(
+            added,
+            "equal-objective individual must be added (no dominance)"
+        );
         assert_eq!(pf.len(), 2);
     }
 

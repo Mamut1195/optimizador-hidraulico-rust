@@ -10,6 +10,11 @@
 //!
 //! # Design §12 determinism rule
 //! No `HashMap`; geometry uses `Vec<(f64,f64)>` polylines.
+//!
+//! Many items in this module are defined for Phase 7 use (full geometric
+//! constraint evaluation against solver-produced networks). They are
+//! exercised in the inline test suite below.
+#![allow(dead_code)]
 
 use std::f64::consts::PI;
 
@@ -1089,4 +1094,443 @@ fn angle_between(d1: Pt, d2: Pt) -> f64 {
     }
     let cos_angle = (dot / (mag1 * mag2)).clamp(-1.0, 1.0);
     cos_angle.acos() * (180.0 / PI)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests (REQ-004, REQ-018)
+// Previously in tests/pr8c_constraints.rs. Moved inline (REQ-014).
+// ─────────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{ForbiddenZone, MandatoryRoute};
+    use hydro_types::enums::{NodeType, PipeMaterial};
+    use hydro_types::network::{NetworkNode, NetworkPipe, NodeId, PipeId, PipeNetwork};
+    use hydro_types::response::{Solution, SolutionMetadata, SolutionScore};
+
+    fn make_solution(nodes: Vec<NetworkNode>, pipes: Vec<NetworkPipe>) -> Solution {
+        Solution {
+            rank: 1,
+            network: PipeNetwork::new("test", nodes, pipes),
+            score: SolutionScore::default(),
+            metadata: SolutionMetadata::default(),
+        }
+    }
+
+    fn make_pipe(id: &str, s: &str, e: &str, length: f64) -> NetworkPipe {
+        NetworkPipe {
+            id: PipeId::new(id),
+            start_node_id: NodeId::new(s),
+            end_node_id: NodeId::new(e),
+            length,
+            effective_length: length,
+            diameter: 0.3,
+            material: PipeMaterial::Pvc,
+            roughness: 0.009,
+            start_invert: 0.0,
+            end_invert: 0.0,
+            slope: 0.0,
+            design_flow: 0.0,
+            waypoints: vec![],
+            metadata: Default::default(),
+        }
+    }
+
+    fn make_node(id: &str, x: f64, y: f64, z: f64) -> NetworkNode {
+        NetworkNode::new(id, x, y, z, NodeType::Manhole)
+    }
+
+    // ── ConstraintReport + spec penalty formula ───────────────────────────────
+
+    #[test]
+    fn test_feasible_candidate_no_penalty() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0, 0.0], vec![10.0, 5.0]);
+        let report = checker.check_bounds(&[5.0, 2.5]);
+        assert!(report.feasible);
+        assert!(report.violations.is_empty());
+        assert_eq!(report.penalty, 0.0);
+    }
+
+    #[test]
+    fn test_single_violation_spec_penalty_formula() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0, 0.0], vec![10.0, 5.0]);
+        let report = checker.check_bounds(&[5.0, 7.0]);
+        assert!(!report.feasible);
+        assert_eq!(report.violations.len(), 1);
+        let expected = 1e12 + 2.0 * 1e9;
+        assert!((report.penalty - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_multiple_violations_penalty_sums() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0, 0.0, 0.0], vec![5.0, 5.0, 5.0]);
+        let report = checker.check_bounds(&[-1.0, 2.5, 8.0]);
+        assert!(!report.feasible);
+        assert_eq!(report.violations.len(), 2);
+        let total: f64 = report
+            .violations
+            .iter()
+            .map(|v| 1e12 + v.magnitude * 1e9)
+            .sum();
+        assert!((report.penalty - total).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_violation_magnitude_is_correct() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0], vec![10.0]);
+        let report = checker.check_bounds(&[13.5]);
+        assert_eq!(report.violations.len(), 1);
+        assert!((report.violations[0].magnitude - 3.5).abs() < 1e-10);
+    }
+
+    // ── Gene-level bounds ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_bounds_below_lower_bound_infeasible() {
+        let checker = ConstraintChecker::new_bounds_only(vec![1.0], vec![5.0]);
+        let report = checker.check_bounds(&[0.0]);
+        assert!(!report.feasible);
+        assert_eq!(report.violations.len(), 1);
+        assert!(report.violations[0].magnitude > 0.0);
+    }
+
+    #[test]
+    fn test_bounds_above_upper_bound_infeasible() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0], vec![3.0]);
+        assert!(!checker.check_bounds(&[5.0]).feasible);
+    }
+
+    #[test]
+    fn test_bounds_exact_boundary_feasible() {
+        let checker = ConstraintChecker::new_bounds_only(vec![0.0], vec![3.0]);
+        assert!(checker.check_bounds(&[3.0]).feasible);
+        assert!(checker.check_bounds(&[0.0]).feasible);
+    }
+
+    #[test]
+    fn test_bounds_no_bounds_always_feasible() {
+        let checker = ConstraintChecker::new_no_bounds();
+        let report = checker.check_bounds(&[999.0, -999.0]);
+        assert!(report.feasible);
+        assert_eq!(report.penalty, 0.0);
+    }
+
+    // ── Forbidden zones ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_forbidden_zone_pipe_intersects_is_infeasible() {
+        let zone = ForbiddenZone {
+            vertices: vec![[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0]],
+            label: None,
+        };
+        let checker = ConstraintChecker::new_geometric(vec![zone], vec![], None);
+        let route = vec![(-5.0_f64, 5.0_f64), (15.0, 5.0)];
+        let report = checker.check_route(&route);
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::ForbiddenZone));
+        assert!(report.penalty > 0.0);
+    }
+
+    #[test]
+    fn test_forbidden_zone_pipe_clear_is_feasible() {
+        let zone = ForbiddenZone {
+            vertices: vec![[0.0, 0.0], [5.0, 0.0], [5.0, 5.0], [0.0, 5.0]],
+            label: None,
+        };
+        let checker = ConstraintChecker::new_geometric(vec![zone], vec![], None);
+        let route = vec![(10.0_f64, 0.0_f64), (20.0, 0.0)];
+        assert!(checker.check_route(&route).feasible);
+    }
+
+    #[test]
+    fn test_no_forbidden_zones_always_feasible() {
+        let checker = ConstraintChecker::new_geometric(vec![], vec![], None);
+        assert!(
+            checker
+                .check_route(&[(0.0_f64, 0.0_f64), (100.0, 100.0)])
+                .feasible
+        );
+    }
+
+    // ── Mandatory routes ──────────────────────────────────────────────────────
+
+    #[test]
+    fn test_mandatory_route_satisfied_is_feasible() {
+        let mandatory = MandatoryRoute {
+            waypoints: vec![[0.0, 0.0], [10.0, 0.0]],
+            corridor_width: 2.0,
+            label: None,
+        };
+        let checker = ConstraintChecker::new_geometric(vec![], vec![mandatory], None);
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+            ],
+            vec![make_pipe("p1", "n1", "n2", 10.0)],
+        );
+        assert!(checker.check_solution(&solution).feasible);
+    }
+
+    #[test]
+    fn test_mandatory_route_missing_is_infeasible() {
+        let mandatory = MandatoryRoute {
+            waypoints: vec![[100.0, 100.0], [200.0, 100.0]],
+            corridor_width: 2.0,
+            label: None,
+        };
+        let checker = ConstraintChecker::new_geometric(vec![], vec![mandatory], None);
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+            ],
+            vec![make_pipe("p1", "n1", "n2", 10.0)],
+        );
+        let report = checker.check_solution(&solution);
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::MandatoryRoute));
+    }
+
+    // ── Bend angle ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_bend_angle_violation_detected() {
+        let checker = ConstraintChecker::new_geometric(vec![], vec![], Some(120.0));
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+                make_node("n3", 10.0, 10.0, 5.0),
+            ],
+            vec![
+                make_pipe("p1", "n1", "n2", 10.0),
+                make_pipe("p2", "n2", "n3", 10.0),
+            ],
+        );
+        let report = checker.check_solution(&solution);
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::BendAngle));
+    }
+
+    #[test]
+    fn test_bend_angle_straight_pipe_feasible() {
+        let checker = ConstraintChecker::new_geometric(vec![], vec![], Some(45.0));
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+                make_node("n3", 20.0, 0.0, 5.0),
+            ],
+            vec![
+                make_pipe("p1", "n1", "n2", 10.0),
+                make_pipe("p2", "n2", "n3", 10.0),
+            ],
+        );
+        assert!(checker.check_solution(&solution).feasible);
+    }
+
+    // ── Cover depth ───────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_cover_depth_below_min_is_infeasible() {
+        let checker = ConstraintChecker::new_with_cover(1.5, false, 10.0);
+        let mut p = make_pipe("p1", "n1", "n2", 10.0);
+        p.start_invert = 4.5;
+        p.end_invert = 4.5;
+        let mut n1 = make_node("n1", 0.0, 0.0, 5.0);
+        n1.z = 5.0;
+        let mut n2 = make_node("n2", 10.0, 0.0, 5.0);
+        n2.z = 5.0;
+        let report = checker.check_solution(&make_solution(vec![n1, n2], vec![p]));
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::CoverDepth));
+    }
+
+    #[test]
+    fn test_cover_depth_above_min_is_feasible() {
+        let checker = ConstraintChecker::new_with_cover(1.5, false, 10.0);
+        let mut p = make_pipe("p1", "n1", "n2", 10.0);
+        p.start_invert = 2.0;
+        p.end_invert = 2.0;
+        let mut n1 = make_node("n1", 0.0, 0.0, 5.0);
+        n1.z = 5.0;
+        let mut n2 = make_node("n2", 10.0, 0.0, 5.0);
+        n2.z = 5.0;
+        assert!(
+            checker
+                .check_solution(&make_solution(vec![n1, n2], vec![p]))
+                .feasible
+        );
+    }
+
+    // ── Existing clearance ────────────────────────────────────────────────────
+
+    #[test]
+    fn test_existing_clearance_crossing_insufficient_vertical_infeasible() {
+        let existing = ExistingNetworkEntry {
+            coords: vec![(-5.0, 5.0), (15.0, 5.0)],
+            depth: 1.5,
+            setback: None,
+        };
+        let checker = ConstraintChecker::new_with_clearance(vec![existing], 0.3, 1.0, true);
+        let mut p = make_pipe("p1", "n1", "n2", 20.0);
+        p.start_invert = 3.5;
+        p.end_invert = 3.5;
+        let mut n1 = make_node("n1", 5.0, -5.0, 5.0);
+        n1.z = 5.0;
+        let mut n2 = make_node("n2", 5.0, 15.0, 5.0);
+        n2.z = 5.0;
+        let report = checker.check_solution(&make_solution(vec![n1, n2], vec![p]));
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::ExistingClearance));
+    }
+
+    #[test]
+    fn test_existing_clearance_parallel_sufficient_horizontal_feasible() {
+        let existing = ExistingNetworkEntry {
+            coords: vec![(0.0, 0.0), (10.0, 0.0)],
+            depth: 1.5,
+            setback: None,
+        };
+        let checker = ConstraintChecker::new_with_clearance(vec![existing], 0.3, 1.0, true);
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 5.0, 5.0),
+                make_node("n2", 10.0, 5.0, 5.0),
+            ],
+            vec![make_pipe("p1", "n1", "n2", 10.0)],
+        );
+        assert!(checker.check_solution(&solution).feasible);
+    }
+
+    // ── Slope bounds ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_slope_below_min_is_infeasible() {
+        let checker = ConstraintChecker::new_with_slopes(0.005, 0.1, true);
+        let mut p = make_pipe("p1", "n1", "n2", 100.0);
+        p.start_invert = 5.0;
+        p.end_invert = 4.9;
+        p.slope = 0.001;
+        let report = checker.check_solution(&make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 6.0),
+                make_node("n2", 100.0, 0.0, 5.9),
+            ],
+            vec![p],
+        ));
+        assert!(!report.feasible);
+        assert!(report
+            .violations
+            .iter()
+            .any(|v| v.kind == ConstraintViolationKind::Slope));
+    }
+
+    #[test]
+    fn test_slope_above_max_is_infeasible() {
+        let checker = ConstraintChecker::new_with_slopes(0.001, 0.05, true);
+        let mut p = make_pipe("p1", "n1", "n2", 100.0);
+        p.start_invert = 5.0;
+        p.end_invert = -5.0;
+        p.slope = 0.1;
+        let report = checker.check_solution(&make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 6.0),
+                make_node("n2", 100.0, 0.0, -4.0),
+            ],
+            vec![p],
+        ));
+        assert!(!report.feasible);
+    }
+
+    #[test]
+    fn test_adverse_slope_not_rejected_by_slope_check() {
+        let checker = ConstraintChecker::new_with_slopes(0.005, 0.1, true);
+        let mut p = make_pipe("p1", "n1", "n2", 100.0);
+        p.start_invert = 3.0;
+        p.end_invert = 4.0;
+        p.slope = -0.01;
+        let report = checker.check_solution(&make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 100.0, 0.0, 5.0),
+            ],
+            vec![p],
+        ));
+        assert!(report.feasible);
+    }
+
+    // ── Aggregate check + REQ-018 ─────────────────────────────────────────────
+
+    #[test]
+    fn test_aggregate_check_feasible_candidate() {
+        let checker =
+            ConstraintChecker::new_full(vec![0.0, 0.0], vec![10.0, 5.0], vec![], vec![], None);
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+            ],
+            vec![make_pipe("p1", "n1", "n2", 10.0)],
+        );
+        let report = checker.check_full(&[5.0, 2.5], &solution);
+        assert!(report.feasible);
+        assert_eq!(report.penalty, 0.0);
+    }
+
+    #[test]
+    fn test_aggregate_check_bounds_infeasible_skips_geometric() {
+        let checker = ConstraintChecker::new_full(vec![0.0], vec![10.0], vec![], vec![], None);
+        let solution = make_solution(
+            vec![
+                make_node("n1", 0.0, 0.0, 5.0),
+                make_node("n2", 10.0, 0.0, 5.0),
+            ],
+            vec![make_pipe("p1", "n1", "n2", 10.0)],
+        );
+        let report = checker.check_full(&[15.0], &solution);
+        assert!(!report.feasible);
+        let expected = 1e12 + 5.0 * 1e9;
+        assert!((report.penalty - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_req018_feasibility_rate_at_least_10_percent() {
+        let lower = vec![0.0, 0.5, 1.0, 0.0, 60.0];
+        let upper = vec![9.0, 2.0, 1.5, 3.0, 120.0];
+        let checker = ConstraintChecker::new_bounds_only(lower.clone(), upper.clone());
+        let mut individuals: Vec<Vec<f64>> = Vec::new();
+        for _ in 0..45 {
+            let mid: Vec<f64> = lower
+                .iter()
+                .zip(upper.iter())
+                .map(|(lo, hi)| (lo + hi) / 2.0)
+                .collect();
+            individuals.push(mid);
+        }
+        for _ in 0..5 {
+            individuals.push(vec![-1.0, 1.0, 1.2, 1.0, 90.0]);
+        }
+        let feasible = individuals
+            .iter()
+            .filter(|ind| checker.check_bounds(ind).feasible)
+            .count();
+        assert!(feasible as f64 / 50.0 >= 0.10);
+    }
 }

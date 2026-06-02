@@ -13,6 +13,11 @@ use crate::config::OptimizationConfig;
 // ── GenerationStats ───────────────────────────────────────────────────────────
 
 /// Per-generation aggregate statistics (REQ-011, convergence_history).
+///
+/// Fields are read by `compute_gen_stats` in `optimizer.rs`. Some fields
+/// (`feasibility_rate`, `pareto_size`, `elapsed_seconds`) are captured for
+/// future reporting and are not yet consumed by external callers.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct GenerationStats {
     /// 1-indexed generation number.
@@ -70,18 +75,9 @@ impl ParetoResults {
     /// falls back to 0.0.
     pub fn best_by_resilience(&self) -> Option<&Solution> {
         self.solutions.iter().min_by(|a, b| {
-            let ra = a
-                .metadata
-                .fitness
-                .map(|f| f[4])
-                .unwrap_or(f64::INFINITY);
-            let rb = b
-                .metadata
-                .fitness
-                .map(|f| f[4])
-                .unwrap_or(f64::INFINITY);
-            ra.partial_cmp(&rb)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            let ra = a.metadata.fitness.map(|f| f[4]).unwrap_or(f64::INFINITY);
+            let rb = b.metadata.fitness.map(|f| f[4]).unwrap_or(f64::INFINITY);
+            ra.partial_cmp(&rb).unwrap_or(std::cmp::Ordering::Equal)
         })
     }
 

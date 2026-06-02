@@ -393,3 +393,288 @@ impl IndividualEncoder {
         Ok(params)
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests (REQ-001: gene specs, random_individual, decode)
+// Previously in tests/pr8a_encoding.rs and tests/pr8b_verify_fixes.rs.
+// Moved inline (REQ-014: no pub re-exports for internal types).
+// ─────────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::SeedableRng;
+
+    fn make_rng(seed: u64) -> ChaCha20Rng {
+        ChaCha20Rng::seed_from_u64(seed)
+    }
+
+    // ── GENE_SPECS table ──────────────────────────────────────────────────────
+
+    /// REQ-001: GENE_SPECS must cover all 6 solver types.
+    #[test]
+    fn test_gene_specs_table_completeness() {
+        let specs = gene_specs();
+        for k in &[
+            "sewer",
+            "water_supply",
+            "conveyance",
+            "distribution",
+            "pump_station",
+            "intake",
+        ] {
+            assert!(specs.contains_key(k), "GENE_SPECS missing key '{k}'");
+        }
+        assert_eq!(specs.len(), 6);
+    }
+
+    /// REQ-001: Sewer has 5 genes with correct bounds.
+    #[test]
+    fn test_gene_specs_sewer_bounds() {
+        let all_specs = gene_specs();
+        let specs = all_specs.get("sewer").expect("sewer key must exist");
+        assert_eq!(specs.len(), 5);
+        assert_eq!(specs[0].name, "route_variant");
+        assert_eq!(specs[0].lower_bound, 0.0);
+        assert_eq!(specs[0].upper_bound, 9.0);
+        assert_eq!(specs[0].dtype, GeneType::Int);
+        assert_eq!(specs[1].name, "slope_factor");
+        assert_eq!(specs[1].lower_bound, 0.5);
+        assert_eq!(specs[1].upper_bound, 2.0);
+        assert_eq!(specs[1].dtype, GeneType::Float);
+        assert_eq!(specs[4].name, "manhole_spacing");
+        assert_eq!(specs[4].lower_bound, 60.0);
+        assert_eq!(specs[4].upper_bound, 120.0);
+    }
+
+    // ── random_individual ─────────────────────────────────────────────────────
+
+    /// REQ-001 Scenario: Random individual is within bounds (sewer).
+    #[test]
+    fn test_random_individual_within_bounds_sewer() {
+        let mut rng = make_rng(42);
+        let ind = IndividualEncoder::random_individual(SolverType::Sewer, &mut rng);
+        let all_specs = gene_specs();
+        let specs = all_specs.get("sewer").unwrap();
+        assert_eq!(ind.genes.len(), specs.len());
+        for (gene_val, spec) in ind.genes.iter().zip(specs.iter()) {
+            assert!(
+                *gene_val >= spec.lower_bound && *gene_val <= spec.upper_bound,
+                "gene '{}' value {} out of bounds [{}, {}]",
+                spec.name,
+                gene_val,
+                spec.lower_bound,
+                spec.upper_bound
+            );
+        }
+    }
+
+    /// REQ-001: random_individual within bounds for all 6 solver types.
+    #[test]
+    fn test_random_individual_within_bounds_all_types() {
+        let types = [
+            SolverType::Sewer,
+            SolverType::WaterSupply,
+            SolverType::Conveyance,
+            SolverType::Distribution,
+            SolverType::PumpStation,
+            SolverType::Intake,
+        ];
+        let all_specs = gene_specs();
+        for solver_type in types {
+            let mut rng = make_rng(42);
+            let key: &str = solver_type.into();
+            let ind = IndividualEncoder::random_individual(solver_type, &mut rng);
+            let specs = all_specs.get(key).unwrap();
+            assert_eq!(
+                ind.genes.len(),
+                specs.len(),
+                "wrong gene count for {solver_type:?}"
+            );
+            for (gene_val, spec) in ind.genes.iter().zip(specs.iter()) {
+                assert!(
+                    *gene_val >= spec.lower_bound && *gene_val <= spec.upper_bound,
+                    "gene '{}' in {solver_type:?}: value {} out of [{}, {}]",
+                    spec.name,
+                    gene_val,
+                    spec.lower_bound,
+                    spec.upper_bound
+                );
+            }
+        }
+    }
+
+    // ── decode ────────────────────────────────────────────────────────────────
+
+    /// REQ-001 Scenario: Decode integer gene rounds correctly.
+    #[test]
+    fn test_decode_integer_gene_rounds() {
+        let ind = Individual {
+            genes: vec![0.0, 1.0, 1.0, 2.7, 60.0],
+            fitness: None,
+        };
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Sewer).unwrap();
+        assert_eq!(*decoded.get("diameter_offset").unwrap(), 3.0);
+    }
+
+    /// REQ-001: Decode float gene clamps to upper bound.
+    #[test]
+    fn test_decode_float_gene_clamps_upper() {
+        let ind = Individual {
+            genes: vec![0.0, 2.1, 1.0, 0.0, 60.0],
+            fitness: None,
+        };
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Sewer).unwrap();
+        let sf = decoded.get("slope_factor").unwrap();
+        assert!(
+            (sf - 2.0).abs() < 1e-12,
+            "slope_factor 2.1 should clamp to 2.0, got {sf}"
+        );
+    }
+
+    /// REQ-001 Scenario: Decode rejects wrong-length chromosome.
+    #[test]
+    fn test_decode_rejects_wrong_length() {
+        let ind = Individual {
+            genes: vec![0.0, 1.0, 1.0],
+            fitness: None,
+        };
+        match IndividualEncoder::decode(&ind, SolverType::Sewer) {
+            Err(crate::errors::OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("chromosome length mismatch"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for sewer.
+    #[test]
+    fn test_encode_decode_roundtrip_sewer() {
+        let mut rng = make_rng(99);
+        let ind = IndividualEncoder::random_individual(SolverType::Sewer, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Sewer).unwrap();
+        let all_specs = gene_specs();
+        let specs = all_specs.get("sewer").unwrap();
+        for spec in specs {
+            let val = decoded
+                .get(spec.name)
+                .expect("decoded must contain spec name");
+            assert!(
+                *val >= spec.lower_bound && *val <= spec.upper_bound,
+                "decoded '{}' = {} out of bounds",
+                spec.name,
+                val
+            );
+            if spec.dtype == GeneType::Int {
+                assert_eq!(
+                    *val,
+                    val.round(),
+                    "integer gene '{}' = {} is not an integer",
+                    spec.name,
+                    val
+                );
+            }
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for water_supply (WARNING-1 fix).
+    #[test]
+    fn test_encode_decode_roundtrip_water_supply() {
+        let mut rng = make_rng(1);
+        let ind = IndividualEncoder::random_individual(SolverType::WaterSupply, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::WaterSupply).unwrap();
+        let specs = gene_specs().get("water_supply").unwrap();
+        for spec in specs {
+            let val = decoded.get(spec.name).unwrap();
+            assert!(*val >= spec.lower_bound && *val <= spec.upper_bound);
+            if spec.dtype == GeneType::Int {
+                assert_eq!(*val, val.round());
+            }
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for conveyance.
+    #[test]
+    fn test_encode_decode_roundtrip_conveyance() {
+        let mut rng = make_rng(2);
+        let ind = IndividualEncoder::random_individual(SolverType::Conveyance, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Conveyance).unwrap();
+        let specs = gene_specs().get("conveyance").unwrap();
+        for spec in specs {
+            let val = decoded.get(spec.name).unwrap();
+            assert!(*val >= spec.lower_bound && *val <= spec.upper_bound);
+            if spec.dtype == GeneType::Int {
+                assert_eq!(*val, val.round());
+            }
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for distribution.
+    #[test]
+    fn test_encode_decode_roundtrip_distribution() {
+        let mut rng = make_rng(3);
+        let ind = IndividualEncoder::random_individual(SolverType::Distribution, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Distribution).unwrap();
+        let specs = gene_specs().get("distribution").unwrap();
+        for spec in specs {
+            let val = decoded.get(spec.name).unwrap();
+            assert!(*val >= spec.lower_bound && *val <= spec.upper_bound);
+            if spec.dtype == GeneType::Int {
+                assert_eq!(*val, val.round());
+            }
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for pump_station.
+    #[test]
+    fn test_encode_decode_roundtrip_pump_station() {
+        let mut rng = make_rng(4);
+        let ind = IndividualEncoder::random_individual(SolverType::PumpStation, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::PumpStation).unwrap();
+        let specs = gene_specs().get("pump_station").unwrap();
+        for spec in specs {
+            let val = decoded.get(spec.name).unwrap();
+            assert!(*val >= spec.lower_bound && *val <= spec.upper_bound);
+            if spec.dtype == GeneType::Int {
+                assert_eq!(*val, val.round());
+            }
+        }
+    }
+
+    /// REQ-001: encode→decode round-trip for intake.
+    #[test]
+    fn test_encode_decode_roundtrip_intake() {
+        let mut rng = make_rng(5);
+        let ind = IndividualEncoder::random_individual(SolverType::Intake, &mut rng);
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Intake).unwrap();
+        let specs = gene_specs().get("intake").unwrap();
+        for spec in specs {
+            let val = decoded.get(spec.name).unwrap();
+            assert!(*val >= spec.lower_bound && *val <= spec.upper_bound);
+            if spec.dtype == GeneType::Int {
+                assert_eq!(*val, val.round());
+            }
+        }
+    }
+
+    /// REQ-001: negative value clamps to lower_bound.
+    #[test]
+    fn test_decode_integer_gene_clamps_below_lower_bound() {
+        let ind = Individual {
+            genes: vec![-0.5, 1.0, 1.0, 0.0, 60.0],
+            fitness: None,
+        };
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Sewer).unwrap();
+        assert_eq!(*decoded.get("route_variant").unwrap(), 0.0);
+    }
+
+    /// REQ-001: value above upper_bound clamps.
+    #[test]
+    fn test_decode_integer_gene_clamps_above_upper_bound() {
+        let ind = Individual {
+            genes: vec![9.7, 1.0, 1.0, 0.0, 60.0],
+            fitness: None,
+        };
+        let decoded = IndividualEncoder::decode(&ind, SolverType::Sewer).unwrap();
+        assert_eq!(*decoded.get("route_variant").unwrap(), 9.0);
+    }
+}
