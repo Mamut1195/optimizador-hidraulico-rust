@@ -192,7 +192,22 @@ fn distrib_evaluate_formula_exact() {
     let f = load_distribution_golden();
     let terrain = make_distrib_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = DistributionSolver::new(terrain, constraints);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistributionTest".to_string(),
+    );
     let network = reconstruct_distrib_network(&f);
 
     let score = solver
@@ -287,7 +302,22 @@ fn distrib_pump_count_is_always_zero() {
     let f = load_distribution_golden();
     let terrain = make_distrib_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = DistributionSolver::new(terrain, constraints);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistributionTest".to_string(),
+    );
     let network = reconstruct_distrib_network(&f);
 
     let score = solver.evaluate(&network).expect("evaluate");
@@ -304,13 +334,6 @@ fn distrib_solve_end_to_end_parity() {
     let f = load_distribution_golden();
     let terrain = make_distrib_terrain_from_formula(&f.terrain);
     let constraints = DesignConstraints::default();
-    let mut solver = DistributionSolver::new(terrain, constraints);
-
-    let params = SolverParams {
-        grid_resolution: f.solver_params.grid_resolution,
-        ..SolverParams::default()
-    };
-
     let source = (f.solver_params.source[0], f.solver_params.source[1]);
     let demand_points: Vec<(f64, f64)> = f
         .solver_params
@@ -318,6 +341,20 @@ fn distrib_solve_end_to_end_parity() {
         .iter()
         .map(|dp| (dp[0], dp[1]))
         .collect();
+    let mut solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistributionTest".to_string(),
+    );
+
+    let params = SolverParams {
+        grid_resolution: f.solver_params.grid_resolution,
+        ..SolverParams::default()
+    };
 
     let solutions = solver
         .solve_distribution(
@@ -414,11 +451,24 @@ fn distrib_solve_end_to_end_parity() {
 fn distrib_valves_saturated_ordering_trap() {
     let f = load_distribution_valves_saturated();
 
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+
     // Test evaluate-only: reconstruct oracle network, verify valve/hydrant counts
     let constraints = DesignConstraints::default();
     let solver = DistributionSolver::new(
         make_distrib_terrain(&f.terrain.points, f.terrain.grid_res),
         constraints.clone(),
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistribValvesSaturated".to_string(),
     );
     let network = reconstruct_valves_saturated_network(&f);
 
@@ -450,19 +500,19 @@ fn distrib_valves_saturated_ordering_trap() {
     assert_abs_diff_eq!(score.total_cost, f.evaluate_only.total_cost, epsilon = 1e-4);
 
     // E2E solve: run solver with valve_spacing=100, verify same counts
-    let mut solver2 =
-        DistributionSolver::new(make_distrib_terrain_from_formula(&f.terrain), constraints);
+    let mut solver2 = DistributionSolver::new(
+        make_distrib_terrain_from_formula(&f.terrain),
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistribValvesSaturated".to_string(),
+    );
     let params = SolverParams {
         grid_resolution: f.solver_params.grid_resolution,
         ..SolverParams::default()
     };
-    let source = (f.solver_params.source[0], f.solver_params.source[1]);
-    let demand_points: Vec<(f64, f64)> = f
-        .solver_params
-        .demand_points
-        .iter()
-        .map(|dp| (dp[0], dp[1]))
-        .collect();
 
     let solutions = solver2
         .solve_distribution(
@@ -526,13 +576,6 @@ fn distrib_alternatives_pairwise_distinct() {
     let f = load_distribution_alternatives();
     let terrain = make_distrib_terrain_from_formula(&f.terrain);
     let constraints = DesignConstraints::default();
-    let mut solver = DistributionSolver::new(terrain, constraints);
-
-    let params = SolverParams {
-        grid_resolution: f.solver_params.grid_resolution,
-        ..SolverParams::default()
-    };
-
     let source = (f.solver_params.source[0], f.solver_params.source[1]);
     let demand_points: Vec<(f64, f64)> = f
         .solver_params
@@ -540,6 +583,20 @@ fn distrib_alternatives_pairwise_distinct() {
         .iter()
         .map(|dp| (dp[0], dp[1]))
         .collect();
+    let mut solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistributionAlt".to_string(),
+    );
+
+    let params = SolverParams {
+        grid_resolution: f.solver_params.grid_resolution,
+        ..SolverParams::default()
+    };
 
     let solutions = solver
         .solve_distribution(
@@ -671,13 +728,6 @@ fn distrib_domain_invariants() {
     let f = load_distribution_golden();
     let terrain = make_distrib_terrain_from_formula(&f.terrain);
     let constraints = DesignConstraints::default();
-    let mut solver = DistributionSolver::new(terrain, constraints);
-
-    let params = SolverParams {
-        grid_resolution: f.solver_params.grid_resolution,
-        ..SolverParams::default()
-    };
-
     let source = (f.solver_params.source[0], f.solver_params.source[1]);
     let demand_points: Vec<(f64, f64)> = f
         .solver_params
@@ -685,6 +735,20 @@ fn distrib_domain_invariants() {
         .iter()
         .map(|dp| (dp[0], dp[1]))
         .collect();
+    let mut solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points.clone(),
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistributionTest".to_string(),
+    );
+
+    let params = SolverParams {
+        grid_resolution: f.solver_params.grid_resolution,
+        ..SolverParams::default()
+    };
 
     let solutions = solver
         .solve_distribution(
@@ -754,7 +818,22 @@ fn distrib_valves_saturated_evaluate_only() {
     let f = load_distribution_valves_saturated();
     let terrain = make_distrib_terrain(&f.terrain.points, f.terrain.grid_res);
     let constraints = DesignConstraints::default();
-    let solver = DistributionSolver::new(terrain, constraints);
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+    let solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "DistribValvesSaturated".to_string(),
+    );
     let network = reconstruct_valves_saturated_network(&f);
 
     let score = solver
