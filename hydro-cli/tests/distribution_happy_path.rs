@@ -105,8 +105,7 @@ fn test_run_distribution_dispatch() {
     };
 
     // ACT — returns Err(InternalError("... WU-5")) on RED commit; Ok on GREEN.
-    let result =
-        run(req, Some(42)).expect("run() must return Ok for a valid distribution request");
+    let result = run(req, Some(42)).expect("run() must return Ok for a valid distribution request");
 
     // ASSERT — REQ-001 happy path scenario.
     assert!(

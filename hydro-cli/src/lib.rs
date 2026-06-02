@@ -3,7 +3,7 @@
 //! # Public surface (REQ-001, REQ-010)
 //!
 //! - [`CliError`] — typed error enum with [`CliError::exit_code`] (REQ-003)
-//! - [`run`] — full optimization dispatch stub (implemented in WU-4/5)
+//! - [`run`] — full optimization dispatch (all 6 solvers, WU-4/WU-5)
 //! - [`validate_request`] — structural + solver-specific validation stub (WU-2)
 //!
 //! All items are re-exported at the crate root so integration tests can call
@@ -12,7 +12,10 @@
 use std::time::Instant;
 
 use hydro_optimizer::{GeneticOptimizer, OptimizationConfig, OptimizationError, SolverType};
-use hydro_solvers::{SewerSolver, Solver, SolverError, SolverParams};
+use hydro_solvers::{
+    ConveyanceSolver, DistributionSolver, IntakeSolver, PumpStationSolver, SewerSolver, Solver,
+    SolverError, SolverParams, WaterSupplySolver,
+};
 use hydro_terrain::TerrainModel;
 use hydro_types::{
     error::HydroTypesError,
@@ -364,10 +367,9 @@ fn assemble_design_result(
 /// - `Err(CliError)` — see [`CliError`] exit-code table.
 ///
 /// # Implementation note (WU-4 / WU-5)
-/// WU-4 implements the `sewer` dispatch arm. Remaining 5 project_types
-/// (`water_supply`, `conveyance`, `distribution`, `pump_station`, `intake`)
-/// will be implemented in WU-5; they currently return `InternalError` to
-/// prevent silent silencing of future work.
+/// WU-4 implemented the `sewer` dispatch arm. WU-5 implements the remaining
+/// 5 project_types: `water_supply`, `conveyance`, `distribution`,
+/// `pump_station`, and `intake`. All 6 arms are now live.
 pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResult, CliError> {
     let start = Instant::now();
 
@@ -418,15 +420,237 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             )
         }
 
-        // ── WU-5 stubs ────────────────────────────────────────────────────
+        // ── WU-5: WaterSupply dispatch ────────────────────────────────────
         //
-        // The remaining 5 project_types are intentionally not implemented
-        // here. Returning InternalError makes the boundary visible in tests
-        // without masking a missing arm as a panic.
-        other @ ("water_supply" | "conveyance" | "distribution" | "pump_station" | "intake") => {
-            Err(CliError::InternalError(format!(
-                "project_type '{other}' dispatch not yet implemented (WU-5)"
-            )))
+        // REQ-004: monomorphized arm — no Box<dyn Solver>.
+        // service_points are treated as demand_points (design §2 table).
+        // demand_per_node falls back to base_params.design_flow (design §2.5).
+        "water_supply" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let demand_pts: Vec<(f64, f64)> = req
+                .service_points
+                .as_ref()
+                .unwrap() // validated: Some, non-empty
+                .iter()
+                .map(xy)
+                .collect();
+            let source = xy(req.source.as_ref().unwrap()); // validated: Some
+
+            let solver = WaterSupplySolver::new(
+                terrain,
+                constraints,
+                demand_pts,
+                source,
+                base_params.design_flow, // demand_per_node — design §2.5
+                material,
+                req.project_name.clone(),
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::WaterSupply,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
+        }
+
+        // ── WU-5: Conveyance dispatch ─────────────────────────────────────
+        //
+        // outlet is reused as destination (design §2 table, ConveyanceSolver signature).
+        "conveyance" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let source = xy(req.source.as_ref().unwrap()); // validated: Some
+            let destination = xy(req.outlet.as_ref().unwrap()); // validated: Some (outlet = destination)
+
+            let solver = ConveyanceSolver::new(
+                terrain,
+                constraints,
+                source,
+                destination,
+                material,
+                req.project_name.clone(),
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::Conveyance,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
+        }
+
+        // ── WU-5: Distribution dispatch ───────────────────────────────────
+        //
+        // service_points are treated as demand_points (design §2 table).
+        // validate_request already enforces len() >= 2 (design §2 rule 3).
+        "distribution" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let demand_pts: Vec<(f64, f64)> = req
+                .service_points
+                .as_ref()
+                .unwrap() // validated: Some, len >= 2
+                .iter()
+                .map(xy)
+                .collect();
+            let source = xy(req.source.as_ref().unwrap()); // validated: Some
+
+            let solver = DistributionSolver::new(
+                terrain,
+                constraints,
+                demand_pts,
+                source,
+                base_params.design_flow, // demand_per_node — design §2.5
+                material,
+                req.project_name.clone(),
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::Distribution,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
+        }
+
+        // ── WU-5: PumpStation dispatch ────────────────────────────────────
+        //
+        // PumpStationSolver takes Option<TerrainModel> — we pass Some(terrain) for
+        // structural consistency even though the solver never reads it algorithmically.
+        // Elevations are derived from terrain.elevation_at() (design §2.5, §9).
+        // TerrainModel::elevation_at() is infallible (returns f64, never Err).
+        // Pipe lengths are derived from Euclidean distance between source and outlet XY.
+        //
+        // Hardcoded v1 defaults (design §2.5 conservative defaults table):
+        //   suction_diameter    = 0.20 m  — matches smoke test default diameter range
+        //   discharge_diameter  = 0.20 m  — same (PUMP_DIAMETERS: 0.10–0.40 m)
+        //   wet_well_factor     = 1.0     — Phase 6.5 smoke test: matches oracle (1.0)
+        //   retention_minutes   = 5.0     — Phase 6.5 smoke test: matches oracle (5.0)
+        //   num_pumps           = None    — let num_alternatives drive the range
+        //   suction_d_idx       = None    — no diameter-index override
+        //   discharge_d_idx     = None    — no diameter-index override
+        "pump_station" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let src_xy = xy(req.source.as_ref().unwrap()); // validated: Some
+            let dst_xy = xy(req.outlet.as_ref().unwrap()); // validated: Some
+
+            // Elevation lookup — infallible; falls back to nearest-neighbor if outside bounds.
+            let suction_elevation = terrain.elevation_at(src_xy.0, src_xy.1);
+            let discharge_elevation = terrain.elevation_at(dst_xy.0, dst_xy.1);
+
+            // Pipe lengths: Euclidean distance between source and outlet XY (design §2.5).
+            // Used for both suction and discharge sides as a conservative v1 approximation.
+            let pipe_length = {
+                let dx = dst_xy.0 - src_xy.0;
+                let dy = dst_xy.1 - src_xy.1;
+                (dx * dx + dy * dy).sqrt().max(1.0) // clamp to >= 1.0 m to avoid zero-length
+            };
+
+            let solver = PumpStationSolver::new(
+                Some(terrain),
+                constraints,
+                suction_elevation,
+                discharge_elevation,
+                pipe_length, // suction_pipe_length (design §2.5: Euclidean distance)
+                pipe_length, // discharge_pipe_length (same approximation)
+                0.20,        // suction_diameter (m) — v1 default, PUMP_DIAMETERS range
+                0.20,        // discharge_diameter (m) — v1 default, PUMP_DIAMETERS range
+                material,
+                1.0,  // wet_well_factor — Phase 6.5 smoke test value
+                5.0,  // retention_minutes — Phase 6.5 smoke test value
+                None, // num_pumps — let num_alternatives drive the range
+                None, // suction_d_idx — no diameter-index override
+                None, // discharge_d_idx — no diameter-index override
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::PumpStation,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
+        }
+
+        // ── WU-5: Intake dispatch ─────────────────────────────────────────
+        //
+        // IntakeSolver takes Option<TerrainModel> — pass Some(terrain) for consistency.
+        // source_elevation is derived from terrain.elevation_at(source_xy) (infallible).
+        // pipe_elevation = source_elevation - 2.0 m (1–2 m below ground, design §5 placeholder).
+        //
+        // source_type defaults to "river" (CLI v1 constraint, design §2 table, §2.7 note).
+        // Valid values: "river", "lake", "spring", "groundwater", "canal", "reservoir".
+        // validate_request prevalidates; reaching here means "river" is always safe.
+        //
+        // Hardcoded v1 channel/screen constants (design §2.5 conservative defaults table,
+        // Phase 6.5 smoke test values from solver_wiring_smoke.rs):
+        //   channel_slope        = 0.001   — mild slope; IntakeGolden uses 0.005 but 0.001 is safer
+        //   channel_width_factor = 1.2     — slight width margin over critical flow width
+        //   channel_slope_factor = 1.0     — no slope correction
+        //   weir_type            = 1       — rectangular weir (0 = v-notch per solver code)
+        //   screen_velocity_factor= 1.5    — Phase 6.5 smoke uses f.solver_params.screen_velocity_factor (1.0)
+        //   screen_velocity      = 0.15 m/s — Phase 6.5 smoke test hardcoded default
+        //   bar_spacing          = 0.025 m  — Phase 6.5 smoke test hardcoded default
+        //   bar_thickness        = 0.010 m  — Phase 6.5 smoke test hardcoded default
+        //   channel_roughness    = 0.015    — Phase 6.5 smoke test hardcoded default (Manning n)
+        "intake" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let src_xy = xy(req.source.as_ref().unwrap()); // validated: Some
+
+            // Elevation lookup — infallible; falls back to nearest-neighbor if outside bounds.
+            let source_elevation = terrain.elevation_at(src_xy.0, src_xy.1);
+            // pipe_elevation: 2 m below source surface — conservative v1 placeholder (design §5).
+            let pipe_elevation = source_elevation - 2.0;
+
+            let solver = IntakeSolver::new(
+                Some(terrain),
+                constraints,
+                "river".to_string(), // source_type — CLI v1 default (design §2.7, VALID_SOURCE_TYPES)
+                source_elevation,
+                pipe_elevation, // 2 m below source surface (v1 placeholder, design §5)
+                0.001,          // channel_slope — mild slope v1 default
+                material,
+                1.2, // channel_width_factor — slight width margin
+                1.0, // channel_slope_factor — no slope correction
+                1,   // weir_type — 1 = rectangular (design §5; IntakeGolden weir_type=0, but
+                //              intake tests use weir_type from fixture via smoke; CLI uses 1
+                //              as a conservative default matching design §5 skeleton)
+                1.5,   // screen_velocity_factor — Phase 6.5 smoke: 1.0; CLI uses 1.5 (margin)
+                0.15,  // screen_velocity (m/s) — Phase 6.5 smoke hardcoded default
+                0.025, // bar_spacing (m) — Phase 6.5 smoke hardcoded default
+                0.010, // bar_thickness (m) — Phase 6.5 smoke hardcoded default
+                0.015, // channel_roughness (Manning n) — Phase 6.5 smoke hardcoded default
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::Intake,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
         }
 
         // Unknown types are caught by validate_request above; this arm is

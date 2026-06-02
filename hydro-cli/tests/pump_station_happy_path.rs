@@ -55,7 +55,6 @@ fn test_run_pump_station_dispatch() {
     let suction_elev = f.solver_params.suction_elevation; // 100.0
     let discharge_elev = f.solver_params.discharge_elevation; // 115.0
     let max_x = 60.0_f64;
-    let max_y = 20.0_f64;
     let slope_x = (discharge_elev - suction_elev) / max_x;
 
     let mut terrain_points: Vec<PointXYZ> = Vec::new();
@@ -117,8 +116,7 @@ fn test_run_pump_station_dispatch() {
     };
 
     // ACT — returns Err(InternalError("... WU-5")) on RED commit; Ok on GREEN.
-    let result =
-        run(req, Some(42)).expect("run() must return Ok for a valid pump_station request");
+    let result = run(req, Some(42)).expect("run() must return Ok for a valid pump_station request");
 
     // ASSERT — REQ-001 happy path scenario.
     assert!(
