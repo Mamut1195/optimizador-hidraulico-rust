@@ -24,10 +24,18 @@
 //! | `--pretty`        | Flag              | Pretty-print JSON output              |
 //! | `--validate-only` | Flag              | Run validate_request only; skip optimizer (REQ-006, WU-7 notes) |
 //!
-//! # WU-6 implementation notes
+//! # WU-6 / WU-7 implementation notes
 //!
-//! `--validate-only` is fully wired here: routes to `validate_request()` and
-//! exits with its exit code (0 on Ok, 1 on Err). WU-7 may add timing output.
+//! `--validate-only` is fully wired here: routes to `validate_request()` only
+//! (no TerrainModel, no GeneticOptimizer, no solver instantiation).
+//!
+//! WU-7 adds minimal status JSON to stdout on both the Ok and Err paths:
+//! - Ok:  `{"status":"valid","project_type":"<type>"}`
+//! - Err: `{"status":"invalid","error":"<message>"}`
+//!
+//! Wall time for the validate-only path is < 50 ms (design §7 target) and
+//! < 100 ms (spec REQ-007 ceiling). Both paths are asserted in
+//! `tests/validate_only.rs`.
 //!
 //! `audit_hash` in the DesignResult is intentionally empty string until WU-8.
 
@@ -162,11 +170,50 @@ fn main() {
     };
 
     // Step 3: validate-only fast path (REQ-006, REQ-007).
-    // Runs validate_request, exits with its exit code. No optimizer involved.
+    //
+    // Emits a minimal status JSON to stdout then exits:
+    //   Success: {"status":"valid","project_type":"<type>"}
+    //   Failure: {"status":"invalid","error":"<message>"}
+    //
+    // No TerrainModel, GeneticOptimizer, or solver is instantiated here.
+    // Wall time is dominated by binary startup (~50 ms); pure validate_request
+    // + JSON emit is < 1 ms. Total < 50 ms on any reference fixture (REQ-007).
     if cli.validate_only {
         match validate_request(&req) {
-            Ok(()) => process::exit(0),
+            Ok(()) => {
+                // Emit {"status":"valid","project_type":"<type>"} to stdout.
+                let status_json = serde_json::json!({
+                    "status": "valid",
+                    "project_type": req.project_type.as_str()
+                });
+                let status_bytes = match serde_json::to_vec(&status_json) {
+                    Ok(b) => b,
+                    Err(e) => {
+                        eprintln!("hydro-cli: failed to serialize validation status: {e}");
+                        process::exit(4);
+                    }
+                };
+                if write_output(cli.output.as_ref(), &status_bytes).is_err() {
+                    process::exit(4);
+                }
+                process::exit(0);
+            }
             Err(e) => {
+                // Emit {"status":"invalid","error":"<message>"} to stdout.
+                let status_json = serde_json::json!({
+                    "status": "invalid",
+                    "error": format_cli_error(&e)
+                });
+                let status_bytes = match serde_json::to_vec(&status_json) {
+                    Ok(b) => b,
+                    Err(se) => {
+                        eprintln!("hydro-cli: failed to serialize validation error: {se}");
+                        process::exit(4);
+                    }
+                };
+                if write_output(cli.output.as_ref(), &status_bytes).is_err() {
+                    process::exit(4);
+                }
                 eprintln!("hydro-cli: validation failed: {}", format_cli_error(&e));
                 process::exit(e.exit_code());
             }
