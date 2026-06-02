@@ -26,11 +26,7 @@ fn test_cli_error_exit_codes() {
     // From<HydroTypesError> → ValidationError → exit 1
     let hte = HydroTypesError::MissingRequired { field: "outlet" };
     let cli_err = CliError::from(hte);
-    assert_eq!(
-        cli_err.exit_code(),
-        1,
-        "HydroTypesError must map to exit 1"
-    );
+    assert_eq!(cli_err.exit_code(), 1, "HydroTypesError must map to exit 1");
 
     // ValidationError constructed directly → exit 1
     let direct = CliError::ValidationError(HydroTypesError::CrossFieldViolation {
@@ -58,8 +54,9 @@ fn test_cli_error_exit_codes() {
     // --- exit 3: NormComplianceFailed ---
 
     // From<OptimizationError::NormValidationFailure> → NormComplianceFailed → exit 3
-    let cli_err =
-        CliError::from(OptimizationError::NormValidationFailure("too many bends".into()));
+    let cli_err = CliError::from(OptimizationError::NormValidationFailure(
+        "too many bends".into(),
+    ));
     assert_eq!(
         cli_err.exit_code(),
         3,

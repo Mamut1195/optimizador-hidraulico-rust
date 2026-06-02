@@ -9,11 +9,26 @@
 //!   2 — no feasible solution found
 //!   3 — no norm-compliant solution (strict_norm_compliance gate)
 //!   4 — internal engine error
+//!
+//! # WU-1 placeholder
+//! Full clap shell + dispatch wired in WU-6. Until then the binary produces a
+//! typed `InternalError` and exits with its exit_code() (4), preserving the
+//! scaffold behaviour while routing through the new error type.
+
+use hydro_cli::CliError;
 
 fn main() {
-    // Placeholder — full implementation lives in PR-7 (hydro-cli).
-    eprintln!("hydro-cli: engine not yet implemented (scaffold only)");
-    std::process::exit(4);
+    let err = CliError::InternalError(
+        "hydro-cli: engine not yet implemented (scaffold only — WU-6 will replace this)".into(),
+    );
+    eprintln!(
+        "hydro-cli: {}",
+        match &err {
+            CliError::InternalError(msg) => msg.as_str(),
+            _ => "unexpected error variant in scaffold",
+        }
+    );
+    std::process::exit(err.exit_code());
 }
 
 #[cfg(test)]
