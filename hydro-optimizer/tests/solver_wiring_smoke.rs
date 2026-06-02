@@ -74,8 +74,8 @@ fn has_feasible_individual(results: &hydro_optimizer::ParetoResults, threshold: 
 /// GIVEN a `GeneticOptimizer` wrapping a fully-wired `ConveyanceSolver` built from
 /// `solvers_conveyance_golden.json`, seed=42, population_size=8, max_generations=3
 /// WHEN `optimize()` is called
-/// THEN at least one individual has `fitness[0] < 1e-99` — RED placeholder assertion
-/// that always fails, establishing the RED commit before the GREEN fix in F4.
+/// THEN at least one individual has `fitness[0] < 1e11` (feasible; the infeasible
+/// sentinel is `1e12`).
 #[test]
 fn optimizer_smoke_conveyance_feasible() {
     let f = load_conveyance_golden();
@@ -122,9 +122,9 @@ fn optimizer_smoke_conveyance_feasible() {
         .expect("optimize() must not error for conveyance smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
 
@@ -132,7 +132,7 @@ fn optimizer_smoke_conveyance_feasible() {
 
 /// Smoke: SewerSolver wiring exercises the GA with golden-fixture context.
 ///
-/// RED placeholder — assertion uses impossible threshold 1e-99.
+/// GREEN — asserts `fitness[0] < 1e11` (feasibility threshold).
 #[test]
 fn optimizer_smoke_sewer_feasible() {
     let f = load_sewer_golden();
@@ -182,9 +182,9 @@ fn optimizer_smoke_sewer_feasible() {
         .expect("optimize() must not error for sewer smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
 
@@ -192,7 +192,7 @@ fn optimizer_smoke_sewer_feasible() {
 
 /// Smoke: WaterSupplySolver wiring exercises the GA with golden-fixture context.
 ///
-/// RED placeholder — assertion uses impossible threshold 1e-99.
+/// GREEN — asserts `fitness[0] < 1e11` (feasibility threshold).
 #[test]
 fn optimizer_smoke_water_supply_feasible() {
     let f = load_water_supply_golden();
@@ -241,9 +241,9 @@ fn optimizer_smoke_water_supply_feasible() {
         .expect("optimize() must not error for water_supply smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
 
@@ -251,7 +251,7 @@ fn optimizer_smoke_water_supply_feasible() {
 
 /// Smoke: DistributionSolver wiring exercises the GA with golden-fixture context.
 ///
-/// RED placeholder — assertion uses impossible threshold 1e-99.
+/// GREEN — asserts `fitness[0] < 1e11` (feasibility threshold).
 #[test]
 fn optimizer_smoke_distribution_feasible() {
     let f = load_distribution_golden();
@@ -302,9 +302,9 @@ fn optimizer_smoke_distribution_feasible() {
         .expect("optimize() must not error for distribution smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
 
@@ -312,7 +312,7 @@ fn optimizer_smoke_distribution_feasible() {
 
 /// Smoke: PumpStationSolver wiring exercises the GA with golden-fixture context.
 ///
-/// RED placeholder — assertion uses impossible threshold 1e-99.
+/// GREEN — asserts `fitness[0] < 1e11` (feasibility threshold).
 #[test]
 fn optimizer_smoke_pump_station_feasible() {
     let f = load_pump_station_golden();
@@ -356,9 +356,9 @@ fn optimizer_smoke_pump_station_feasible() {
         .expect("optimize() must not error for pump_station smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
 
@@ -366,7 +366,7 @@ fn optimizer_smoke_pump_station_feasible() {
 
 /// Smoke: IntakeSolver wiring exercises the GA with golden-fixture context.
 ///
-/// RED placeholder — assertion uses impossible threshold 1e-99.
+/// GREEN — asserts `fitness[0] < 1e11` (feasibility threshold).
 #[test]
 fn optimizer_smoke_intake_feasible() {
     let f = load_intake_golden();
@@ -411,8 +411,8 @@ fn optimizer_smoke_intake_feasible() {
         .expect("optimize() must not error for intake smoke");
 
     assert!(
-        has_feasible_individual(&results, 1e-99),
-        "RED placeholder: this assertion deliberately fails to establish the RED commit. \
-         Fix in F4 by changing 1e-99 to 1e11."
+        has_feasible_individual(&results, 1e11),
+        "at least one individual must have fitness[0] < 1e11 (feasibility threshold); \
+         fitness[0] >= 1e11 means all evaluations returned the infeasible sentinel (1e12)"
     );
 }
