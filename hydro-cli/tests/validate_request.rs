@@ -9,7 +9,7 @@
 //! panic even earlier (deserialization). The RED commit is expected to fail
 //! `cargo test` on every case below.
 
-use hydro_cli::{validate_request, CliError};
+use hydro_cli::validate_request;
 use hydro_types::request::DesignRequest;
 use serde_json::json;
 

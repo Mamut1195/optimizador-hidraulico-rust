@@ -184,17 +184,154 @@ pub fn run(_req: DesignRequest, _seed_override: Option<u64>) -> Result<DesignRes
 
 /// Validate a `DesignRequest` without running the optimizer.
 ///
-/// Calls `req.validate()` from hydro-types, then performs per-`project_type`
-/// presence checks on required `Option<_>` fields (design §2 table).
+/// 1. Calls `req.validate()` from hydro-types (range + cross-field checks).
+/// 2. Performs per-`project_type` `Option<_>` presence checks per design §2.
+///
+/// The rules implemented here are the CLI pre-validation layer described in
+/// design §2, rules 2–4. They surface errors as exit 1 (`ValidationError`)
+/// rather than letting them reach the optimizer as exit 4 internal failures.
 ///
 /// # Returns
 /// - `Ok(())` — all checks pass.
 /// - `Err(CliError::ValidationError(_))` — first failing check.
-///
-/// # Implementation note (WU-1)
-/// Body is a stub (`todo!()`). Full implementation lands in WU-2.
-pub fn validate_request(_req: &DesignRequest) -> Result<(), CliError> {
-    todo!("validate_request() is implemented in WU-2")
+pub fn validate_request(req: &DesignRequest) -> Result<(), CliError> {
+    // Rule 1: hydro-types range + cross-field validation.
+    req.validate().map_err(CliError::from)?;
+
+    // Rules 2–4: per-project_type required `Option<_>` presence checks.
+    match req.project_type.as_str() {
+        // Sewer requires outlet (discharge point) and at least one service point.
+        "sewer" => {
+            if req.outlet.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "outlet" },
+                ));
+            }
+            match &req.service_points {
+                None => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::MissingRequired {
+                            field: "service_points",
+                        },
+                    ))
+                }
+                Some(pts) if pts.is_empty() => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::MissingRequired {
+                            field: "service_points",
+                        },
+                    ))
+                }
+                _ => {}
+            }
+        }
+
+        // WaterSupply requires source (supply node) and at least one demand point.
+        "water_supply" => {
+            if req.source.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "source" },
+                ));
+            }
+            match &req.service_points {
+                None => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::MissingRequired {
+                            field: "service_points",
+                        },
+                    ))
+                }
+                Some(pts) if pts.is_empty() => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::MissingRequired {
+                            field: "service_points",
+                        },
+                    ))
+                }
+                _ => {}
+            }
+        }
+
+        // Conveyance requires source (origin) and outlet (destination).
+        // `outlet` is reused as the destination field for ConveyanceSolver (design §2 table).
+        "conveyance" => {
+            if req.source.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "source" },
+                ));
+            }
+            if req.outlet.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "outlet" },
+                ));
+            }
+        }
+
+        // Distribution requires source and >= 2 demand points.
+        // Design §2 rule 3: < 2 points must surface as exit 1, not exit 4
+        // (SolverError::InsufficientTerminals). Pre-validate in CLI.
+        "distribution" => {
+            if req.source.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "source" },
+                ));
+            }
+            match &req.service_points {
+                None => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::MissingRequired {
+                            field: "service_points",
+                        },
+                    ))
+                }
+                Some(pts) if pts.len() < 2 => {
+                    return Err(CliError::ValidationError(
+                        HydroTypesError::CrossFieldViolation {
+                            message: "distribution requires >= 2 demand points".into(),
+                        },
+                    ))
+                }
+                _ => {}
+            }
+        }
+
+        // PumpStation requires source (suction XY) and outlet (discharge XY).
+        // Elevations and pipe lengths are derived from TerrainModel at dispatch time.
+        "pump_station" => {
+            if req.source.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "source" },
+                ));
+            }
+            if req.outlet.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "outlet" },
+                ));
+            }
+        }
+
+        // Intake requires source (intake XY). source_type defaults to "river" in v1
+        // (DesignRequest carries no source_type field). Design §2 table, §2.7 note.
+        "intake" => {
+            if req.source.is_none() {
+                return Err(CliError::ValidationError(
+                    HydroTypesError::MissingRequired { field: "source" },
+                ));
+            }
+        }
+
+        // ProjectTypeStr deserialization already rejects unknown project types,
+        // so this arm is unreachable in practice. It is retained as a defensive guard.
+        other => {
+            return Err(CliError::ValidationError(
+                HydroTypesError::CrossFieldViolation {
+                    message: format!("unknown project_type: {other}"),
+                },
+            ))
+        }
+    }
+
+    Ok(())
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
