@@ -484,3 +484,97 @@ fn sewer_solve_end_to_end_parity() {
         }
     );
 }
+
+// ── T-6.5.B: sewer_solve_via_trait_roundtrip ─────────────────────────────────
+
+/// T-6.5.B (RED → GREEN via PR-B): `Solver::solve` delegates to `solve_sewer`
+/// and returns a feasible solution for the golden fixture.
+///
+/// Scenario 1 — happy path: construct with fixture service_points/outlet/material/
+/// flow_per_service/network_name, call `Solver::solve`, assert `Ok(solutions)` with
+/// `len >= 1` and `solutions[0].score.total_cost > 0.0`.
+///
+/// Scenario 2 — empty service_points: construct with `service_points = vec![]`,
+/// call `Solver::solve`, assert `Err(_)` — NOT `Ok(vec![])`.
+#[test]
+fn sewer_solve_via_trait_roundtrip() {
+    let f = load_sewer_golden();
+
+    // ── Scenario 1: happy path via trait ─────────────────────────────────────
+    {
+        let terrain = make_fixture_terrain(&f);
+        let constraints = DesignConstraints::default();
+        let service_points: Vec<(f64, f64)> = f
+            .solver_params
+            .service_points
+            .iter()
+            .map(|sp| (sp[0], sp[1]))
+            .collect();
+        let outlet = (f.solver_params.outlet[0], f.solver_params.outlet[1]);
+
+        let mut solver = SewerSolver::new(
+            terrain,
+            constraints,
+            service_points,
+            outlet,
+            f.solver_params.flow_per_service,
+            PipeMaterial::Concrete,
+            "test_sewer".to_string(),
+        );
+
+        let params = SolverParams {
+            grid_resolution: f.solver_params.grid_resolution,
+            route_variant: f.solver_params.route_variant,
+            slope_factor: f.solver_params.slope_factor,
+            cover_factor: f.solver_params.cover_factor,
+            diameter_offset: f.solver_params.diameter_offset,
+            manhole_spacing: f.solver_params.manhole_spacing,
+            num_alternatives: f.solver_params.num_alternatives,
+            design_flow: f.solver_params.flow_per_service,
+            ..SolverParams::default()
+        };
+
+        let result = Solver::solve(&mut solver, &params);
+        assert!(
+            result.is_ok(),
+            "Solver::solve (happy path) must return Ok — got {:?}",
+            result
+        );
+        let solutions = result.unwrap();
+        assert!(
+            !solutions.is_empty(),
+            "Solver::solve must return at least one solution, got 0"
+        );
+        assert!(
+            solutions[0].score.total_cost > 0.0,
+            "solutions[0].score.total_cost must be > 0.0, got {}",
+            solutions[0].score.total_cost
+        );
+    }
+
+    // ── Scenario 2: empty service_points must yield Err ──────────────────────
+    {
+        let f2 = load_sewer_golden();
+        let terrain = make_fixture_terrain(&f2);
+        let constraints = DesignConstraints::default();
+        let outlet = (f2.solver_params.outlet[0], f2.solver_params.outlet[1]);
+
+        let mut solver = SewerSolver::new(
+            terrain,
+            constraints,
+            vec![], // empty service_points — must trigger Err
+            outlet,
+            f2.solver_params.flow_per_service,
+            PipeMaterial::Concrete,
+            "test_sewer_empty".to_string(),
+        );
+
+        let params = SolverParams::default();
+
+        let result = Solver::solve(&mut solver, &params);
+        assert!(
+            result.is_err(),
+            "Solver::solve with empty service_points must return Err, got Ok"
+        );
+    }
+}
