@@ -9,10 +9,17 @@
 //! All items are re-exported at the crate root so integration tests can call
 //! them directly without spawning a subprocess (REQ-010).
 
-use hydro_optimizer::{OptimizationConfig, OptimizationError};
-use hydro_solvers::{SolverError, SolverParams};
+use std::time::Instant;
+
+use hydro_optimizer::{GeneticOptimizer, OptimizationConfig, OptimizationError, SolverType};
+use hydro_solvers::{SewerSolver, Solver, SolverError, SolverParams};
 use hydro_terrain::TerrainModel;
-use hydro_types::{error::HydroTypesError, request::DesignRequest, response::DesignResult};
+use hydro_types::{
+    error::HydroTypesError,
+    request::{DesignRequest, PointXY},
+    response::{DesignResult, Diagnostics},
+    PipeMaterial,
+};
 
 // ── CliError ────────────────────────────────────────────────────────────────
 
@@ -257,10 +264,92 @@ pub fn build_solver_params(req: &DesignRequest) -> SolverParams {
     }
 }
 
-// ── Public API stubs ────────────────────────────────────────────────────────
-//
-// Bodies are `todo!()` for WU-1. Signatures are locked per REQ-001.
-// Implementation grows across WU-2 (validate_request) through WU-8 (audit_hash).
+// ── run() helpers ───────────────────────────────────────────────────────────
+
+/// Convert an `Option<PointXY>` reference to a `(f64, f64)` tuple.
+///
+/// Panics if `None` — callers must only call this after `validate_request`
+/// has confirmed the field is `Some`.
+fn xy(p: &PointXY) -> (f64, f64) {
+    (p.x, p.y)
+}
+
+/// Resolve the canonical `PipeMaterial` enum from `req.material` (a pre-validated
+/// canonical String stored by the serde deserializer).
+///
+/// `req.material` is resolved by `deserialize_material_str` at parse time,
+/// so unknown strings are already rejected as exit 1 before reaching here.
+/// This function should never fail in practice.
+fn resolve_material(req: &DesignRequest) -> Result<PipeMaterial, CliError> {
+    PipeMaterial::from_str_with_aliases(&req.material).ok_or_else(|| {
+        CliError::InternalError(format!(
+            "material '{}' passed validation but failed enum resolution — this is a bug",
+            req.material
+        ))
+    })
+}
+
+/// Run the genetic optimizer for a single concrete solver, then assemble
+/// a `DesignResult` from the Pareto results.
+///
+/// The optimizer is constructed, run, and the result is shaped here.
+/// `audit_hash` is left empty (empty string); WU-8 fills it after run().
+///
+/// # Type parameters
+/// `S` must implement `Solver + Send + Sync + 'static` per the optimizer API.
+fn run_optimizer<S: Solver + Send + Sync + 'static>(
+    solver: S,
+    solver_type: SolverType,
+    opt_config: OptimizationConfig,
+    base_params: SolverParams,
+    req: &DesignRequest,
+    start: Instant,
+) -> Result<DesignResult, CliError> {
+    let mut optimizer = GeneticOptimizer::new(solver, solver_type, opt_config, base_params)
+        .map_err(CliError::from)?;
+
+    let pareto = optimizer.optimize().map_err(CliError::from)?;
+
+    Ok(assemble_design_result(pareto, req, start))
+}
+
+/// Shape a `ParetoResults` into the public `DesignResult` type.
+///
+/// - Moves solutions from the Pareto front.
+/// - Sets `best_solution` to `solutions[0]` (sorted by total_cost ascending
+///   by the optimizer).
+/// - `audit_hash` is intentionally left as empty string — WU-8 fills it.
+fn assemble_design_result(
+    pareto: hydro_optimizer::ParetoResults,
+    req: &DesignRequest,
+    start: Instant,
+) -> DesignResult {
+    let elapsed = start.elapsed().as_secs_f64();
+    let success = !pareto.solutions.is_empty();
+    let best_solution = pareto.solutions.first().cloned();
+
+    // Copy diagnostics from the optimizer's Pareto output. audit_hash is
+    // intentionally empty here — WU-8 will populate it post-optimize.
+    let diagnostics = Diagnostics {
+        audit_hash: String::new(), // WU-8 placeholder
+        elapsed_seconds: elapsed,
+        ..pareto.diagnostics
+    };
+
+    DesignResult {
+        success,
+        project_name: req.project_name.clone(),
+        project_type: req.project_type.as_str().to_string(),
+        elapsed_seconds: elapsed,
+        seed: req.seed.map(|s| s as i64),
+        norm: req.norm.clone(),
+        best_solution,
+        solutions: pareto.solutions,
+        diagnostics,
+    }
+}
+
+// ── Public run() ─────────────────────────────────────────────────────────────
 
 /// Run the full optimization pipeline for the given `DesignRequest`.
 ///
@@ -274,11 +363,78 @@ pub fn build_solver_params(req: &DesignRequest) -> SolverParams {
 /// - `Ok(DesignResult)` on success — `solutions` non-empty, `success == true`.
 /// - `Err(CliError)` — see [`CliError`] exit-code table.
 ///
-/// # Implementation note (WU-1)
-/// Body is a stub (`todo!()`). Dispatch, terrain build, config mapping, and
-/// audit-hash computation are added in WU-3 through WU-8.
-pub fn run(_req: DesignRequest, _seed_override: Option<u64>) -> Result<DesignResult, CliError> {
-    todo!("run() is implemented in WU-4 (sewer dispatch) through WU-5 (remaining solvers)")
+/// # Implementation note (WU-4 / WU-5)
+/// WU-4 implements the `sewer` dispatch arm. Remaining 5 project_types
+/// (`water_supply`, `conveyance`, `distribution`, `pump_station`, `intake`)
+/// will be implemented in WU-5; they currently return `InternalError` to
+/// prevent silent silencing of future work.
+pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResult, CliError> {
+    let start = Instant::now();
+
+    // REQ-002: structural + solver-specific validation first.
+    validate_request(&req)?;
+
+    // Build shared optimizer inputs from the validated request.
+    let opt_config = build_optimization_config(&req, seed_override);
+    let base_params = build_solver_params(&req);
+
+    match req.project_type.as_str() {
+        // ── WU-4: Sewer dispatch ──────────────────────────────────────────
+        //
+        // REQ-004: monomorphized arm — no Box<dyn Solver>.
+        // TerrainModel is built here (not in build_terrain_model) so that
+        // the sewer arm owns it directly without an extra clone.
+        "sewer" => {
+            let terrain = build_terrain_model(&req)?;
+            let constraints = req.effective_constraints();
+            let material = resolve_material(&req)?;
+
+            let service_pts: Vec<(f64, f64)> = req
+                .service_points
+                .as_ref()
+                .unwrap() // validated: Some, non-empty
+                .iter()
+                .map(xy)
+                .collect();
+            let outlet = xy(req.outlet.as_ref().unwrap()); // validated: Some
+
+            let solver = SewerSolver::new(
+                terrain,
+                constraints,
+                service_pts,
+                outlet,
+                base_params.design_flow, // flow_per_service
+                material,
+                req.project_name.clone(),
+            );
+
+            run_optimizer(
+                solver,
+                SolverType::Sewer,
+                opt_config,
+                base_params,
+                &req,
+                start,
+            )
+        }
+
+        // ── WU-5 stubs ────────────────────────────────────────────────────
+        //
+        // The remaining 5 project_types are intentionally not implemented
+        // here. Returning InternalError makes the boundary visible in tests
+        // without masking a missing arm as a panic.
+        other @ ("water_supply" | "conveyance" | "distribution" | "pump_station" | "intake") => {
+            Err(CliError::InternalError(format!(
+                "project_type '{other}' dispatch not yet implemented (WU-5)"
+            )))
+        }
+
+        // Unknown types are caught by validate_request above; this arm is
+        // unreachable in normal operation.
+        other => Err(CliError::InternalError(format!(
+            "unknown project_type: {other}"
+        ))),
+    }
 }
 
 /// Validate a `DesignRequest` without running the optimizer.

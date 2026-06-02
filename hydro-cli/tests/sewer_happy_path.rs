@@ -80,10 +80,13 @@ fn test_run_sewer_dispatch() {
         flow_per_service: f.solver_params.flow_per_service,
         grid_resolution: f.terrain.grid_res,
         seed: Some(42),
-        // Fast GA budget — pop=8, gen=3 is enough for a feasible individual;
-        // Phase 6.5 smoke tests confirm < 1 s per solver at this budget.
-        nsga_population_size: 8,
-        nsga_generations: 3,
+        // Fast GA budget constrained by validate_request ranges:
+        //   population_size in [20, 500], generations in [10, 500], max_time in [30, 7200].
+        // Using minimums: pop=20, gen=10, max_time=30 keeps expected wall time ~ 3-5 s on CI.
+        // Phase 6.5 smoke used pop=8 gen=3 directly (bypassed validate_request); the
+        // integration test must go through the full validation path.
+        nsga_population_size: 20,
+        nsga_generations: 10,
         nsga_max_time_seconds: 30,
         nsga_num_workers: None,
         enforce_cover_depth: false,
