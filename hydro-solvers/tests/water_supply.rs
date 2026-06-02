@@ -654,3 +654,88 @@ fn ws_node_pressure_parity() {
         );
     }
 }
+
+// ── T-5.3.j: Solver trait roundtrip ──────────────────────────────────────────
+
+/// T-5.3.j: `Solver::solve` on `WaterSupplySolver` delegates to
+/// `solve_water_supply` and returns `Ok(non-empty)` on valid fixture data,
+/// or `Err(_)` when `demand_points` is empty.
+///
+/// Strict TDD — RED commit: `WaterSupplySolver::new` does not yet accept 7 args.
+/// Expected compile error: E0061 (N args supplied vs 2 expected).
+#[test]
+fn water_supply_solve_via_trait_roundtrip() {
+    let f = load_water_supply_golden();
+
+    // ── Happy path ────────────────────────────────────────────────────────────
+    {
+        let terrain = make_ws_terrain(&f);
+        let constraints = DesignConstraints::default();
+
+        let source = (f.solver_params.source[0], f.solver_params.source[1]);
+        let demand_points: Vec<(f64, f64)> = f
+            .solver_params
+            .demand_points
+            .iter()
+            .map(|dp| (dp[0], dp[1]))
+            .collect();
+
+        let mut solver = WaterSupplySolver::new(
+            terrain,
+            constraints,
+            demand_points,
+            source,
+            f.solver_params.demand_per_node,
+            PipeMaterial::Pvc,
+            "test_water_supply".to_string(),
+        );
+
+        let params = SolverParams {
+            source_head: f.solver_params.source_head,
+            design_flow: f.solver_params.demand_per_node,
+            num_alternatives: f.solver_params.num_alternatives,
+            grid_resolution: f.solver_params.grid_resolution,
+            network_type: f.solver_params.network_type,
+            diameter_offset: f.solver_params.diameter_offset,
+            loop_density: f.solver_params.loop_density,
+            ..SolverParams::default()
+        };
+
+        let solutions = solver.solve(&params).expect("Solver::solve must succeed on valid fixture");
+        assert!(!solutions.is_empty(), "Solver::solve must return at least one solution");
+        assert!(
+            solutions[0].score.total_cost > 0.0,
+            "solutions[0].score.total_cost must be positive, got {}",
+            solutions[0].score.total_cost
+        );
+    }
+
+    // ── Error path: empty demand_points ──────────────────────────────────────
+    {
+        let terrain = make_ws_terrain(&f);
+        let constraints = DesignConstraints::default();
+        let source = (f.solver_params.source[0], f.solver_params.source[1]);
+
+        let mut solver = WaterSupplySolver::new(
+            terrain,
+            constraints,
+            vec![], // empty demand_points → must Err
+            source,
+            f.solver_params.demand_per_node,
+            PipeMaterial::Pvc,
+            "test_water_supply_empty".to_string(),
+        );
+
+        let params = SolverParams {
+            source_head: f.solver_params.source_head,
+            design_flow: f.solver_params.demand_per_node,
+            ..SolverParams::default()
+        };
+
+        let result = solver.solve(&params);
+        assert!(
+            result.is_err(),
+            "Solver::solve with empty demand_points must return Err, got Ok"
+        );
+    }
+}
