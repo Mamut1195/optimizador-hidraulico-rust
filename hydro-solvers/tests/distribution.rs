@@ -778,3 +778,94 @@ fn distrib_valves_saturated_evaluate_only() {
         score.total_cost, f.evaluate_only.total_cost
     );
 }
+
+// ── T-5.4.i: Solver trait roundtrip (RED → GREEN via PR-D wiring) ─────────────
+
+/// T-5.4.i: DistributionSolver implements Solver::solve.
+///
+/// Strict TDD RED test — this test fails on the current stub because
+/// `DistributionSolver::new` only takes 2 args, but the test passes 7.
+/// It becomes GREEN once D2 extends the constructor and implements Solver::solve.
+///
+/// Scenarios:
+///   1. Happy path: golden fixture → Ok(non-empty), solutions[0].score.total_cost > 0.0
+///   2. Error: single demand point → Err(_) (insufficient topology)
+#[test]
+fn distribution_solve_via_trait_roundtrip() {
+    // ── Scenario 1: happy path via Solver trait ───────────────────────────────
+    let f = load_distribution_golden();
+    let terrain = make_distrib_terrain_from_formula(&f.terrain);
+    let constraints = DesignConstraints::default();
+
+    let demand_points: Vec<(f64, f64)> = f
+        .solver_params
+        .demand_points
+        .iter()
+        .map(|dp| (dp[0], dp[1]))
+        .collect();
+    let source = (f.solver_params.source[0], f.solver_params.source[1]);
+
+    let mut solver = DistributionSolver::new(
+        terrain,
+        constraints,
+        demand_points,
+        source,
+        f.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "test_distribution".to_string(),
+    );
+
+    let params = SolverParams {
+        grid_resolution: f.solver_params.grid_resolution,
+        source_head: f.solver_params.source_head,
+        num_alternatives: f.solver_params.num_alternatives,
+        mesh_density: f.solver_params.mesh_density,
+        diameter_offset: f.solver_params.diameter_offset,
+        valve_spacing: f.solver_params.valve_spacing,
+        hydrant_spacing: f.solver_params.hydrant_spacing,
+        ..SolverParams::default()
+    };
+
+    let result = solver.solve(&params);
+    assert!(
+        result.is_ok(),
+        "Solver::solve must return Ok on golden fixture, got: {:?}",
+        result.err()
+    );
+    let solutions = result.unwrap();
+    assert!(
+        !solutions.is_empty(),
+        "Solver::solve must return at least one solution"
+    );
+    assert!(
+        solutions[0].score.total_cost > 0.0,
+        "solutions[0].score.total_cost must be > 0.0, got {}",
+        solutions[0].score.total_cost
+    );
+
+    // ── Scenario 2: single demand point → Err (insufficient topology) ─────────
+    let f2 = load_distribution_golden();
+    let terrain2 = make_distrib_terrain_from_formula(&f2.terrain);
+    let constraints2 = DesignConstraints::default();
+
+    let mut solver_err = DistributionSolver::new(
+        terrain2,
+        constraints2,
+        vec![(0.0, 80.0)], // single demand point — insufficient for mesh
+        (0.0, 0.0),
+        f2.solver_params.demand_per_node,
+        PipeMaterial::Pvc,
+        "test_distribution_err".to_string(),
+    );
+
+    let params_err = SolverParams {
+        grid_resolution: f2.solver_params.grid_resolution,
+        source_head: f2.solver_params.source_head,
+        ..SolverParams::default()
+    };
+
+    assert!(
+        solver_err.solve(&params_err).is_err(),
+        "single demand point must yield Err, not Ok(vec![])"
+    );
+}
