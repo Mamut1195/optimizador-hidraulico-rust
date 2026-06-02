@@ -9,8 +9,9 @@
 //! All items are re-exported at the crate root so integration tests can call
 //! them directly without spawning a subprocess (REQ-010).
 
-use hydro_optimizer::OptimizationError;
-use hydro_solvers::SolverError;
+use hydro_optimizer::{OptimizationConfig, OptimizationError};
+use hydro_solvers::{SolverError, SolverParams};
+use hydro_terrain::TerrainModel;
 use hydro_types::{error::HydroTypesError, request::DesignRequest, response::DesignResult};
 
 // ── CliError ────────────────────────────────────────────────────────────────
@@ -155,6 +156,104 @@ fn map_solver_error(e: SolverError) -> CliError {
         SolverError::SteinerFailed(msg) => {
             CliError::InternalError(format!("solver: Steiner tree failed: {msg}"))
         }
+    }
+}
+
+// ── WU-3: Mapping helpers ────────────────────────────────────────────────────
+//
+// Pure functions that convert a validated `DesignRequest` into the typed
+// structs required by the optimizer and solver constructors. These are pub
+// so integration tests can exercise them without spawning the optimizer.
+
+/// Build a `TerrainModel` from the `terrain_points` of a `DesignRequest`.
+///
+/// Uses `TerrainModel::from_xyz_list` then `build_grid` with the default
+/// resolution (20.0 m, from `SolverParams::default().grid_resolution`) per
+/// design §5 and §9.
+///
+/// # Errors
+///
+/// Returns `Err(CliError::ValidationError(_))` if:
+/// - `terrain_points` is empty or has fewer than 3 points
+///   (`TerrainError::EmptyTerrain` / `TerrainError::InsufficientPoints`)
+/// - `build_grid` fails (degenerate scatter geometry)
+pub fn build_terrain_model(req: &DesignRequest) -> Result<TerrainModel, CliError> {
+    // Convert PointXYZ list → [f64; 3] slice expected by TerrainModel.
+    let xyz: Vec<[f64; 3]> = req.terrain_points.iter().map(|p| [p.x, p.y, p.z]).collect();
+
+    let mut terrain = TerrainModel::from_xyz_list(&xyz).map_err(|e| {
+        CliError::ValidationError(HydroTypesError::CrossFieldViolation {
+            message: e.to_string(),
+        })
+    })?;
+
+    // Default grid resolution from SolverParams; may be overridden in a future
+    // spec revision that adds a `grid_resolution` override to DesignRequest.
+    let resolution = req.grid_resolution; // default 20.0 from DesignRequest
+    terrain.build_grid(resolution).map_err(|e| {
+        CliError::ValidationError(HydroTypesError::CrossFieldViolation {
+            message: e.to_string(),
+        })
+    })?;
+
+    Ok(terrain)
+}
+
+/// Build an `OptimizationConfig` from a `DesignRequest` and an optional seed
+/// override.
+///
+/// Effective seed resolution (design §3 canonical input, REQ-005):
+/// `seed_override.unwrap_or(req.seed.unwrap_or(42))`
+///
+/// Fields mapped: `population_size`, `generations`, `max_time_seconds`,
+/// `num_workers`, `enforce_cover_depth`, `enforce_clearance` (slope),
+/// `enable_path_smoothing`, and the five objective weights.
+/// All other fields keep `OptimizationConfig::default()` values.
+pub fn build_optimization_config(
+    req: &DesignRequest,
+    seed_override: Option<u64>,
+) -> OptimizationConfig {
+    let effective_seed = seed_override.unwrap_or_else(|| req.seed.unwrap_or(42));
+
+    OptimizationConfig {
+        population_size: req.nsga_population_size,
+        generations: req.nsga_generations,
+        max_time_seconds: req.nsga_max_time_seconds as f64,
+        num_workers: req.nsga_num_workers,
+        seed: effective_seed,
+        // Constraint enforcement flags from request.
+        enforce_cover_depth: req.enforce_cover_depth,
+        enforce_slope: req.enforce_segment_slopes,
+        enforce_clearance: req.enforce_existing_clearance,
+        // Path smoothing flag from request.
+        enable_path_smoothing: req.enable_path_smoothing,
+        // Objective weights from request.
+        weight_cost: req.weight_cost,
+        weight_excavation: req.weight_excavation,
+        weight_pumping: req.weight_pumping,
+        weight_interference: req.weight_interference,
+        weight_resilience: req.weight_resilience,
+        // All other fields use oracle defaults.
+        ..OptimizationConfig::default()
+    }
+}
+
+/// Build a `SolverParams` from a `DesignRequest`.
+///
+/// Starts from `SolverParams::default()` and overrides fields the request
+/// carries. Per design §5, this is the "GA-driven params" struct passed to
+/// every solver arm at dispatch time.
+pub fn build_solver_params(req: &DesignRequest) -> SolverParams {
+    SolverParams {
+        design_flow: req.flow_per_service,
+        grid_resolution: req.grid_resolution,
+        source_head: req
+            .source_head
+            .unwrap_or(SolverParams::default().source_head),
+        num_alternatives: req.num_alternatives,
+        // All other topology / routing / network params keep defaults
+        // until a future spec revision adds request fields for them.
+        ..SolverParams::default()
     }
 }
 
