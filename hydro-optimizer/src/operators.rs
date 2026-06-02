@@ -12,9 +12,7 @@
 //!   applies `round()` + clamp for integer genes (matches DEAP behaviour).
 //! - All functions are `pub(crate)` (REQ-014).
 //!
-//! Note: `#[allow(dead_code)]` is kept on functions consumed by `optimizer.rs`
-//! (PR-8f). This mirrors the pattern used in `nsga3/mod.rs` until the wiring
-//! commit lands.
+//! All functions are consumed by `optimizer.rs` (PR-8f main loop).
 
 use rand::Rng;
 use rand_chacha::ChaCha20Rng;
@@ -33,8 +31,6 @@ use crate::encoding::{GeneSpec, Individual};
 /// ```
 ///
 /// REQ-008: pure deterministic function, no RNG.
-// Reason: consumed by optimizer.rs main loop in PR-8f.
-#[allow(dead_code)]
 pub(crate) fn adaptive_eta_value(generation: u32, max_gen: u32, eta_min: f64, eta_max: f64) -> f64 {
     let progress = generation as f64 / max_gen.max(1) as f64;
     eta_min + (eta_max - eta_min) * progress
@@ -49,8 +45,6 @@ pub(crate) fn adaptive_eta_value(generation: u32, max_gen: u32, eta_min: f64, et
 ///
 /// Integer genes: the raw float chromosome value is operated on by SBX (same
 /// as DEAP — integers are stored as floats in the chromosome and decoded later).
-// Reason: consumed by optimizer.rs main loop in PR-8f.
-#[allow(dead_code)]
 pub(crate) fn sbx_crossover(
     parent1: &mut Individual,
     parent2: &mut Individual,
@@ -134,8 +128,6 @@ fn sbx_betaq(u: f64, alpha: f64, eta: f64) -> f64 {
 /// actually changed. This is an intentional improvement over DEAP, which
 /// always clears fitness after `mutate()` — sparing one redundant evaluation
 /// per untouched individual. PR-8f evaluates only individuals with `fitness == None`.
-// Reason: consumed by optimizer.rs main loop in PR-8f.
-#[allow(dead_code)]
 pub(crate) fn polynomial_mutation(
     individual: &mut Individual,
     specs: &[GeneSpec],
@@ -212,8 +204,6 @@ fn poly_mutation_delta(u: f64, x: f64, lb: f64, ub: f64, eta: f64, dx: f64) -> f
 ///
 /// # Panics (debug)
 /// Panics if `cxpb + mutpb > 1.0` or `population` is empty.
-// Reason: consumed by optimizer.rs main loop in PR-8f.
-#[allow(dead_code)]
 pub(crate) fn var_or(
     population: &[Individual],
     specs: &[GeneSpec],
@@ -275,8 +265,6 @@ pub(crate) fn var_or(
 /// `fitness` is `None` on all returned individuals.
 ///
 /// Mirrors `toolbox.population(n=self.config.population_size)` in the oracle.
-// Reason: consumed by optimizer.rs main loop in PR-8f.
-#[allow(dead_code)]
 pub(crate) fn init_population(
     solver_type: crate::encoding::SolverType,
     pop_size: usize,

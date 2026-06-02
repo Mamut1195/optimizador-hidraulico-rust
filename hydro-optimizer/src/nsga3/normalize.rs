@@ -17,7 +17,11 @@
 /// - `intercepts`: the hyperplane intercepts (after fallback if needed).
 pub(crate) struct NormalizeResult {
     pub normalized: Vec<[f64; 5]>,
+    // `ideal` and `intercepts` are produced but not yet consumed by callers.
+    // They are retained for Phase 7 convergence logging (REQ-011 history).
+    #[allow(dead_code)]
     pub ideal: [f64; 5],
+    #[allow(dead_code)]
     pub intercepts: [f64; 5],
 }
 

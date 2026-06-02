@@ -9,6 +9,7 @@
 use hydro_types::response::{ConvergenceRecord, Diagnostics, Solution};
 
 use crate::config::OptimizationConfig;
+use crate::diagnostics::OptimizerDiagnostics;
 
 // ── GenerationStats ───────────────────────────────────────────────────────────
 
@@ -44,8 +45,13 @@ pub struct ParetoResults {
     pub solutions: Vec<Solution>,
     /// Per-generation convergence records (legacy format for `hydro_types`).
     pub convergence: Vec<ConvergenceRecord>,
-    /// Optimizer diagnostics.
+    /// Optimizer diagnostics (legacy hydro-types schema — HTTP layer).
     pub diagnostics: Diagnostics,
+    /// Optimizer-internal counters using the REQ-009 field names.
+    /// Accessible via `optimizer_diagnostics()`. The field-level dead_code allow
+    /// is needed because callers currently use the public `diagnostics` field.
+    #[allow(dead_code)]
+    pub(crate) optimizer_diagnostics: OptimizerDiagnostics,
     /// Total wall-clock time for the run.
     pub elapsed_seconds: f64,
     /// Snapshot of the config used (for reproducibility / audit).
@@ -53,6 +59,20 @@ pub struct ParetoResults {
 }
 
 impl ParetoResults {
+    /// Return the REQ-009-named diagnostic counters for this run.
+    ///
+    /// These use the spec-mandated field names (`pareto_candidates`,
+    /// `skipped_infeasible`, `discarded_by_norm`, `norm_violations`,
+    /// `conversion_errors`) which differ from the legacy HTTP-layer
+    /// `hydro_types::response::Diagnostics` schema.
+    ///
+    /// `pub(crate)` because `OptimizerDiagnostics` is an internal type; downstream
+    /// callers use the public `diagnostics` field (hydro-types schema).
+    #[allow(dead_code)]
+    pub(crate) fn optimizer_diagnostics(&self) -> &OptimizerDiagnostics {
+        &self.optimizer_diagnostics
+    }
+
     /// Return the solution with the lowest `total_cost`, or `None` if empty.
     pub fn best_by_cost(&self) -> Option<&Solution> {
         self.solutions.first()
@@ -180,6 +200,7 @@ mod tests {
             solutions,
             convergence: vec![],
             diagnostics: Diagnostics::default(),
+            optimizer_diagnostics: OptimizerDiagnostics::default(),
             elapsed_seconds: 1.0,
             config_snapshot: OptimizationConfig::default(),
         }

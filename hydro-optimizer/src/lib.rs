@@ -22,8 +22,10 @@
 // ── Internal modules ──────────────────────────────────────────────────────────
 pub(crate) mod config;
 pub(crate) mod constraints;
+pub(crate) mod diagnostics;
 pub(crate) mod encoding;
 pub(crate) mod errors;
+pub(crate) mod metrics;
 pub(crate) mod nsga3;
 pub(crate) mod objective;
 pub(crate) mod operators;
@@ -48,8 +50,7 @@ pub use results::ParetoResults;
 
 // ── cfg(test) internal surface ────────────────────────────────────────────────
 // Integration-test helpers are gated behind #[cfg(test)] so they NEVER leak
-// into the public API surface. Downstream integration tests in tests/*.rs use
-// inline helper modules or re-export from within their own #[cfg(test)] scope.
+// into the public API surface (REQ-014 stays at exactly 6 pub items).
 //
 // NOTE: items previously re-exported at crate root for pr8a/b/c integration tests
 // (ConstraintChecker, ObjectiveFunction, GeneSpec, child_rng, etc.) are REMOVED.

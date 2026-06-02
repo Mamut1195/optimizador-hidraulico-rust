@@ -5,7 +5,9 @@
 //!
 //! REQ-014: `GeneticOptimizer` is one of the 6 mandated public items.
 //! REQ-015: Single `ChaCha20Rng` root; child RNGs keyed by (gen, idx).
-//! REQ-017: Parallel evaluation via `rayon::par_iter`.
+//! Evaluation is currently sequential due to Solver::solve(&mut self) requiring
+//! Arc<Mutex<S>>. Parallel evaluation deferred to Phase 7 solver-pool pattern
+//! (REQ-017).
 
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -17,6 +19,7 @@ use hydro_types::response::{
 
 use crate::config::OptimizationConfig;
 use crate::constraints::ConstraintChecker;
+use crate::diagnostics::OptimizerDiagnostics;
 use crate::encoding::{gene_specs, Individual, IndividualEncoder, SolverType};
 use crate::errors::OptimizationError;
 use crate::nsga3::sel_nsga3;
@@ -125,6 +128,17 @@ pub struct GeneticOptimizer<S: Solver + Send + Sync> {
 impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
     /// Construct and validate the optimizer.
     ///
+    /// # Parameters
+    /// - `solver` — The domain solver, wrapped in `Arc<Mutex<S>>` internally.
+    /// - `solver_type` — Identifies the gene-spec table to use for encoding/decoding.
+    /// - `config` — Hyperparameters, constraint flags, and the RNG seed.
+    /// - `base_params` — Solver-specific defaults merged with decoded gene values at
+    ///   evaluation time. Fields not covered by the genome (e.g. `valve_spacing`,
+    ///   `hydrant_spacing` for water-supply solvers) are taken from `base_params`
+    ///   unchanged. Intentional addition over Design §2 `new(solver, project_type,
+    ///   config)` — avoids hard-coding solver defaults inside the optimizer.
+    ///   Tracked in the design as a PR-8f deviation.
+    ///
     /// Returns `Err(InvalidConfig)` if the config is invalid.
     pub fn new(
         solver: S,
@@ -207,6 +221,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
 
         let mut pareto_front = ParetoFront::new();
         let mut convergence_stats: Vec<GenerationStats> = Vec::new();
+        let mut opt_diag = OptimizerDiagnostics::default();
 
         // ── Generation loop ───────────────────────────────────────────────────
         let max_gen = self.config.generations;
@@ -260,7 +275,14 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
                 if let Some(fitness) = ind.fitness {
                     if fitness[0] < 1e11 {
                         // feasible
-                        pareto_front.update(ind.clone(), fitness);
+                        let added = pareto_front.update(ind.clone(), fitness);
+                        if added {
+                            opt_diag.pareto_candidates += 1;
+                        } else {
+                            opt_diag.discarded_by_norm += 1;
+                        }
+                    } else {
+                        opt_diag.skipped_infeasible += 1;
                     }
                 }
             }
@@ -355,7 +377,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
             generations_run,
             population_size: self.config.population_size as i64,
             elapsed_seconds: elapsed,
-            compute_backend: "rayon-native".to_owned(),
+            compute_backend: "sequential".to_owned(),
             audit_hash: String::new(), // stub per design §9
             convergence: convergence.clone(),
         };
@@ -364,6 +386,7 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
             solutions,
             convergence,
             diagnostics,
+            optimizer_diagnostics: opt_diag,
             elapsed_seconds: elapsed,
             config_snapshot: self.config.clone(),
         })
@@ -371,9 +394,10 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
 
     /// Evaluate all individuals with `fitness == None` in the population.
     ///
-    /// REQ-017: decode/bounds checks run in parallel via rayon; the solver call
-    /// is sequential (Solver::solve requires &mut self, held behind Mutex).
-    /// Each individual gets a deterministic child RNG keyed by (gen, idx).
+    /// Evaluation is sequential: Solver::solve requires `&mut self` via Mutex,
+    /// preventing true parallelism. REQ-017 (rayon::par_iter) is deferred to
+    /// Phase 7 solver-pool pattern. Each individual gets a deterministic child
+    /// RNG keyed by (gen, idx).
     fn evaluate_population(
         &self,
         population: &mut [Individual],

@@ -399,7 +399,7 @@ pub(crate) fn connectivity_redundancy(network: &PipeNetwork) -> f64 {
 
 /// Simplified lifecycle OPEX using the oracle default parameters.
 ///
-/// Uses the oracle's formula: P_kw = ρgQH/η (η=0.7 fallback),
+/// Uses the oracle's formula: P_kw = ρgQH/η, η=0.7 per REQ-003.
 /// annual = P_kw × hours_per_year × tariff, total = annual × lifetime.
 ///
 /// Oracle defaults: hours_per_year=4000, tariff=0.10 USD/kWh, lifetime=20 yr.
@@ -409,7 +409,8 @@ fn lifecycle_opex_usd(flow_m3s: f64, lift_m: f64) -> f64 {
     }
     const RHO: f64 = 1000.0; // kg/m³
     const G: f64 = 9.81; // m/s²
-    const ETA: f64 = 0.7; // default pump efficiency (fallback)
+                         // Pump efficiency η = 0.7 per REQ-003 (Python oracle hardcodes this constant; not a placeholder).
+    const ETA: f64 = 0.7;
     const HOURS_PER_YEAR: f64 = 4000.0;
     const TARIFF: f64 = 0.10;
     const LIFETIME: f64 = 20.0;

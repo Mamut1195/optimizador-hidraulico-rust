@@ -16,7 +16,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 rand = { workspace = true }
 rand_chacha = { workspace = true }
-rayon = { workspace = true }
+# rayon: deferred to Phase 7 solver-pool pattern (REQ-017). Re-add when parallel
+# evaluation is unblocked by removing the Arc<Mutex<S>> requirement.
 geo = { workspace = true }
 
 [dev-dependencies]
