@@ -1,13 +1,117 @@
-//! NSGA-III Environmental Selection — top-level wrapper (PR-8d2, REQ-007).
+//! NSGA-III Environmental Selection — top-level wrapper.
 //!
-//! Implementation pending (GREEN phase). This file contains only the test suite.
+//! Implements `select_environmental` which combines:
+//! 1. Fast nondominated sort (PR-8d1).
+//! 2. Fill population front-by-front until the "splitting" front.
+//! 3. Normalize objectives (this slice — `normalize`).
+//! 4. Associate + niche-count selection from the partial front (this slice — `niching`).
+//!
+//! This mirrors DEAP's `tools.selNSGA3` algorithm for 5 minimization objectives.
 
+use rand_chacha::ChaCha20Rng;
+
+use crate::nsga3::niching::{associate, build_niche_counts, select_from_partial_front};
+use crate::nsga3::nondom_sort::fast_nondominated_sort;
+use crate::nsga3::normalize::normalize;
+use crate::nsga3::reference_points::uniform_reference_points;
+
+/// Select `n` individuals from a population using NSGA-III environmental selection.
+///
+/// # Arguments
+/// * `fitnesses`  — fitness matrix, one `[f64; 5]` row per individual.
+/// * `n`          — target selection size (≤ `fitnesses.len()`).
+/// * `ref_points` — reference point vectors from the Das-Dennis lattice.
+/// * `rng`        — RNG for tie-breaking in niching.
+///
+/// # Returns
+/// A `Vec<usize>` of length `min(n, fitnesses.len())` containing selected indices.
+pub(crate) fn select_environmental(
+    fitnesses: &[[f64; 5]],
+    n: usize,
+    ref_points: &[Vec<f64>],
+    rng: &mut ChaCha20Rng,
+) -> Vec<usize> {
+    let pop_size = fitnesses.len();
+
+    if pop_size == 0 || n == 0 {
+        return Vec::new();
+    }
+    if n >= pop_size {
+        return (0..pop_size).collect();
+    }
+
+    // ── Step 1: Fast nondominated sort ────────────────────────────────────────
+    let fronts = fast_nondominated_sort(fitnesses);
+
+    // ── Step 2: Fill front-by-front until splitting front ─────────────────────
+    let mut selected: Vec<usize> = Vec::with_capacity(n);
+    let mut partial_front: Vec<usize> = Vec::new();
+
+    for front in &fronts {
+        if selected.len() + front.len() <= n {
+            // Entire front fits.
+            selected.extend_from_slice(front);
+        } else {
+            // This is the splitting (partial) front.
+            partial_front = front.clone();
+            break;
+        }
+        if selected.len() == n {
+            return selected;
+        }
+    }
+
+    // Already have exactly n after full fronts (no partial needed).
+    if selected.len() == n {
+        return selected;
+    }
+
+    let needed = n - selected.len();
+
+    // ── Step 3: Normalize ALL objectives (definite + partial) ─────────────────
+    // Gather all candidate indices for normalization context.
+    let all_candidates: Vec<usize> = selected
+        .iter()
+        .copied()
+        .chain(partial_front.iter().copied())
+        .collect();
+
+    let candidate_fitnesses: Vec<[f64; 5]> = all_candidates.iter().map(|&i| fitnesses[i]).collect();
+
+    let norm_result = normalize(&candidate_fitnesses);
+
+    // ── Step 4: Associate ALL candidates to reference points ──────────────────
+    // Build association table indexed by ORIGINAL population index.
+    // Unused entries default to (0, f64::INFINITY).
+    let mut assoc: Vec<(usize, f64)> = vec![(0, f64::INFINITY); pop_size];
+    let candidate_assoc = associate(&norm_result.normalized, ref_points);
+    for (pos, &orig_idx) in all_candidates.iter().enumerate() {
+        assoc[orig_idx] = candidate_assoc[pos];
+    }
+
+    // ── Step 5: Build niche counts from definite set ──────────────────────────
+    let mut niche_count = build_niche_counts(&selected, &assoc, ref_points.len());
+
+    // ── Step 6: Select from partial front via niching ─────────────────────────
+    let extra = select_from_partial_front(&partial_front, &assoc, &mut niche_count, needed, rng);
+
+    selected.extend(extra);
+    selected
+}
+
+/// Convenience wrapper using the standard 5-objective, p=4 reference points.
+///
+/// Generates 70 Das-Dennis reference points and delegates to `select_environmental`.
+pub(crate) fn sel_nsga3(fitnesses: &[[f64; 5]], n: usize, rng: &mut ChaCha20Rng) -> Vec<usize> {
+    let ref_points = uniform_reference_points(5, 4);
+    select_environmental(fitnesses, n, &ref_points, rng)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::nsga3::reference_points::uniform_reference_points;
     use rand::SeedableRng;
-    use rand_chacha::ChaCha20Rng;
 
     fn make_rng() -> ChaCha20Rng {
         ChaCha20Rng::seed_from_u64(0)
@@ -142,6 +246,9 @@ mod tests {
         let mut rng2 = ChaCha20Rng::seed_from_u64(123);
         let sel2 = select_environmental(&fitnesses, 15, &ref_points, &mut rng2);
 
-        assert_eq!(sel1, sel2, "identical seeds must produce identical selection");
+        assert_eq!(
+            sel1, sel2,
+            "identical seeds must produce identical selection"
+        );
     }
 }

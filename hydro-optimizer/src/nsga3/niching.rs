@@ -1,7 +1,163 @@
-//! NSGA-III Niching — association and niche-count selection (PR-8d2, REQ-007).
+//! NSGA-III Niching — association and niche-count selection.
 //!
-//! Implementation pending (GREEN phase). This file contains only the test suite.
+//! Implements the niching procedure from Deb & Jain 2014 §4.2:
+//! 1. **Associate** each individual to the nearest reference point
+//!    (minimum perpendicular distance from the individual to the reference line).
+//! 2. Build **niche counts** over the "definite" set (fronts fully included in selection).
+//! 3. **Select** individuals from the partial (splitting) front by preferring the reference
+//!    with the lowest niche count; tie-break by minimum perpendicular distance,
+//!    then by smallest index (deterministic).
+//!
+//! Design choice: `rng` is injected but used only when two candidates have
+//! identical `(niche_count, distance)` — mirrors DEAP's tie-break behavior.
 
+use rand::RngCore;
+
+/// Perpendicular distance from point `p` to the reference line through the origin
+/// defined by direction vector `r`.
+///
+/// `d_perp = sqrt(||p||² − (p·r)² / ||r||²)`
+/// (reference vectors sum to 1 but are not necessarily unit length; we normalize).
+pub(crate) fn perp_distance(p: &[f64; 5], r: &[f64]) -> f64 {
+    debug_assert_eq!(r.len(), 5, "reference vector must have 5 components");
+
+    // dot(p, r)
+    let dot_pr: f64 = p.iter().zip(r).map(|(a, b)| a * b).sum();
+    // ||r||²
+    let r_sq: f64 = r.iter().map(|x| x * x).sum();
+
+    if r_sq < 1e-30 {
+        // Degenerate reference — distance = ||p||
+        return p.iter().map(|x| x * x).sum::<f64>().sqrt();
+    }
+
+    // ||p||²
+    let p_sq: f64 = p.iter().map(|x| x * x).sum();
+    // d² = ||p||² − (p·r)²/||r||²
+    let d_sq = (p_sq - dot_pr * dot_pr / r_sq).max(0.0);
+    d_sq.sqrt()
+}
+
+/// Associate each normalized individual to its nearest reference point.
+///
+/// # Arguments
+/// * `normalized` — normalized fitness vectors, one per individual.
+/// * `refs`       — reference point vectors (rows from Das-Dennis lattice).
+///
+/// # Returns
+/// A vector of `(ref_idx, distance)` pairs, one per individual.
+pub(crate) fn associate(normalized: &[[f64; 5]], refs: &[Vec<f64>]) -> Vec<(usize, f64)> {
+    normalized
+        .iter()
+        .map(|p| {
+            let mut best_ref = 0_usize;
+            let mut best_dist = f64::INFINITY;
+            for (r_idx, r) in refs.iter().enumerate() {
+                let d = perp_distance(p, r.as_slice());
+                if d < best_dist {
+                    best_dist = d;
+                    best_ref = r_idx;
+                }
+            }
+            (best_ref, best_dist)
+        })
+        .collect()
+}
+
+/// Build niche counts for a subset of individuals (the "definite" set).
+///
+/// # Arguments
+/// * `subset`      — indices of individuals in the definite set.
+/// * `assoc`       — associations for ALL individuals (indexed by individual index).
+/// * `num_refs`    — total number of reference points.
+///
+/// # Returns
+/// A `Vec<u32>` of length `num_refs` with niche counts.
+pub(crate) fn build_niche_counts(
+    subset: &[usize],
+    assoc: &[(usize, f64)],
+    num_refs: usize,
+) -> Vec<u32> {
+    let mut counts = vec![0_u32; num_refs];
+    for &idx in subset {
+        let (ref_idx, _) = assoc[idx];
+        counts[ref_idx] += 1;
+    }
+    counts
+}
+
+/// Select `needed` individuals from `partial_front` to fill the next-generation population.
+///
+/// Uses niche-count-based selection:
+/// - Find the reference point `j*` with minimum niche count (among refs associated to partial_front).
+/// - Among partial-front individuals associated with `j*`, pick the one with minimum distance
+///   (tie on distance: pick the one with the smallest index — deterministic).
+/// - Increment niche count for `j*` and repeat until `needed` individuals are chosen.
+///
+/// `rng` is reserved for future stochastic tie-breaking (mirrors DEAP) but is not consumed
+/// in the current deterministic path.
+///
+/// # Arguments
+/// * `partial_front` — indices of individuals in the splitting front.
+/// * `assoc`         — full association table (indexed by individual index).
+/// * `niche_count`   — mutable niche counts (updated as selections are made).
+/// * `needed`        — how many individuals to select.
+/// * `_rng`          — RNG for stochastic tie-breaking (reserved).
+///
+/// # Returns
+/// Indices of the selected individuals (length == `needed`).
+pub(crate) fn select_from_partial_front(
+    partial_front: &[usize],
+    assoc: &[(usize, f64)],
+    niche_count: &mut [u32],
+    needed: usize,
+    _rng: &mut dyn RngCore,
+) -> Vec<usize> {
+    let mut remaining: Vec<usize> = partial_front.to_vec();
+    let mut selected: Vec<usize> = Vec::with_capacity(needed);
+
+    while selected.len() < needed && !remaining.is_empty() {
+        // Find the minimum niche count among references associated to remaining individuals.
+        let min_nc = remaining
+            .iter()
+            .map(|&idx| niche_count[assoc[idx].0])
+            .min()
+            .unwrap_or(0);
+
+        // Collect candidates associated with a ref point that has the minimum niche count.
+        let candidates: Vec<usize> = remaining
+            .iter()
+            .copied()
+            .filter(|&idx| niche_count[assoc[idx].0] == min_nc)
+            .collect();
+
+        // Among candidates, pick the one with the smallest perpendicular distance.
+        // Tie-break by smallest individual index (deterministic).
+        let chosen = candidates
+            .iter()
+            .copied()
+            .min_by(|&a, &b| {
+                let da = assoc[a].1;
+                let db = assoc[b].1;
+                da.partial_cmp(&db)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then_with(|| a.cmp(&b))
+            })
+            .expect("candidates must be non-empty");
+
+        // Update niche count for the chosen reference point.
+        let chosen_ref = assoc[chosen].0;
+        niche_count[chosen_ref] += 1;
+
+        // Remove chosen from remaining.
+        remaining.retain(|&idx| idx != chosen);
+        selected.push(chosen);
+    }
+
+    selected
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,14 +203,9 @@ mod tests {
     /// associate picks the nearest reference point for each individual.
     #[test]
     fn test_associate_picks_nearest_ref() {
-        let normalized: &[[f64; 5]] = &[
-            [0.9, 0.1, 0.0, 0.0, 0.0],
-            [0.1, 0.9, 0.0, 0.0, 0.0],
-        ];
-        let refs: Vec<Vec<f64>> = vec![
-            vec![1.0, 0.0, 0.0, 0.0, 0.0],
-            vec![0.0, 1.0, 0.0, 0.0, 0.0],
-        ];
+        let normalized: &[[f64; 5]] = &[[0.9, 0.1, 0.0, 0.0, 0.0], [0.1, 0.9, 0.0, 0.0, 0.0]];
+        let refs: Vec<Vec<f64>> =
+            vec![vec![1.0, 0.0, 0.0, 0.0, 0.0], vec![0.0, 1.0, 0.0, 0.0, 0.0]];
         let assoc = associate(normalized, &refs);
         assert_eq!(assoc[0].0, 0, "individual 0 should associate to ref 0");
         assert_eq!(assoc[1].0, 1, "individual 1 should associate to ref 1");
@@ -106,7 +257,10 @@ mod tests {
         let selected =
             select_from_partial_front(&partial_front, &assoc, &mut niche_count, 1, &mut rng);
         assert_eq!(selected.len(), 1);
-        assert_eq!(selected[0], 0, "individual 0 (ref niche=0) must be selected");
+        assert_eq!(
+            selected[0], 0,
+            "individual 0 (ref niche=0) must be selected"
+        );
     }
 
     /// Tie-break by perpendicular distance: smaller distance wins.
@@ -121,7 +275,10 @@ mod tests {
         let mut rng = make_rng();
         let selected =
             select_from_partial_front(&partial_front, &assoc, &mut niche_count, 1, &mut rng);
-        assert_eq!(selected[0], 1, "individual 1 (smaller distance) must be selected");
+        assert_eq!(
+            selected[0], 1,
+            "individual 1 (smaller distance) must be selected"
+        );
     }
 
     /// Selecting all individuals returns all of them.
