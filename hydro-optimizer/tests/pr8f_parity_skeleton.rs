@@ -130,3 +130,44 @@ fn parity_hv_igdplus_sewer_basic() {
         "IGD+ parity failed: rust={igdp_rust:.4e}, oracle={oracle_igdp:.4e} (>15% diff)"
     );
 }
+
+// ── REQ-012 PathSmoother path-length parity ──────────────────────────────────
+
+/// REQ-012 parity gate: total length of the Rust PathSmoother's output on the
+/// sewer_basic fixture must be within ±2% of the Python `path_smoother.py`
+/// oracle's output on the same input.
+///
+/// The test body panics with a clear message if the fixture is absent.
+///
+/// ## To activate
+/// 1. Add `contracts/examples/sewer_basic/oracle_path.json` with fields:
+///    `waypoints` (Vec<[f64; 2]>), `obstacles` (Vec<Polygon>), `oracle_length`
+///    (f64), `clearance_distance` (f64), `rdp_epsilon` (f64).
+/// 2. Remove the `#[ignore]` attribute from `parity_path_length_sewer_basic`.
+/// 3. Replace the placeholder front with a real call to `PathSmoother::smooth`.
+#[test]
+#[ignore = "fixture-missing: oracle path JSON not yet checked into contracts/examples/sewer_basic"]
+fn parity_path_length_sewer_basic() {
+    let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../contracts/examples/sewer_basic/oracle_path.json");
+
+    if !fixture_path.exists() {
+        panic!(
+            "Fixture not found: {}. \
+             Generate from Python `path_smoother.py` on the sewer_basic case \
+             before un-ignoring this test.",
+            fixture_path.display()
+        );
+    }
+
+    // TODO: deserialize waypoints, obstacles, clearance, rdp_epsilon, oracle_length
+    // from oracle_path.json. Call PathSmoother::new(clearance, rdp_epsilon)
+    // then .smooth(&waypoints, &obstacles). Compute total polyline length.
+    let oracle_length = 1.0_f64; // placeholder
+    let rust_length = 1.0_f64; // placeholder
+
+    assert!(
+        (rust_length - oracle_length).abs() / oracle_length.max(1e-12) <= 0.02,
+        "Path length parity failed: rust={rust_length:.6}, oracle={oracle_length:.6} (>2% diff)"
+    );
+}

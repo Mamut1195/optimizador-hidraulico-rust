@@ -325,8 +325,8 @@ impl<S: Solver + Send + Sync> GeneticOptimizer<S> {
         // cheap (no pre-computation beyond storing two f64 values).
         let path_smoother: Option<PathSmoother> = if self.config.enable_path_smoothing {
             Some(PathSmoother::new(
-                0.5,  // clearance_distance (metres) — default, no per-config field yet
-                0.5,  // rdp_epsilon (metres)
+                0.5, // clearance_distance (metres) — default, no per-config field yet
+                0.5, // rdp_epsilon (metres)
             ))
         } else {
             None

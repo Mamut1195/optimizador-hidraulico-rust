@@ -54,8 +54,12 @@ pub(crate) fn astar(
     open.push((h(start_idx).to_bits(), start_idx));
 
     while !open.is_empty() {
-        // Pop the node with the lowest f-score
-        open.sort_unstable_by_key(|&(f, _)| f);
+        // Pop the node with the lowest f-score; tie-break by node index for
+        // full determinism even when two entries have bit-identical f-scores
+        // (REQ-015). f_bits is sortable as u64 because all values are non-negative
+        // floats (Euclidean distances), and IEEE-754 non-negative bit patterns
+        // sort in the same order as their float values.
+        open.sort_unstable_by_key(|&(f, idx)| (f, idx));
         let (_, current) = open.remove(0);
 
         if current == end_idx {
