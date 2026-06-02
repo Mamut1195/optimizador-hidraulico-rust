@@ -12,7 +12,7 @@
 //! - RDP epsilon defaults to `0.5` metres (configurable via `PathSmoother::new`).
 //!
 //! # Module layout
-//! ```
+//! ```text
 //! routing/
 //! ├── mod.rs          — PathSmoother entry point (this file)
 //! ├── visibility.rs   — visibility graph construction
