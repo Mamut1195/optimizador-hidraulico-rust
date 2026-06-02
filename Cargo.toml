@@ -40,6 +40,9 @@ rayon = "1"
 # CLI
 clap = { version = "4", features = ["derive"] }
 
+# Cryptography / hashing
+sha2 = "0.10"
+
 # Dev / test only
 approx = "0.5"
 insta = { version = "1", features = ["json"] }

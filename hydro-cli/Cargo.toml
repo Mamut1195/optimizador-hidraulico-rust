@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "hydro_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "hydro-cli"
 path = "src/main.rs"
@@ -12,10 +16,13 @@ path = "src/main.rs"
 [dependencies]
 hydro-types = { path = "../hydro-types" }
 hydro-optimizer = { path = "../hydro-optimizer" }
+hydro-solvers = { path = "../hydro-solvers" }
+hydro-terrain = { path = "../hydro-terrain" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
+sha2 = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
