@@ -5,12 +5,15 @@
 //! fast nondominated sort, SBX crossover, polynomial mutation, varOr,
 //! niching/normalization/association, and the main optimization loop.
 //!
-//! # Public API (REQ-014)
-//! - `OptimizationConfig` — hyperparameters and constraint flags.
-//! - `OptimizationError` — typed errors.
-//! - `ProgressEvent` — per-generation reporting.
+//! # Public API (REQ-014 — exactly 6 public items)
+//! - [`GeneticOptimizer`] — struct + `new` + `optimize`
+//! - [`OptimizationConfig`] — hyperparameters + constraint flags (serde)
+//! - [`ParetoResults`] — top-level result with accessors
+//! - [`ProgressEvent`] — per-generation reporting
+//! - [`OptimizationError`] — typed error enum
+//! - [`Diagnostics`] — re-export of `hydro_types::response::Diagnostics`
 //!
-//! All other items are `pub(crate)` or private.
+//! All other items are `pub(crate)` or private (REQ-014).
 //!
 //! # Determinism
 //! Uses `ChaCha20Rng` seeded from `config.seed`. No `HashMap`, no
@@ -19,31 +22,40 @@
 // ── Internal modules ──────────────────────────────────────────────────────────
 pub(crate) mod config;
 pub(crate) mod constraints;
+pub(crate) mod diagnostics;
 pub(crate) mod encoding;
 pub(crate) mod errors;
+pub(crate) mod metrics;
 pub(crate) mod nsga3;
 pub(crate) mod objective;
 pub(crate) mod operators;
+pub(crate) mod optimizer;
 pub(crate) mod progress;
+pub(crate) mod results;
 pub(crate) mod rng;
 
-// ── Public re-exports (REQ-014) ───────────────────────────────────────────────
+// ── Public re-exports (REQ-014 — exactly 6 items) ────────────────────────────
+/// Configuration for one optimization run (REQ-002).
 pub use config::OptimizationConfig;
+/// Typed errors (REQ-013).
 pub use errors::OptimizationError;
+/// Optimization diagnostics (re-export from hydro-types for downstream use).
+pub use hydro_types::response::Diagnostics;
+/// Main optimizer struct (REQ-009).
+pub use optimizer::GeneticOptimizer;
+/// Per-generation progress event (REQ-009).
 pub use progress::ProgressEvent;
+/// Top-level Pareto results (REQ-011).
+pub use results::ParetoResults;
 
-// ── Integration-test surface (types consumed by tests/pr8a_*.rs and pr8b_*.rs)
-// These re-exports make internal types reachable at the crate root for
-// integration tests without exposing full module paths as part of the
-// public API surface.
-pub use config::{ExistingNetwork, ForbiddenZone, MandatoryRoute};
-pub use constraints::{
-    ConstraintChecker, ConstraintReport, ConstraintViolation, ConstraintViolationKind,
-    DesignConstraints, ExistingNetworkEntry,
-};
-pub use encoding::{gene_specs, GeneSpec, GeneType, Individual, IndividualEncoder, SolverType};
-pub use objective::{ExistingNetworkSpec, ObjectiveFunction};
-pub use rng::{child_rng, root_rng};
+// ── cfg(test) internal surface ────────────────────────────────────────────────
+// Integration-test helpers are gated behind #[cfg(test)] so they NEVER leak
+// into the public API surface (REQ-014 stays at exactly 6 pub items).
+//
+// NOTE: items previously re-exported at crate root for pr8a/b/c integration tests
+// (ConstraintChecker, ObjectiveFunction, GeneSpec, child_rng, etc.) are REMOVED.
+// Those integration tests have been moved to inline #[cfg(test)] mod tests blocks
+// inside their respective source files (REQ-014 resolution).
 
 #[cfg(test)]
 mod tests {

@@ -279,3 +279,274 @@ impl OptimizationConfig {
         Ok(())
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests (REQ-002, REQ-013)
+// Previously in tests/pr8a_config.rs and tests/pr8b_verify_fixes.rs.
+// Moved inline (REQ-014: no pub re-exports for internal types).
+// ─────────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::errors::OptimizationError;
+    use crate::rng::{child_rng, root_rng};
+
+    /// REQ-002 Scenario: Default config is valid.
+    #[test]
+    fn test_config_default_is_valid() {
+        let cfg = OptimizationConfig::default();
+        assert_eq!(cfg.population_size, 100);
+        assert_eq!(cfg.generations, 50);
+        assert!((cfg.crossover_prob - 0.9).abs() < 1e-12);
+        assert!((cfg.mutation_prob - 0.1).abs() < 1e-12);
+        assert!((cfg.max_time_seconds - 300.0).abs() < 1e-12);
+        assert_eq!(cfg.seed, 42);
+    }
+
+    /// REQ-002: Serde round-trip.
+    #[test]
+    fn test_config_serde_roundtrip() {
+        let cfg = OptimizationConfig::default();
+        let json = serde_json::to_string(&cfg).expect("serialize must succeed");
+        let back: OptimizationConfig =
+            serde_json::from_str(&json).expect("deserialize must succeed");
+        assert_eq!(back.population_size, cfg.population_size);
+        assert_eq!(back.generations, cfg.generations);
+        assert_eq!(back.seed, cfg.seed);
+    }
+
+    /// REQ-002 Scenario: Invalid population size is rejected.
+    #[test]
+    fn test_config_invalid_population_rejected() {
+        let cfg = OptimizationConfig {
+            population_size: 0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(_)) => {}
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects generations=0.
+    #[test]
+    fn test_config_rejects_generations_zero() {
+        let cfg = OptimizationConfig {
+            generations: 0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("generations"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects crossover_prob < 0.
+    #[test]
+    fn test_config_rejects_crossover_below_zero() {
+        let cfg = OptimizationConfig {
+            crossover_prob: -0.1,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("crossover"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects crossover_prob > 1.
+    #[test]
+    fn test_config_rejects_crossover_above_one() {
+        let cfg = OptimizationConfig {
+            crossover_prob: 1.5,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("crossover"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects mutation_prob < 0.
+    #[test]
+    fn test_config_rejects_mutation_below_zero() {
+        let cfg = OptimizationConfig {
+            mutation_prob: -0.05,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("mutation"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects mutation_prob > 1.
+    #[test]
+    fn test_config_rejects_mutation_above_one() {
+        let cfg = OptimizationConfig {
+            mutation_prob: 1.1,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("mutation"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects max_time_seconds <= 0.
+    #[test]
+    fn test_config_rejects_max_time_nonpositive() {
+        let cfg = OptimizationConfig {
+            max_time_seconds: 0.0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("max_time"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects eta_min <= 0.
+    #[test]
+    fn test_config_rejects_eta_min_nonpositive() {
+        let cfg = OptimizationConfig {
+            eta_min: 0.0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("eta"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects eta_min > eta_max.
+    #[test]
+    fn test_config_rejects_eta_min_greater_than_eta_max() {
+        let cfg = OptimizationConfig {
+            eta_min: 50.0,
+            eta_max: 5.0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("eta"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    /// REQ-002: validate() rejects negative weight.
+    #[test]
+    fn test_config_rejects_negative_weight() {
+        let cfg = OptimizationConfig {
+            weight_cost: -1.0,
+            ..Default::default()
+        };
+        match cfg.validate() {
+            Err(OptimizationError::InvalidConfig(msg)) => {
+                assert!(msg.contains("weight"), "got: {msg}");
+            }
+            other => panic!("expected Err(InvalidConfig), got {other:?}"),
+        }
+    }
+
+    // ── RNG helpers (REQ-015) ─────────────────────────────────────────────────
+
+    /// Design §5: root_rng with same seed produces same sequence.
+    #[test]
+    fn test_rng_root_produces_reproducible_sequence() {
+        use rand::RngCore;
+        let mut rng1 = root_rng(42);
+        let mut rng2 = root_rng(42);
+        assert_eq!(rng1.next_u64(), rng2.next_u64());
+        assert_eq!(rng1.next_u64(), rng2.next_u64());
+    }
+
+    /// Design §5: child_rng with different indices diverges.
+    #[test]
+    fn test_child_rng_diverges_for_different_indices() {
+        use rand::RngCore;
+        let mut rng0 = child_rng(42, 0, 0);
+        let mut rng1 = child_rng(42, 0, 1);
+        assert_ne!(rng0.next_u64(), rng1.next_u64());
+    }
+
+    // ── OptimizationError display (REQ-013) ───────────────────────────────────
+
+    #[test]
+    fn test_error_display_messages() {
+        let e = OptimizationError::InvalidConfig("bad pop size".to_owned());
+        let msg = format!("{e}");
+        assert!(
+            msg.contains("config") || msg.contains("invalid"),
+            "got: {msg}"
+        );
+
+        let e2 = OptimizationError::AllInfeasible;
+        let msg2 = format!("{e2}");
+        assert!(
+            msg2.contains("feasible") || msg2.contains("infeasible"),
+            "got: {msg2}"
+        );
+
+        let e3 = OptimizationError::EvaluatorFailure("solver error".to_owned());
+        let msg3 = format!("{e3}");
+        assert!(
+            msg3.contains("solver") || msg3.contains("evaluat"),
+            "got: {msg3}"
+        );
+
+        let e4 = OptimizationError::NormValidationFailure("profile not found".to_owned());
+        let msg4 = format!("{e4}");
+        assert!(
+            msg4.contains("norm") || msg4.contains("valid"),
+            "got: {msg4}"
+        );
+    }
+
+    #[test]
+    fn test_error_solver_variant_display() {
+        use hydro_solvers::SolverError;
+        let inner = SolverError::BuildFailed("test".to_owned());
+        let e = OptimizationError::from(inner);
+        let msg = format!("{e}");
+        assert!(
+            msg.contains("solver") || msg.contains("error"),
+            "got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_error_time_budget_exceeded_display() {
+        let e = OptimizationError::TimeBudgetExceeded(12.5);
+        let msg = format!("{e}");
+        assert!(
+            msg.contains("budget") || msg.contains("12.5") || msg.contains("wall"),
+            "got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_error_internal_variant_display() {
+        let e = OptimizationError::Internal("niche count overflow".to_owned());
+        let msg = format!("{e}");
+        assert!(
+            msg.contains("internal") || msg.contains("invariant"),
+            "got: {msg}"
+        );
+    }
+}

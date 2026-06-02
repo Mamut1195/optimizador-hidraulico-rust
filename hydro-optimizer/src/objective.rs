@@ -399,7 +399,7 @@ pub(crate) fn connectivity_redundancy(network: &PipeNetwork) -> f64 {
 
 /// Simplified lifecycle OPEX using the oracle default parameters.
 ///
-/// Uses the oracle's formula: P_kw = ρgQH/η (η=0.7 fallback),
+/// Uses the oracle's formula: P_kw = ρgQH/η, η=0.7 per REQ-003.
 /// annual = P_kw × hours_per_year × tariff, total = annual × lifetime.
 ///
 /// Oracle defaults: hours_per_year=4000, tariff=0.10 USD/kWh, lifetime=20 yr.
@@ -409,7 +409,8 @@ fn lifecycle_opex_usd(flow_m3s: f64, lift_m: f64) -> f64 {
     }
     const RHO: f64 = 1000.0; // kg/m³
     const G: f64 = 9.81; // m/s²
-    const ETA: f64 = 0.7; // default pump efficiency (fallback)
+                         // Pump efficiency η = 0.7 per REQ-003 (Python oracle hardcodes this constant; not a placeholder).
+    const ETA: f64 = 0.7;
     const HOURS_PER_YEAR: f64 = 4000.0;
     const TARIFF: f64 = 0.10;
     const LIFETIME: f64 = 20.0;
@@ -505,4 +506,312 @@ fn seg_to_seg_distance(ab: Seg, cd: Seg) -> f64 {
     let d3 = pt_to_seg_distance(c, ab);
     let d4 = pt_to_seg_distance(d, ab);
     d1.min(d2).min(d3).min(d4)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests (REQ-003)
+// Previously in tests/pr8b_objective.rs. Moved inline (REQ-014).
+// ─────────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hydro_types::enums::{NodeType, PipeMaterial};
+    use hydro_types::network::{NetworkNode, NetworkPipe, NodeId, PipeId, PipeNetwork};
+    use hydro_types::response::{Solution, SolutionMetadata, SolutionScore};
+
+    fn make_solution(
+        nodes: Vec<NetworkNode>,
+        pipes: Vec<NetworkPipe>,
+        score: SolutionScore,
+    ) -> Solution {
+        Solution {
+            rank: 1,
+            network: PipeNetwork::new("test", nodes, pipes),
+            score,
+            metadata: SolutionMetadata::default(),
+        }
+    }
+
+    fn make_node(
+        id: &str,
+        x: f64,
+        y: f64,
+        z: f64,
+        node_type: NodeType,
+        demand: f64,
+    ) -> NetworkNode {
+        let mut n = NetworkNode::new(id, x, y, z, node_type);
+        n.demand = demand;
+        n
+    }
+
+    fn make_node_with_pressure(
+        id: &str,
+        x: f64,
+        y: f64,
+        z: f64,
+        node_type: NodeType,
+        demand: f64,
+        pressure_mca: f64,
+    ) -> NetworkNode {
+        let mut n = make_node(id, x, y, z, node_type, demand);
+        n.metadata
+            .insert("pressure_mca".to_owned(), serde_json::json!(pressure_mca));
+        n
+    }
+
+    fn make_pipe(
+        id: &str,
+        start: &str,
+        end: &str,
+        length: f64,
+        diameter: f64,
+        si: f64,
+        ei: f64,
+    ) -> NetworkPipe {
+        NetworkPipe {
+            id: PipeId::new(id),
+            start_node_id: NodeId::new(start),
+            end_node_id: NodeId::new(end),
+            length,
+            effective_length: length,
+            diameter,
+            material: PipeMaterial::Pvc,
+            roughness: 0.009,
+            start_invert: si,
+            end_invert: ei,
+            slope: (si - ei) / length,
+            design_flow: 0.01,
+            waypoints: vec![],
+            metadata: Default::default(),
+        }
+    }
+
+    #[test]
+    fn test_pumping_cost_zero_pumps() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 20.0, NodeType::Reservoir, 0.0),
+            make_node("n2", 100.0, 0.0, 15.0, NodeType::Junction, 0.5),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 18.0, 14.0)];
+        let solution = make_solution(
+            nodes,
+            pipes,
+            SolutionScore {
+                pump_count: 0,
+                ..Default::default()
+            },
+        );
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert_eq!(obj[2], 0.0, "zero pumps → pumping cost must be 0.0");
+    }
+
+    #[test]
+    fn test_pumping_cost_with_pump_stations() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 10.0, NodeType::Reservoir, 0.0),
+            make_node("n2", 100.0, 0.0, 10.0, NodeType::Pump, 0.0),
+            make_node("n3", 200.0, 0.0, 10.0, NodeType::Junction, 0.5),
+        ];
+        let pipes = vec![
+            make_pipe("p1", "n1", "n2", 100.0, 0.3, 9.0, 8.5),
+            make_pipe("p2", "n2", "n3", 100.0, 0.3, 8.5, 8.0),
+        ];
+        let solution = make_solution(
+            nodes,
+            pipes,
+            SolutionScore {
+                pump_count: 2,
+                ..Default::default()
+            },
+        );
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert!(
+            obj[2] >= 100_000.0,
+            "2 pump stations → cost ≥ 100_000, got {}",
+            obj[2]
+        );
+    }
+
+    #[test]
+    fn test_excavation_formula() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 10.0, NodeType::Junction, 0.0),
+            make_node("n2", 100.0, 0.0, 9.0, NodeType::Junction, 0.0),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 8.5, 7.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        let expected = 1.5_f64 * 0.8 * 100.0;
+        assert!(
+            (obj[1] - expected).abs() < 1e-6,
+            "expected {expected}, got {}",
+            obj[1]
+        );
+    }
+
+    #[test]
+    fn test_cost_formula() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 10.0, NodeType::Junction, 0.0),
+            make_node("n2", 100.0, 0.0, 9.0, NodeType::Junction, 0.0),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 8.5, 7.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        let expected_cost = 2_800.0 + 5_000.0 + 1_440.0;
+        assert!(
+            (obj[0] - expected_cost).abs() < 1.0,
+            "expected {expected_cost}, got {}",
+            obj[0]
+        );
+    }
+
+    #[test]
+    fn test_interference_count_zero_existing_networks() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 10.0, NodeType::Junction, 0.0),
+            make_node("n2", 100.0, 0.0, 9.0, NodeType::Junction, 0.0),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 8.5, 7.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert_eq!(
+            obj[3], 0.0,
+            "no existing networks → interference_count must be 0"
+        );
+    }
+
+    #[test]
+    fn test_interference_count_matches() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 10.0, NodeType::Junction, 0.0),
+            make_node("n2", 100.0, 0.0, 10.0, NodeType::Junction, 0.0),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 9.0, 9.0)];
+        let existing = vec![ExistingNetworkSpec {
+            coords: vec![(50.0, -10.0), (50.0, 10.0)],
+            depth: Some(1.1),
+        }];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(existing, None);
+        let obj = of.score(&solution);
+        assert_eq!(
+            obj[3] as i64, 1,
+            "one crossing with sep 0.1m < 0.3m → 1, got {}",
+            obj[3]
+        );
+    }
+
+    #[test]
+    fn test_todini_ir_deficit_zero_for_adequate_pressure() {
+        let nodes = vec![
+            make_node_with_pressure("src", 0.0, 0.0, 50.0, NodeType::Reservoir, 0.0, 0.0),
+            make_node_with_pressure("n1", 100.0, 0.0, 10.0, NodeType::Junction, 1.0, 30.0),
+        ];
+        let pipes = vec![make_pipe("p1", "src", "n1", 100.0, 0.3, 49.0, 9.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert!(
+            obj[4] < 0.5,
+            "adequate pressure → deficit < 0.5, got {}",
+            obj[4]
+        );
+    }
+
+    #[test]
+    fn test_todini_ir_deficit_positive_for_insufficient_head() {
+        let nodes = vec![
+            make_node_with_pressure("src", 0.0, 0.0, 50.0, NodeType::Reservoir, 0.0, 0.0),
+            make_node_with_pressure("n1", 100.0, 0.0, 10.0, NodeType::Junction, 1.0, 5.0),
+        ];
+        let pipes = vec![make_pipe("p1", "src", "n1", 100.0, 0.3, 49.0, 9.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert!(
+            obj[4] > 0.0,
+            "pressure 5mca < H_MIN → deficit > 0, got {}",
+            obj[4]
+        );
+    }
+
+    #[test]
+    fn test_gravity_resilience_uses_connectivity() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 20.0, NodeType::Reservoir, 0.0),
+            make_node("n2", 50.0, 0.0, 18.0, NodeType::Junction, 0.0),
+            make_node("n3", 100.0, 0.0, 16.0, NodeType::Junction, 0.0),
+            make_node("n4", 150.0, 0.0, 14.0, NodeType::Outlet, 0.0),
+        ];
+        let pipes = vec![
+            make_pipe("p1", "n1", "n2", 50.0, 0.3, 19.0, 17.0),
+            make_pipe("p2", "n2", "n3", 50.0, 0.3, 17.0, 15.0),
+            make_pipe("p3", "n3", "n4", 50.0, 0.3, 15.0, 13.0),
+        ];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        assert!(
+            (obj[4] - 1.0).abs() < 1e-9,
+            "linear chain N=4, E=3 → Rc=0 → deficit=1.0, got {}",
+            obj[4]
+        );
+    }
+
+    #[test]
+    fn test_all_five_objectives_are_nonnegative() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 20.0, NodeType::Reservoir, 0.0),
+            make_node("n2", 100.0, 0.0, 15.0, NodeType::Junction, 0.5),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 18.0, 14.0)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        for (i, v) in obj.iter().enumerate() {
+            assert!(*v >= 0.0, "objectives[{i}] = {v} is negative");
+        }
+    }
+
+    #[test]
+    fn test_objective_function_is_deterministic() {
+        let nodes = vec![
+            make_node("n1", 0.0, 0.0, 20.0, NodeType::Reservoir, 0.0),
+            make_node("n2", 100.0, 0.0, 15.0, NodeType::Junction, 0.5),
+        ];
+        let pipes = vec![make_pipe("p1", "n1", "n2", 100.0, 0.3, 18.0, 14.0)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let a = of.score(&solution);
+        let b = of.score(&solution);
+        for i in 0..5 {
+            assert_eq!(a[i], b[i]);
+        }
+    }
+
+    #[test]
+    fn test_todini_ir_formula_matches_oracle() {
+        let nodes = vec![
+            make_node_with_pressure("src", 0.0, 0.0, 100.0, NodeType::Reservoir, 0.0, 0.0),
+            make_node_with_pressure("n1", 100.0, 0.0, 0.0, NodeType::Junction, 2.0, 40.0),
+        ];
+        let pipes = vec![make_pipe("p1", "src", "n1", 100.0, 0.3, 99.0, -0.5)];
+        let solution = make_solution(nodes, pipes, SolutionScore::default());
+        let of = ObjectiveFunction::new(vec![], None);
+        let obj = of.score(&solution);
+        let ir_expected = 0.05_f64 / 0.17_f64;
+        let deficit_expected = 1.0 - ir_expected.clamp(0.0, 1.0);
+        assert!(
+            (obj[4] - deficit_expected).abs() < 1e-6,
+            "expected {deficit_expected:.6}, got {:.6}",
+            obj[4]
+        );
+    }
 }
