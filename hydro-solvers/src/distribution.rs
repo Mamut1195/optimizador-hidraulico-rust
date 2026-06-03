@@ -317,8 +317,7 @@ impl DistributionSolver {
             .iter()
             .map(|(u, v, w, _)| (u.as_str(), v.as_str(), *w))
             .collect();
-        sorted_all_edges
-            .sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
+        sorted_all_edges.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
 
         // Kruskal MST using iterative union-find (path-halving).
         // Using String-owned keys to avoid lifetime issues with closure-captured &str.
@@ -389,9 +388,9 @@ impl DistributionSolver {
 
         // Helper closure: add node to SolverGraph in order (idempotent)
         let ensure_node = |sg: &mut SolverGraph,
-                                order: &mut Vec<NodeIndex<u32>>,
-                                set: &mut HashSet<NodeIndex<u32>>,
-                                id: &str| {
+                           order: &mut Vec<NodeIndex<u32>>,
+                           set: &mut HashSet<NodeIndex<u32>>,
+                           id: &str| {
             let idx = sg.add_node(id);
             if set.insert(idx) {
                 order.push(idx);
@@ -401,8 +400,18 @@ impl DistributionSolver {
 
         // Add MST nodes and edges in Kruskal order
         for &(u, v, _) in &mst_edge_list {
-            ensure_node(&mut combined_sg, &mut combined_node_order, &mut combined_node_set, u);
-            ensure_node(&mut combined_sg, &mut combined_node_order, &mut combined_node_set, v);
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
+                u,
+            );
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
+                v,
+            );
             // Bidirectional edges for undirected adjacency (like networkx Graph)
             combined_sg.add_edge(u, v, 1.0);
             combined_sg.add_edge(v, u, 1.0);
@@ -410,8 +419,18 @@ impl DistributionSolver {
 
         // Add loop edges
         for &(u, v) in &loop_edges {
-            ensure_node(&mut combined_sg, &mut combined_node_order, &mut combined_node_set, u);
-            ensure_node(&mut combined_sg, &mut combined_node_order, &mut combined_node_set, v);
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
+                u,
+            );
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
+                v,
+            );
             combined_sg.add_edge(u, v, 1.0);
             combined_sg.add_edge(v, u, 1.0);
         }
@@ -459,7 +478,8 @@ impl DistributionSolver {
         //
         // We rebuild a String-keyed routing adjacency from the node/pipe geometry for Dijkstra.
         // This is a separate private concern — String keys here are fine (no hot loop clones).
-        let routing_adj = build_routing_adj_sg(&combined_sg, &combined_node_order, &nodes, &node_map);
+        let routing_adj =
+            build_routing_adj_sg(&combined_sg, &combined_node_order, &nodes, &node_map);
 
         let all_paths = dijkstra_all_paths(source_node, &routing_adj);
 
@@ -1163,6 +1183,10 @@ mod tests {
 
         // Node count: 4, edge count: 8 (each undirected edge → 2 directed)
         assert_eq!(sg.node_count(), 4, "must have 4 nodes");
-        assert_eq!(sg.edge_count(), 8, "must have 8 directed edges (4 undirected × 2)");
+        assert_eq!(
+            sg.edge_count(),
+            8,
+            "must have 8 directed edges (4 undirected × 2)"
+        );
     }
 }
