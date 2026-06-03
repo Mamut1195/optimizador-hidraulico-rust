@@ -1055,3 +1055,77 @@ fn dijkstra_all_paths(
 
     paths
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::SolverGraph;
+
+    /// RED test — D-1: pin mesh edge enumeration order via mesh_adj_to_solver_graph.
+    ///
+    /// Verifies that mesh_adj_to_solver_graph inserts combined (MST + loop) edges
+    /// sorted by (from_id, to_id), making SolverGraph neighbor order deterministic
+    /// regardless of HashMap iteration order.
+    ///
+    /// Design §5 PR-D: "Sort (from_id, to_id) before SolverGraph insertion for
+    /// determinism, mirroring the PR-C MST sort pattern."
+    ///
+    /// Fails with E0425 until mesh_adj_to_solver_graph is defined (GREEN commit).
+    #[test]
+    fn distrib_mesh_adj_to_solver_graph_sorted_neighbor_order() {
+        // Build a small 4-node combined adjacency (simulates MST + loop edges).
+        // Nodes: "a", "b", "c", "d". Edges: a-b, a-c, b-d, c-d (undirected mesh).
+        let mut combined_adj: HashMap<String, Vec<String>> = HashMap::new();
+        let edges = vec![
+            ("c", "d"),
+            ("a", "c"),
+            ("b", "d"),
+            ("a", "b"), // inserted out of lex order deliberately
+        ];
+        for (u, v) in &edges {
+            combined_adj
+                .entry(u.to_string())
+                .or_default()
+                .push(v.to_string());
+            combined_adj
+                .entry(v.to_string())
+                .or_default()
+                .push(u.to_string());
+        }
+
+        // mesh_adj_to_solver_graph does NOT exist yet — compile error E0425.
+        let sg: SolverGraph = mesh_adj_to_solver_graph(&combined_adj);
+
+        // Neighbors of "a" must be sorted lex: ["b", "c"] (both directions present).
+        let a_idx = sg.node_index("a").expect("node a must exist");
+        let neighbors: Vec<&str> = sg
+            .sorted_neighbors(a_idx)
+            .iter()
+            .map(|&(idx, _)| sg.node_id(idx))
+            .collect();
+        assert_eq!(
+            neighbors,
+            vec!["b", "c"],
+            "sorted_neighbors of 'a' must be lex-sorted: expected [b, c], got {:?}",
+            neighbors
+        );
+
+        // Neighbors of "d" must be sorted lex: ["b", "c"].
+        let d_idx = sg.node_index("d").expect("node d must exist");
+        let d_neighbors: Vec<&str> = sg
+            .sorted_neighbors(d_idx)
+            .iter()
+            .map(|&(idx, _)| sg.node_id(idx))
+            .collect();
+        assert_eq!(
+            d_neighbors,
+            vec!["b", "c"],
+            "sorted_neighbors of 'd' must be lex-sorted: expected [b, c], got {:?}",
+            d_neighbors
+        );
+
+        // Node count: 4, edge count: 8 (each undirected edge → 2 directed)
+        assert_eq!(sg.node_count(), 4, "must have 4 nodes");
+        assert_eq!(sg.edge_count(), 8, "must have 8 directed edges (4 undirected × 2)");
+    }
+}
