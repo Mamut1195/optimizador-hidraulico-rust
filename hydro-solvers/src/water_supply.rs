@@ -379,13 +379,8 @@ impl WaterSupplySolver {
             }
         }
 
-        // Sorted available diameters (copy-collected — no clone)
-        let mut available: Vec<f64> = self
-            .constraints
-            .available_diameters
-            .iter()
-            .copied()
-            .collect();
+        // Sorted available diameters (to_vec — no clone call)
+        let mut available: Vec<f64> = self.constraints.available_diameters.to_vec();
         available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         // Create pipes with Hazen-Williams dimensioning (topo order: source first).
@@ -440,8 +435,7 @@ impl WaterSupplySolver {
                 );
 
                 let diameter = if diameter_offset > 0 {
-                    if let Some(idx) =
-                        available.iter().position(|&d| (d - diameter).abs() < 1e-12)
+                    if let Some(idx) = available.iter().position(|&d| (d - diameter).abs() < 1e-12)
                     {
                         let new_idx = (idx as i32 + diameter_offset)
                             .min((available.len() - 1) as i32)
@@ -583,16 +577,14 @@ impl WaterSupplySolver {
             }
 
             // Extract (x, y, z) from nodes without cloning NetworkNode.
-            let (start_x, start_y, start_z) =
-                match network.get_node(&NodeId::new(u.as_str())) {
-                    Some(n) => (n.x, n.y, n.z),
-                    None => continue,
-                };
-            let (end_x, end_y, end_z) =
-                match network.get_node(&NodeId::new(v.as_str())) {
-                    Some(n) => (n.x, n.y, n.z),
-                    None => continue,
-                };
+            let (start_x, start_y, start_z) = match network.get_node(&NodeId::new(u.as_str())) {
+                Some(n) => (n.x, n.y, n.z),
+                None => continue,
+            };
+            let (end_x, end_y, end_z) = match network.get_node(&NodeId::new(v.as_str())) {
+                Some(n) => (n.x, n.y, n.z),
+                None => continue,
+            };
 
             let length = {
                 let dx = start_x - end_x;
@@ -819,12 +811,7 @@ impl WaterSupplySolver {
             nodes.push(node);
         }
 
-        let mut available: Vec<f64> = self
-            .constraints
-            .available_diameters
-            .iter()
-            .copied()
-            .collect();
+        let mut available: Vec<f64> = self.constraints.available_diameters.to_vec();
         available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         // Create pipes along path (source outward: path[i] → path[i+1])
