@@ -12,8 +12,8 @@
 //! algorithm in `sewer.rs:1089-1136` (the pre-existing `queue_vec.sort()`
 //! behaviour) and must be preserved bit-for-bit for oracle-parity.
 //!
-//! REQ-007: do NOT use `petgraph::algo::toposort`; use `sorted_kahn_topo_sort`
-//! instead.
+//! REQ-007: do NOT use petgraph's built-in topological sort; use
+//! `sorted_kahn_topo_sort` instead.
 //!
 //! # Ready-set ordering
 //!
