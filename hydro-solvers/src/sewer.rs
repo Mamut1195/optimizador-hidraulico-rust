@@ -1153,7 +1153,6 @@ mod tests {
     ///   "g6" in kept_nodes (leaf)
     #[test]
     fn simplify_tree_sg_collapses_degree2_chain() {
-        use hydro_types::{DesignConstraints, PipeMaterial};
         use std::collections::HashSet;
 
         // Build oriented SolverGraph: g6→g5→g4→g3 and g0→g1→g2→g3 (flows toward g3)
@@ -1195,11 +1194,11 @@ mod tests {
         // GREEN commit once TerrainGraph fixture infrastructure is available.
         let _ = (oriented, in_oriented, terminal_set, outlet_node);
 
-        // RED: this call must fail to compile until PR-B2 GREEN introduces
-        // `simplify_tree_sg`. The `simplify_tree_sg` function takes
-        // `(&SolverGraph, &SolverGraph, ...)` and returns
-        // `(SolverGraph, HashSet<String>)`.
-        let _exists: fn(
+        // Compile-time signature check for `simplify_tree_sg`. The cast fails
+        // with E0425 if the symbol does not exist (RED) and with a type-mismatch
+        // error if the signature drifts. Factored into a type alias to satisfy
+        // clippy::type_complexity.
+        type SimplifyTreeSgFn = fn(
             &SewerSolver,
             &SolverGraph,
             &SolverGraph,
@@ -1207,7 +1206,8 @@ mod tests {
             &HashSet<String>,
             &str,
             f64,
-        ) -> (SolverGraph, HashSet<String>) = SewerSolver::simplify_tree_sg;
+        ) -> (SolverGraph, HashSet<String>);
+        let _exists: SimplifyTreeSgFn = SewerSolver::simplify_tree_sg;
     }
 
     /// GREEN — pin topological order produced by the SolverGraph lex-Kahn pipeline.
