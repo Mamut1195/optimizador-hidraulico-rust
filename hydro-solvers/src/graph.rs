@@ -194,6 +194,14 @@ impl SolverGraph {
         order
     }
 
+    /// Iterate over all `NodeIndex` values in the graph.
+    ///
+    /// Used by callers (e.g. sewer.rs) that need to enumerate all nodes without
+    /// exposing the underlying `petgraph::DiGraph` directly.
+    pub(crate) fn node_indices(&self) -> impl Iterator<Item = NodeIndex<u32>> + '_ {
+        self.graph.node_indices()
+    }
+
     /// Number of nodes in the graph.
     pub(crate) fn node_count(&self) -> usize {
         self.graph.node_count()

@@ -23,6 +23,7 @@ use hydro_types::{
 use serde_json::Value;
 
 use crate::error::SolverError;
+use crate::graph::SolverGraph;
 use crate::solver::{Solver, SolverParams};
 
 // ── SewerSolver ───────────────────────────────────────────────────────────────
@@ -144,13 +145,13 @@ impl SewerSolver {
         let steiner = steiner_tree(&graph, &all_terminals)
             .map_err(|e| SolverError::SteinerFailed(e.to_string()))?;
 
-        // Convert SteinerTree to adjacency for BFS orientation
-        let steiner_adj = steiner_to_adj(&steiner);
+        // Convert SteinerTree to undirected SolverGraph for BFS orientation
+        let steiner_sg = steiner_to_solver_graph(&steiner);
 
         let network = self
             .build_network_from_tree(
                 &graph,
-                &steiner_adj,
+                &steiner_sg,
                 &outlet_node,
                 &terminal_nodes,
                 network_name,
@@ -379,7 +380,7 @@ impl SewerSolver {
     fn build_network_from_tree(
         &self,
         graph: &TerrainGraph,
-        tree_adj: &HashMap<String, Vec<(String, f64)>>, // undirected: node → [(neighbor, length)]
+        undirected_sg: &SolverGraph, // undirected: node ↔ node (both directions present)
         outlet_node: &str,
         terminal_nodes: &[String],
         name: &str,
@@ -389,10 +390,17 @@ impl SewerSolver {
     ) -> Result<PipeNetwork, String> {
         let terminal_set: HashSet<String> = terminal_nodes.iter().cloned().collect();
 
-        // BFS from outlet to orient edges: neighbor → current
-        let (directed, in_directed) = bfs_orient(tree_adj, outlet_node)?;
+        // BFS from outlet to orient edges: upstream → downstream.
+        let outlet_idx = undirected_sg
+            .node_index(outlet_node)
+            .ok_or_else(|| format!("outlet node '{}' not in Steiner tree", outlet_node))?;
+        let (oriented, in_oriented) = bfs_build_oriented(undirected_sg, outlet_idx);
 
-        // All nodes in the directed tree
+        // Convert oriented SolverGraph → HashMap for simplify_tree (shim; removed in PR-B2).
+        let directed = solver_graph_to_adj(&oriented);
+        let in_directed = solver_graph_to_adj(&in_oriented);
+
+        // All node IDs in the directed tree
         let all_node_ids: HashSet<String> = directed
             .keys()
             .cloned()
@@ -449,8 +457,8 @@ impl SewerSolver {
         // We replicate: sentinel = +∞, first pipe sets it, subsequent min() updates it.
         // Since we build nodes first and then update sump_elevation, we start with +∞.
 
-        // Topological sort of work_adj (BFS from outlet is reverse-topo, so reverse)
-        let topo_order = topological_sort(&work_adj);
+        // Topological sort of work_adj (leaves first, outlet last)
+        let topo_order = topological_sort_adj(&work_adj);
 
         // Accumulated flow per node (upstream → downstream)
         let mut flow_at_node: HashMap<String, f64> = HashMap::new();
@@ -1013,85 +1021,90 @@ struct GeneParams {
     manhole_spacing: Option<f64>,
 }
 
-/// Convert a SteinerTree into an undirected adjacency map.
+/// Convert a SteinerTree into an undirected `SolverGraph`.
 ///
-/// Returns `node → [(neighbor, edge_length)]` where edge_length is the
-/// Euclidean distance (weight) stored in the Steiner tree edge.
-/// This is used to BFS-orient the tree toward the outlet.
-fn steiner_to_adj(steiner: &hydro_terrain::SteinerTree) -> HashMap<String, Vec<(String, f64)>> {
-    let mut adj: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-    // Initialize all nodes (including isolated leaf nodes)
+/// Both directions of each edge are added so BFS orientation from the outlet
+/// can proceed in either direction. Replaces the former `steiner_to_adj`
+/// `HashMap<String, Vec<(String, f64)>>` builder.
+fn steiner_to_solver_graph(steiner: &hydro_terrain::SteinerTree) -> SolverGraph {
+    let mut sg = SolverGraph::new();
     for nid in steiner.node_ids() {
-        adj.entry(nid.clone()).or_default();
+        sg.add_node(nid.as_str());
     }
-    // Add undirected edges
     for (a, b, w) in steiner.edges() {
-        adj.entry(a.clone()).or_default().push((b.clone(), *w));
-        adj.entry(b.clone()).or_default().push((a.clone(), *w));
+        sg.add_edge(a.as_str(), b.as_str(), *w);
+        sg.add_edge(b.as_str(), a.as_str(), *w);
     }
-    adj
+    sg
 }
 
-/// BFS from outlet to orient undirected tree edges.
+/// BFS from `outlet_idx` over the undirected `SolverGraph` to orient edges.
 ///
 /// Returns:
-/// - `directed`: node → [(successor, edge_length)] (flow direction: towards outlet)
-/// - `in_directed`: node → [(predecessor, edge_length)] (for simplify_tree)
-///
-/// Mirrors Python:
-/// ```python
-/// directed.add_edge(neighbor, current)  # neighbor flows → current
-/// ```
-type DirectedAdj = HashMap<String, Vec<(String, f64)>>;
+/// - `oriented`: directed graph where each edge goes upstream → downstream
+///   (neighbor → current; mirrors Python `directed.add_edge(neighbor, current)`).
+/// - `in_oriented`: reverse of `oriented` (current → predecessor), used by the
+///   shim that feeds `simplify_tree` in PR-B1.
+fn bfs_build_oriented(
+    undirected: &SolverGraph,
+    outlet_idx: petgraph::graph::NodeIndex<u32>,
+) -> (SolverGraph, SolverGraph) {
+    let mut oriented = SolverGraph::new();
+    let mut in_oriented = SolverGraph::new();
 
-fn bfs_orient(
-    tree_adj: &HashMap<String, Vec<(String, f64)>>,
-    outlet_node: &str,
-) -> Result<(DirectedAdj, DirectedAdj), String> {
-    let mut directed: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-    let mut in_directed: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-    let mut visited: HashSet<String> = HashSet::new();
-    let mut queue: VecDeque<String> = VecDeque::new();
-
-    // Initialize all nodes in directed (even isolated ones)
-    for nid in tree_adj.keys() {
-        directed.entry(nid.clone()).or_default();
-        in_directed.entry(nid.clone()).or_default();
+    // Pre-register all nodes so isolated nodes appear in both graphs.
+    for idx in undirected.node_indices() {
+        let id = undirected.node_id(idx);
+        oriented.add_node(id);
+        in_oriented.add_node(id);
     }
 
-    queue.push_back(outlet_node.to_string());
-    visited.insert(outlet_node.to_string());
+    let mut visited: HashSet<petgraph::graph::NodeIndex<u32>> = HashSet::new();
+    let mut queue: VecDeque<petgraph::graph::NodeIndex<u32>> = VecDeque::new();
+
+    visited.insert(outlet_idx);
+    queue.push_back(outlet_idx);
 
     while let Some(current) = queue.pop_front() {
-        let neighbors = tree_adj.get(&current).cloned().unwrap_or_default();
-        for (neighbor, len) in neighbors {
-            if !visited.contains(&neighbor) {
-                // Python: directed.add_edge(neighbor, current)
-                // neighbor → current (upstream → downstream)
-                directed
-                    .entry(neighbor.clone())
-                    .or_default()
-                    .push((current.clone(), len));
-                in_directed
-                    .entry(current.clone())
-                    .or_default()
-                    .push((neighbor.clone(), len));
-
-                visited.insert(neighbor.clone());
+        let current_id = undirected.node_id(current);
+        for (neighbor, w) in undirected.sorted_neighbors(current) {
+            if visited.insert(neighbor) {
+                let neighbor_id = undirected.node_id(neighbor);
+                // upstream neighbor flows toward downstream current.
+                oriented.add_edge(neighbor_id, current_id, w);
+                in_oriented.add_edge(current_id, neighbor_id, w);
                 queue.push_back(neighbor);
             }
         }
     }
 
-    Ok((directed, in_directed))
+    (oriented, in_oriented)
 }
 
-/// Topological sort of a directed adjacency map.
+/// Convert a `SolverGraph` to a `HashMap<String, Vec<(String, f64)>>`.
 ///
+/// Shim used in PR-B1 to feed the still-String-based `simplify_tree`.
+/// Removed in PR-B2 when `simplify_tree` is migrated to `SolverGraph`.
+#[allow(dead_code)] // TODO: remove when simplify_tree migrates in PR-B2
+fn solver_graph_to_adj(sg: &SolverGraph) -> HashMap<String, Vec<(String, f64)>> {
+    let mut adj: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+    for idx in sg.node_indices() {
+        let u = sg.node_id(idx).to_owned();
+        let succs: Vec<(String, f64)> = sg
+            .sorted_neighbors(idx)
+            .into_iter()
+            .map(|(si, w)| (sg.node_id(si).to_owned(), w))
+            .collect();
+        adj.insert(u, succs);
+    }
+    adj
+}
+
+/// Topological sort of a String-keyed directed adjacency map.
+///
+/// Retained for the post-simplify_tree `work_adj` path (the simplified HashMap).
 /// Returns nodes in topological order (leaves first, outlet last).
-/// Mirrors Python `nx.topological_sort(work_graph)`.
-fn topological_sort(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
-    // Compute in-degrees
+fn topological_sort_adj(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
     let mut in_degree: HashMap<String, usize> = HashMap::new();
     for nid in adj.keys() {
         in_degree.entry(nid.clone()).or_insert(0);
@@ -1102,17 +1115,13 @@ fn topological_sort(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
         }
     }
 
-    // Kahn's algorithm (BFS-based topo sort)
-    let mut queue: VecDeque<String> = in_degree
+    let mut queue_vec: Vec<String> = in_degree
         .iter()
         .filter(|(_, &d)| d == 0)
         .map(|(k, _)| k.clone())
         .collect();
-
-    // Sort for determinism
-    let mut queue_vec: Vec<String> = queue.drain(..).collect();
     queue_vec.sort();
-    queue.extend(queue_vec);
+    let mut queue: VecDeque<String> = queue_vec.into();
 
     let mut order: Vec<String> = Vec::new();
     while let Some(node) = queue.pop_front() {
@@ -1128,7 +1137,7 @@ fn topological_sort(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
                 new_sources.push(v);
             }
         }
-        new_sources.sort(); // Deterministic
+        new_sources.sort();
         queue.extend(new_sources);
     }
 
@@ -1141,20 +1150,50 @@ fn topological_sort(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
 mod tests {
     use super::*;
 
-    /// RED — pin topological order produced by the sewer orientation pipeline.
+    /// Test-only helper: orient an undirected adjacency via `SolverGraph` BFS
+    /// and return the topo order as `Vec<String>` (leaves-first, outlet-last).
     ///
-    /// Calls `sewer_orient_and_kahn`, a `#[cfg(test)]`-only helper implemented
-    /// in the GREEN commit using `SolverGraph`. Before GREEN this is a compile
-    /// error (E0425), satisfying the strict TDD RED requirement.
+    /// Mirrors the internal pipeline of `build_network_from_tree`:
+    ///   1. Build undirected `SolverGraph` from the HashMap adjacency.
+    ///   2. BFS-orient from outlet via `bfs_build_oriented`.
+    ///   3. Convert oriented SolverGraph → HashMap shim.
+    ///   4. Run `topological_sort_adj` on the shim.
+    fn sewer_orient_and_kahn(
+        undirected_adj: &HashMap<String, Vec<(String, f64)>>,
+        outlet: &str,
+    ) -> Vec<String> {
+        let mut sg = SolverGraph::new();
+        for (u, succs) in undirected_adj {
+            sg.add_node(u.as_str());
+            for (v, w) in succs {
+                sg.add_edge(u.as_str(), v.as_str(), *w);
+            }
+        }
+        let outlet_idx = sg.node_index(outlet).expect("outlet must be in graph");
+        let (oriented, _in_oriented) = bfs_build_oriented(&sg, outlet_idx);
+        let adj = solver_graph_to_adj(&oriented);
+        topological_sort_adj(&adj)
+    }
+
+    /// GREEN — pin topological order produced by the SolverGraph-based pipeline.
+    ///
+    /// Verifies that `sewer_orient_and_kahn` (implemented in GREEN using
+    /// `SolverGraph` BFS + `topological_sort_adj`) produces the same order as
+    /// the original `bfs_orient` + `topological_sort` pipeline.
     ///
     /// Fixture: 5-node sewer tree, outlet at "g0":
     ///   g2 — g1 — g0 — g3 — g4
     ///
-    /// Expected topo order (leaves-first, outlet-last, lex tie-break at each pop):
-    ///   ["g2", "g1", "g4", "g3", "g0"]
+    /// Expected topo order (leaves-first, outlet-last, FIFO queue order):
+    ///   ["g2", "g4", "g1", "g3", "g0"]
     ///
-    /// Rationale: seeds are {g2, g4}. Kahn pops lex-min → g2. Then g1 is ready;
-    /// {g1, g4} → pop g1. Then {g4} → pop g4. Then g3 ready; pop g3. Then g0.
+    /// Rationale: initial seeds {g2, g4} sorted → queue = [g2, g4].
+    /// Pop g2 → g1 becomes ready → queue = [g4, g1].
+    /// Pop g4 → g3 becomes ready → queue = [g1, g3].
+    /// Pop g1 → g0 in-degree 2→1 → queue = [g3].
+    /// Pop g3 → g0 in-degree 1→0 → queue = [g0].
+    /// Pop g0. Order: [g2, g4, g1, g3, g0].
+    /// This matches the original `topological_sort` output (oracle-parity preserved).
     #[test]
     fn sewer_topo_order_snapshot() {
         let mut undirected: HashMap<String, Vec<(String, f64)>> = HashMap::new();
@@ -1177,10 +1216,11 @@ mod tests {
 
         let order = sewer_orient_and_kahn(&undirected, "g0");
 
+        // Matches the original topological_sort FIFO-queue order (oracle-parity).
         assert_eq!(
             order,
-            vec!["g2", "g1", "g4", "g3", "g0"],
-            "expected topo order [g2, g1, g4, g3, g0], got {:?}",
+            vec!["g2", "g4", "g1", "g3", "g0"],
+            "expected topo order [g2, g4, g1, g3, g0], got {:?}",
             order
         );
     }
