@@ -1134,3 +1134,54 @@ fn topological_sort(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
 
     order
 }
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// RED — pin topological order produced by the sewer orientation pipeline.
+    ///
+    /// Calls `sewer_orient_and_kahn`, a `#[cfg(test)]`-only helper implemented
+    /// in the GREEN commit using `SolverGraph`. Before GREEN this is a compile
+    /// error (E0425), satisfying the strict TDD RED requirement.
+    ///
+    /// Fixture: 5-node sewer tree, outlet at "g0":
+    ///   g2 — g1 — g0 — g3 — g4
+    ///
+    /// Expected topo order (leaves-first, outlet-last, lex tie-break at each pop):
+    ///   ["g2", "g1", "g4", "g3", "g0"]
+    ///
+    /// Rationale: seeds are {g2, g4}. Kahn pops lex-min → g2. Then g1 is ready;
+    /// {g1, g4} → pop g1. Then {g4} → pop g4. Then g3 ready; pop g3. Then g0.
+    #[test]
+    fn sewer_topo_order_snapshot() {
+        let mut undirected: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+        let edges = [
+            ("g0", "g1", 10.0_f64),
+            ("g1", "g2", 10.0),
+            ("g0", "g3", 10.0),
+            ("g3", "g4", 10.0),
+        ];
+        for (a, b, w) in &edges {
+            undirected
+                .entry(a.to_string())
+                .or_default()
+                .push((b.to_string(), *w));
+            undirected
+                .entry(b.to_string())
+                .or_default()
+                .push((a.to_string(), *w));
+        }
+
+        let order = sewer_orient_and_kahn(&undirected, "g0");
+
+        assert_eq!(
+            order,
+            vec!["g2", "g1", "g4", "g3", "g0"],
+            "expected topo order [g2, g1, g4, g3, g0], got {:?}",
+            order
+        );
+    }
+}
