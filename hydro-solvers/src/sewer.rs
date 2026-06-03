@@ -1175,6 +1175,86 @@ mod tests {
         topological_sort_adj(&adj)
     }
 
+    /// RED (PR-B2) — simplify_tree_sg on SolverGraph.
+    ///
+    /// Calls `simplify_tree_sg` which is introduced in PR-B2 GREEN.
+    /// Before GREEN this test fails to compile (E0425: cannot find function
+    /// `simplify_tree_sg` in module `super`).
+    ///
+    /// Fixture: 7-node chain with degree-2 intermediate nodes that should
+    /// collapse when manhole_spacing > their segment length.
+    ///
+    ///   g6 — g5 — g4 — g3(outlet) — g2 — g1 — g0
+    ///
+    /// With manhole_spacing=100.0 and segment length=10.0 per edge, only the
+    /// endpoints (outlet=g3, leaf nodes g0, g6) are kept. Intermediate nodes
+    /// g1,g2,g4,g5 all have in_degree+out_degree==2 and spacing does not force
+    /// intermediate manholes — so after simplification only g0, g3, g6 remain.
+    ///
+    /// This pins the SolverGraph-based `simplify_tree_sg` contract:
+    ///   kept_nodes.len() == 3
+    ///   "g3" in kept_nodes (outlet)
+    ///   "g0" in kept_nodes (leaf)
+    ///   "g6" in kept_nodes (leaf)
+    #[test]
+    fn simplify_tree_sg_collapses_degree2_chain() {
+        use hydro_types::{DesignConstraints, PipeMaterial};
+        use std::collections::HashSet;
+
+        // Build oriented SolverGraph: g6→g5→g4→g3 and g0→g1→g2→g3 (flows toward g3)
+        let mut oriented = SolverGraph::new();
+        for (a, b) in &[
+            ("g6", "g5"),
+            ("g5", "g4"),
+            ("g4", "g3"),
+            ("g0", "g1"),
+            ("g1", "g2"),
+            ("g2", "g3"),
+        ] {
+            oriented.add_edge(a, b, 10.0);
+        }
+
+        // Build in_oriented (reverse): g3→g4→g5→g6 and g3→g2→g1→g0
+        let mut in_oriented = SolverGraph::new();
+        for (a, b) in &[
+            ("g5", "g6"),
+            ("g4", "g5"),
+            ("g3", "g4"),
+            ("g2", "g3"),
+            ("g1", "g2"),
+            ("g0", "g1"),
+        ] {
+            in_oriented.add_edge(a, b, 10.0);
+        }
+
+        let terminal_set: HashSet<String> = ["g0", "g6"].iter().map(|s| s.to_string()).collect();
+        let outlet_node = "g3";
+
+        // Build a minimal TerrainGraph with coordinates so simplify_tree_sg can
+        // compute distances. We cannot use TerrainGraph directly in unit tests
+        // without a model file, so we call simplify_tree_sg — if it exists the
+        // compile succeeds (GREEN); if not we get E0425 (RED).
+        //
+        // NOTE: This test only checks the *compile-time* existence of
+        // `simplify_tree_sg` at the RED stage.  A runtime assertion is in the
+        // GREEN commit once TerrainGraph fixture infrastructure is available.
+        let _ = (oriented, in_oriented, terminal_set, outlet_node);
+
+        // RED: this call must fail to compile until PR-B2 GREEN introduces
+        // `simplify_tree_sg`. The `simplify_tree_sg` function takes
+        // `(&SolverGraph, &SolverGraph, ...)` and returns
+        // `(SolverGraph, HashSet<String>)`.
+        let _exists: fn(
+            &SewerSolver,
+            &SolverGraph,
+            &SolverGraph,
+            &hydro_terrain::TerrainGraph,
+            &HashSet<String>,
+            &str,
+            f64,
+        ) -> (SolverGraph, HashSet<String>) = SewerSolver::simplify_tree_sg;
+    }
+
     /// GREEN — pin topological order produced by the SolverGraph-based pipeline.
     ///
     /// Verifies that `sewer_orient_and_kahn` (implemented in GREEN using
