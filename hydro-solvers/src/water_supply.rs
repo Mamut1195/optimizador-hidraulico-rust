@@ -1143,3 +1143,65 @@ fn topological_sort_directed(adj: &HashMap<String, Vec<String>>) -> Vec<String> 
 
     order
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::SolverGraph;
+    use std::collections::HashMap;
+
+    // ── mst_adj_to_solver_graph — BFS visit order snapshot ──────────────────
+    //
+    // RED: references `mst_adj_to_solver_graph` which does not exist yet.
+    // Compile error E0425: "cannot find function `mst_adj_to_solver_graph`".
+    // This confirms the TDD red state before the GREEN migration.
+    //
+    // Fixture: a 5-node MST-like adjacency (undirected via bidirectional edges)
+    //   source -> a, b
+    //   a -> c
+    //   b -> d
+    //
+    // BFS from source (SOURCE-OUTWARD) yields visit order: [source, a, b, c, d]
+    // (sorted_neighbors sorts lex: "a" < "b", so a before b; then "c" < "d")
+    #[test]
+    fn ws_mst_adj_to_solver_graph_bfs_visit_order_snapshot() {
+        // Build an MST adjacency map (bidirectional, as returned by TerrainGraph::minimum_spanning_tree)
+        let mut mst_adj: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+        mst_adj.insert(
+            "source".to_string(),
+            vec![("a".to_string(), 1.0), ("b".to_string(), 1.0)],
+        );
+        mst_adj.insert(
+            "a".to_string(),
+            vec![("source".to_string(), 1.0), ("c".to_string(), 1.0)],
+        );
+        mst_adj.insert(
+            "b".to_string(),
+            vec![("source".to_string(), 1.0), ("d".to_string(), 1.0)],
+        );
+        mst_adj.insert(
+            "c".to_string(),
+            vec![("a".to_string(), 1.0)],
+        );
+        mst_adj.insert(
+            "d".to_string(),
+            vec![("b".to_string(), 1.0)],
+        );
+
+        // mst_adj_to_solver_graph loads the MST adjacency into a SolverGraph.
+        // RED: this function does not exist yet — compile error E0425.
+        let sg: SolverGraph = mst_adj_to_solver_graph(&mst_adj);
+
+        // BFS from source (SOURCE-OUTWARD) produces [source, a, b, c, d]
+        let source_idx = sg.node_index("source").expect("source must be in sg");
+        let visit_order = sg.bfs_oriented(source_idx);
+        let ids: Vec<&str> = visit_order.iter().map(|&idx| sg.node_id(idx)).collect();
+
+        assert_eq!(
+            ids,
+            vec!["source", "a", "b", "c", "d"],
+            "BFS from source in MST SolverGraph must yield lex-sorted visit order, got {:?}",
+            ids
+        );
+    }
+}
