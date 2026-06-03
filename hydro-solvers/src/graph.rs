@@ -208,6 +208,21 @@ impl SolverGraph {
         self.graph.node_indices()
     }
 
+    /// Collect outgoing neighbor `NodeIndex` values in edge-insertion order.
+    ///
+    /// petgraph stores edges in a reverse-linked list (newest first), so
+    /// `graph.edges(idx)` yields them in reverse insertion order. This helper
+    /// reverses that to restore the original insertion order, matching the
+    /// `combined_adj[u].push(v)` order used before the SolverGraph migration.
+    ///
+    /// Used by distribution.rs to replicate networkx's neighbor insertion order for
+    /// oracle-compatible edge emission (NOT lex-sorted — use `sorted_neighbors` for that).
+    pub(crate) fn neighbors_insertion_order(&self, idx: NodeIndex<u32>) -> Vec<NodeIndex<u32>> {
+        let mut nbrs: Vec<NodeIndex<u32>> = self.graph.edges(idx).map(|e| e.target()).collect();
+        nbrs.reverse();
+        nbrs
+    }
+
     /// Number of nodes in the graph.
     ///
     /// TODO: used by solvers in PR-C / PR-D for cardinality checks.
