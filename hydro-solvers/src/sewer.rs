@@ -171,24 +171,23 @@ impl SewerSolver {
 
         // Generate k alternatives via k-shortest paths from the farthest terminal
         if !terminal_nodes.is_empty() && params.num_alternatives > 1 {
-            let distances: Vec<(String, f64)> = terminal_nodes
+            let distances: Vec<(&str, f64)> = terminal_nodes
                 .iter()
-                .filter(|n| *n != &outlet_node)
+                .filter(|n| n.as_str() != outlet_node.as_str())
                 .filter_map(|nid| {
                     graph
                         .shortest_path_cost(nid, &outlet_node)
                         .ok()
-                        .map(|c| (nid.clone(), c))
+                        .map(|c| (nid.as_str(), c))
                 })
                 .collect();
 
-            if let Some((farthest, _)) = distances
+            if let Some(&(farthest, _)) = distances
                 .iter()
                 .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
             {
-                let farthest = farthest.clone();
                 if let Ok(k_paths) =
-                    graph.k_shortest_paths(&farthest, &outlet_node, params.num_alternatives)
+                    graph.k_shortest_paths(farthest, &outlet_node, params.num_alternatives)
                 {
                     for (i, path) in k_paths[1..].iter().enumerate() {
                         let alt_name = format!("{}_alt{}", network_name, i + 2);
@@ -234,116 +233,136 @@ impl SewerSolver {
 
     /// Reduce a directed tree to manhole nodes at required spacing.
     ///
+    /// SolverGraph-native version introduced in PR-B2. Replaces the String-HashMap
+    /// variant (`simplify_tree`) and the `solver_graph_to_adj` shim. All internal
+    /// sets operate on `NodeIndex<u32>`; String conversion only happens at the
+    /// kept-node output boundary.
+    ///
     /// Faithful port of Python `_simplify_tree`. Keeps:
     /// - outlets + terminals (must_keep)
     /// - junction nodes (in_degree + out_degree != 2)
     /// - intermediate nodes placed at `manhole_spacing` intervals along chains.
     ///
-    /// Returns `(simplified_adj, kept_nodes)` where simplified_adj carries
-    /// `path_length` as edge weight.
-    #[allow(clippy::type_complexity)]
-    fn simplify_tree(
+    /// Returns `(simplified_sg, kept_node_ids)` where `simplified_sg` is a
+    /// directed `SolverGraph` carrying `path_length` as edge weight, and
+    /// `kept_node_ids` is the set of kept node String ids.
+    pub(crate) fn simplify_tree_sg(
         &self,
-        directed: &HashMap<String, Vec<(String, f64)>>, // node → [(successor, len)]
-        in_directed: &HashMap<String, Vec<(String, f64)>>, // node → [(predecessor, len)]
+        oriented: &SolverGraph,   // upstream → downstream
+        in_oriented: &SolverGraph, // downstream → upstream (reverse of oriented)
         graph: &TerrainGraph,
         terminal_set: &HashSet<String>,
         outlet_node: &str,
         manhole_spacing: f64,
-    ) -> (HashMap<String, Vec<(String, f64)>>, HashSet<String>) {
+    ) -> (SolverGraph, HashSet<String>) {
+        use petgraph::graph::NodeIndex;
+
         // Build must_keep set: outlet + terminals + junctions (degree != 2)
-        let all_nodes: HashSet<String> = directed.keys().cloned().collect();
-        let mut must_keep: HashSet<String> = HashSet::new();
-        must_keep.insert(outlet_node.to_string());
-        for t in terminal_set {
-            must_keep.insert(t.clone());
+        let mut must_keep: HashSet<NodeIndex<u32>> = HashSet::new();
+
+        if let Some(idx) = oriented.node_index(outlet_node) {
+            must_keep.insert(idx);
         }
-        for node in &all_nodes {
-            let out_deg = directed.get(node).map(|v| v.len()).unwrap_or(0);
-            let in_deg = in_directed.get(node).map(|v| v.len()).unwrap_or(0);
+        for t in terminal_set {
+            if let Some(idx) = oriented.node_index(t.as_str()) {
+                must_keep.insert(idx);
+            }
+        }
+        for idx in oriented.node_indices() {
+            let out_deg = oriented.sorted_neighbors(idx).len();
+            let in_deg = in_oriented
+                .node_index(oriented.node_id(idx))
+                .map(|rev_idx| in_oriented.sorted_neighbors(rev_idx).len())
+                .unwrap_or(0);
             if in_deg + out_deg != 2 {
-                must_keep.insert(node.clone());
+                must_keep.insert(idx);
             }
         }
 
         // Walk chains: for each must_keep node, follow successors until another must_keep node
-        let mut chains: Vec<Vec<String>> = Vec::new();
-        let mut visited_edges: HashSet<(String, String)> = HashSet::new();
+        let mut chains: Vec<Vec<NodeIndex<u32>>> = Vec::new();
+        let mut visited_edges: HashSet<(NodeIndex<u32>, NodeIndex<u32>)> = HashSet::new();
 
-        for start in &must_keep {
-            let succs: Vec<String> = directed
-                .get(start)
-                .map(|v| v.iter().map(|(s, _)| s.clone()).collect())
-                .unwrap_or_default();
-            for succ in succs {
-                let edge_key = (start.clone(), succ.clone());
+        let mut must_keep_vec: Vec<NodeIndex<u32>> = must_keep.iter().copied().collect();
+        must_keep_vec.sort_by(|&a, &b| oriented.node_id(a).cmp(oriented.node_id(b)));
+
+        for start in &must_keep_vec {
+            for (succ, _) in oriented.sorted_neighbors(*start) {
+                let edge_key = (*start, succ);
                 if visited_edges.contains(&edge_key) {
                     continue;
                 }
-                let mut chain = vec![start.clone()];
-                let mut current = succ.clone();
+                let mut chain = vec![*start];
+                let mut current = succ;
                 while !must_keep.contains(&current) {
-                    chain.push(current.clone());
-                    let next_succs: Vec<String> = directed
-                        .get(&current)
-                        .map(|v| v.iter().map(|(s, _)| s.clone()).collect())
-                        .unwrap_or_default();
-                    if next_succs.is_empty() {
+                    let prev = *chain.last().unwrap();
+                    visited_edges.insert((prev, current));
+                    chain.push(current);
+                    let next = oriented.sorted_neighbors(current);
+                    if next.is_empty() {
                         break;
                     }
-                    visited_edges.insert((chain[chain.len() - 2].clone(), current.clone()));
-                    current = next_succs[0].clone();
+                    current = next[0].0;
                 }
-                visited_edges.insert((chain.last().unwrap().clone(), current.clone()));
+                visited_edges.insert((*chain.last().unwrap(), current));
                 chain.push(current);
                 chains.push(chain);
             }
         }
 
-        // Place intermediate manholes at manhole_spacing intervals
-        let mut keep = must_keep.clone();
+        // Place intermediate manholes at manhole_spacing intervals.
+        // Seed keep from must_keep without cloning the full HashSet.
+        let mut keep: HashSet<petgraph::graph::NodeIndex<u32>> =
+            must_keep.iter().copied().collect();
         for chain in &chains {
             let mut dist = 0.0_f64;
             for i in 1..chain.len().saturating_sub(1) {
-                let c_prev = graph.get_node_coord(&chain[i - 1]);
-                let c_curr = graph.get_node_coord(&chain[i]);
+                let id_prev = oriented.node_id(chain[i - 1]);
+                let id_curr = oriented.node_id(chain[i]);
+                let c_prev = graph.get_node_coord(id_prev);
+                let c_curr = graph.get_node_coord(id_curr);
                 if let (Some((px, py)), Some((cx, cy))) = (c_prev, c_curr) {
                     dist += ((px - cx).powi(2) + (py - cy).powi(2)).sqrt();
                 }
                 if dist >= manhole_spacing {
-                    keep.insert(chain[i].clone());
+                    keep.insert(chain[i]);
                     dist = 0.0;
                 }
             }
         }
 
-        // Build simplified directed graph with path_length on each edge
-        let mut simplified: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-        for node in &keep {
-            simplified.entry(node.clone()).or_default();
+        // Build simplified directed SolverGraph with path_length on each edge
+        let mut simplified = SolverGraph::new();
+        for &idx in &keep {
+            simplified.add_node(oriented.node_id(idx));
         }
 
         for chain in &chains {
-            let mut prev_kept = chain[0].clone();
+            let mut prev_kept = chain[0];
             let mut path_len = 0.0_f64;
             for i in 1..chain.len() {
-                let c_prev = graph.get_node_coord(&chain[i - 1]);
-                let c_curr = graph.get_node_coord(&chain[i]);
+                let id_prev = oriented.node_id(chain[i - 1]);
+                let id_curr = oriented.node_id(chain[i]);
+                let c_prev = graph.get_node_coord(id_prev);
+                let c_curr = graph.get_node_coord(id_curr);
                 if let (Some((px, py)), Some((cx, cy))) = (c_prev, c_curr) {
                     path_len += ((px - cx).powi(2) + (py - cy).powi(2)).sqrt();
                 }
                 if keep.contains(&chain[i]) {
-                    simplified
-                        .entry(prev_kept.clone())
-                        .or_default()
-                        .push((chain[i].clone(), path_len));
-                    prev_kept = chain[i].clone();
+                    let from_id = oriented.node_id(prev_kept);
+                    let to_id = oriented.node_id(chain[i]);
+                    simplified.add_edge(from_id, to_id, path_len);
+                    prev_kept = chain[i];
                     path_len = 0.0;
                 }
             }
         }
 
-        (simplified, keep)
+        // Build the kept_node_ids set for the caller (String boundary)
+        let kept_node_ids: HashSet<String> =
+            keep.iter().map(|&idx| oriented.node_id(idx).to_owned()).collect();
+
+        (simplified, kept_node_ids)
     }
 
     // ── Diameter selection ─────────────────────────────────────────────────
@@ -396,42 +415,40 @@ impl SewerSolver {
             .ok_or_else(|| format!("outlet node '{}' not in Steiner tree", outlet_node))?;
         let (oriented, in_oriented) = bfs_build_oriented(undirected_sg, outlet_idx);
 
-        // Convert oriented SolverGraph → HashMap for simplify_tree (shim; removed in PR-B2).
-        let directed = solver_graph_to_adj(&oriented);
-        let in_directed = solver_graph_to_adj(&in_oriented);
-
-        // All node IDs in the directed tree
-        let all_node_ids: HashSet<String> = directed
-            .keys()
-            .cloned()
-            .chain(in_directed.keys().cloned())
-            .collect();
-
-        // Simplify or use as-is
-        let (work_adj, kept_nodes) = if let Some(spacing) = params.manhole_spacing {
-            self.simplify_tree(
-                &directed,
-                &in_directed,
+        // Simplify or use oriented graph as-is — both paths produce a SolverGraph.
+        let (work_sg, kept_nodes) = if let Some(spacing) = params.manhole_spacing {
+            self.simplify_tree_sg(
+                &oriented,
+                &in_oriented,
                 graph,
                 &terminal_set,
                 outlet_node,
                 spacing,
             )
         } else {
-            // Use directed tree as-is; convert to path_length-based adjacency
-            let mut work = HashMap::new();
-            for (u, succs) in &directed {
-                let entry: Vec<(String, f64)> =
-                    succs.iter().map(|(v, len)| (v.clone(), *len)).collect();
-                work.insert(u.clone(), entry);
-            }
-            let kept: HashSet<String> = all_node_ids;
-            (work, kept)
+            // No simplification: use oriented tree directly.
+            // kept_nodes = all node ids in the oriented graph.
+            let kept: HashSet<String> = oriented
+                .node_indices()
+                .map(|idx| oriented.node_id(idx).to_owned())
+                .collect();
+            (oriented, kept)
         };
 
-        // Create nodes
+        // Create nodes (topo sort to ensure deterministic node order for ID assignment)
+        let topo_order = work_sg
+            .sorted_kahn_topo_sort()
+            .map_err(|e| e.to_string())?;
+
         let mut nodes: Vec<NetworkNode> = Vec::new();
-        for nid in &kept_nodes {
+        // node_map: String id → index into `nodes` vec (used for sump mutations)
+        let mut node_map: HashMap<&str, usize> = HashMap::new();
+
+        for &idx in &topo_order {
+            let nid = work_sg.node_id(idx);
+            if !kept_nodes.contains(nid) {
+                continue;
+            }
             let coord = graph
                 .get_node_coord(nid)
                 .ok_or_else(|| format!("node {} not found in graph", nid))?;
@@ -445,10 +462,15 @@ impl SewerSolver {
             } else {
                 NodeType::Manhole
             };
-            let mut node = NetworkNode::new(nid.as_str(), coord.0, coord.1, z, ntype);
+            let mut node = NetworkNode::new(nid, coord.0, coord.1, z, ntype);
             node.rim_elevation = z;
             node.sump_elevation = f64::INFINITY; // Will be set during pipe processing
+            // SAFETY: `nid` borrows from `work_sg` which outlives `node_map` here.
+            // We use the raw pointer trick via stored &str pointing into the SolverGraph.
+            let pos = nodes.len();
             nodes.push(node);
+            // Store the id string pointer — safe since work_sg is not mutated hereafter.
+            node_map.insert(work_sg.node_id(idx), pos);
         }
 
         // Initialize sump_elevation to a sentinel (Python: default from node constructor)
@@ -457,25 +479,21 @@ impl SewerSolver {
         // We replicate: sentinel = +∞, first pipe sets it, subsequent min() updates it.
         // Since we build nodes first and then update sump_elevation, we start with +∞.
 
-        // Topological sort of work_adj (leaves first, outlet last)
-        let topo_order = topological_sort_adj(&work_adj);
-
-        // Accumulated flow per node (upstream → downstream)
-        let mut flow_at_node: HashMap<String, f64> = HashMap::new();
-        for nid in &kept_nodes {
+        // Accumulated flow per node (upstream → downstream), keyed by NodeIndex.
+        let mut flow_at_node: HashMap<petgraph::graph::NodeIndex<u32>, f64> = HashMap::new();
+        for &idx in &topo_order {
+            let nid = work_sg.node_id(idx);
             let base = if terminal_set.contains(nid) {
                 flow_per_service
             } else {
                 0.0
             };
-            flow_at_node.insert(nid.clone(), base);
+            flow_at_node.insert(idx, base);
         }
-        for nid in &topo_order {
-            let succs = work_adj.get(nid).cloned().unwrap_or_default();
-            let current_flow = flow_at_node.get(nid).copied().unwrap_or(0.0);
-            for (successor, _) in succs {
-                let entry = flow_at_node.entry(successor.clone()).or_insert(0.0);
-                *entry += current_flow;
+        for &idx in &topo_order {
+            let current_flow = flow_at_node.get(&idx).copied().unwrap_or(0.0);
+            for (succ, _) in work_sg.sorted_neighbors(idx) {
+                *flow_at_node.entry(succ).or_insert(0.0) += current_flow;
             }
         }
 
@@ -485,50 +503,36 @@ impl SewerSolver {
         let min_slope = self.constraints.min_slope;
         let max_slope = self.constraints.max_slope;
 
-        // Build a node lookup map for mutations
-        let mut node_map: HashMap<String, usize> = HashMap::new();
-        for (i, n) in nodes.iter().enumerate() {
-            node_map.insert(n.id.0.clone(), i);
-        }
-
         let mut pipes: Vec<NetworkPipe> = Vec::new();
         let mut pipe_counter = 0usize;
 
-        // Iterate edges in work_adj (mirrors Python `for u, v, edge_data in work_graph.edges`)
-        // Note: Python iterates in petgraph/networkx order (not deterministic cross-lang)
-        // but since we're doing structural parity, the order matters for pipe IDs.
-        // We iterate in topological order from leaves to outlet to match Python's topo walk.
-        // Actually Python iterates work_graph.edges() in insertion order.
-        // For simplify_tree=None case, edges come from directed (BFS orientation).
-        // We replicate by iterating work_adj keys in some order.
+        // Iterate edges in topological order (leaves → outlet) to match Python's topo walk.
         //
         // CRITICAL for parity: Python's work_graph.edges(data=True) returns edges in
         // the DiGraph's internal insertion order (the BFS order). We replicate this
         // by iterating topo_order and emitting edges from each node.
 
-        for u in &topo_order {
-            let succs = match work_adj.get(u) {
-                Some(v) => v.clone(),
-                None => continue,
-            };
-            for (v, path_length) in succs {
-                let start_idx = match node_map.get(u) {
+        for &u_idx in &topo_order {
+            let u_id = work_sg.node_id(u_idx);
+            for (v_idx, path_length) in work_sg.sorted_neighbors(u_idx) {
+                let v_id = work_sg.node_id(v_idx);
+                let start_pos = match node_map.get(u_id) {
                     Some(&i) => i,
                     None => continue,
                 };
-                let end_idx = match node_map.get(&v) {
+                let end_pos = match node_map.get(v_id) {
                     Some(&i) => i,
                     None => continue,
                 };
 
-                let start_z = nodes[start_idx].z;
-                let end_z = nodes[end_idx].z;
+                let start_z = nodes[start_pos].z;
+                let end_z = nodes[end_pos].z;
 
                 // Compute pipe length from node coordinates.
                 //
-                // The `path_length` stored in work_adj is the cumulative Euclidean
+                // The `path_length` stored in work_sg is the cumulative Euclidean
                 // distance of the chain when manhole_spacing simplification is active
-                // (set by _simplify_tree in Python).  When manhole_spacing is None,
+                // (set by simplify_tree_sg).  When manhole_spacing is None,
                 // Python falls back to `start_node.distance_to(end_node)` — the
                 // Euclidean distance between the two adjacent nodes.
                 //
@@ -544,10 +548,10 @@ impl SewerSolver {
                 } else {
                     // No simplification: compute Euclidean distance from node coordinates.
                     // Mirrors Python: edge_data.get("path_length", start_node.distance_to(end_node))
-                    let su = nodes[start_idx].x;
-                    let sv = nodes[start_idx].y;
-                    let eu = nodes[end_idx].x;
-                    let ev = nodes[end_idx].y;
+                    let su = nodes[start_pos].x;
+                    let sv = nodes[start_pos].y;
+                    let eu = nodes[end_pos].x;
+                    let ev = nodes[end_pos].y;
                     ((su - eu).powi(2) + (sv - ev).powi(2)).sqrt()
                 };
                 if length < 0.1 {
@@ -563,7 +567,7 @@ impl SewerSolver {
                     .min(max_slope);
 
                 let flow = flow_at_node
-                    .get(u)
+                    .get(&u_idx)
                     .copied()
                     .unwrap_or(flow_per_service)
                     .max(flow_per_service);
@@ -594,11 +598,11 @@ impl SewerSolver {
                 // Python: start_node.sump_elevation = start_invert - 0.2
                 // Python: end_node.sump_elevation = min(current_sump, end_invert - 0.2)
                 let start_sump = start_invert - 0.2;
-                nodes[start_idx].sump_elevation = start_sump;
+                nodes[start_pos].sump_elevation = start_sump;
 
                 let end_sump_candidate = end_invert - 0.2;
-                let current_end_sump = nodes[end_idx].sump_elevation;
-                nodes[end_idx].sump_elevation = if current_end_sump.is_infinite() {
+                let current_end_sump = nodes[end_pos].sump_elevation;
+                nodes[end_pos].sump_elevation = if current_end_sump.is_infinite() {
                     end_sump_candidate
                 } else {
                     current_end_sump.min(end_sump_candidate)
@@ -610,7 +614,7 @@ impl SewerSolver {
                     pipe_meta.insert("bypassed_by_pump".to_string(), Value::Bool(true));
                     let pump_lift = (min_slope - natural_slope) * length;
                     pipe_meta.insert("pump_lift".to_string(), Value::from(pump_lift.max(0.0)));
-                    nodes[end_idx].node_type = NodeType::Pump;
+                    nodes[end_pos].node_type = NodeType::Pump;
                 }
 
                 let slope = if length > 0.0 {
@@ -621,8 +625,8 @@ impl SewerSolver {
 
                 pipes.push(NetworkPipe {
                     id: PipeId::new(format!("Pipe - ({})", pipe_counter)),
-                    start_node_id: NodeId::new(u.as_str()),
-                    end_node_id: NodeId::new(v.as_str()),
+                    start_node_id: NodeId::new(u_id),
+                    end_node_id: NodeId::new(v_id),
                     length,
                     effective_length: length,
                     diameter,
@@ -665,13 +669,15 @@ impl SewerSolver {
         material: PipeMaterial,
         params: &GeneParams,
     ) -> Result<PipeNetwork, String> {
-        let terminal_set: HashSet<String> = terminal_nodes.iter().cloned().collect();
+        // terminal_set borrows &str from terminal_nodes — no String clone needed.
+        let terminal_set: HashSet<&str> = terminal_nodes.iter().map(|s| s.as_str()).collect();
 
-        // Determine which path indices to keep as manholes
-        let (kept_path, sorted_kept_indices) = if let Some(spacing) = params.manhole_spacing {
+        // Determine which path indices to keep as manholes.
+        // sorted_kept_indices is the canonical order; kept_path maps kept indices to &str.
+        let sorted_kept_indices: Vec<usize> = if let Some(spacing) = params.manhole_spacing {
             let mut kept_indices: HashSet<usize> = [0, path.len() - 1].into_iter().collect();
             for (i, nid) in path.iter().enumerate() {
-                if terminal_set.contains(nid) || nid == outlet_node {
+                if terminal_set.contains(nid.as_str()) || nid == outlet_node {
                     kept_indices.insert(i);
                 }
             }
@@ -691,21 +697,21 @@ impl SewerSolver {
             }
             let mut sorted: Vec<usize> = kept_indices.into_iter().collect();
             sorted.sort_unstable();
-            let kp: Vec<String> = sorted.iter().map(|&i| path[i].clone()).collect();
-            (kp, sorted)
+            sorted
         } else {
-            let kp = path.to_vec();
-            let ki: Vec<usize> = (0..path.len()).collect();
-            (kp, ki)
+            (0..path.len()).collect()
         };
+        // kept_path borrows &str slices from path — no String clone needed.
+        let kept_path: Vec<&str> = sorted_kept_indices.iter().map(|&i| path[i].as_str()).collect();
 
-        // Create nodes with accumulated flow
+        // Create nodes with accumulated flow.
+        // node_map and flow_at borrow &str keys from kept_path — no String clone needed.
         let mut nodes: Vec<NetworkNode> = Vec::new();
-        let mut node_map: HashMap<String, usize> = HashMap::new();
+        let mut node_map: HashMap<&str, usize> = HashMap::new();
         let mut accumulated_flow = 0.0_f64;
-        let mut flow_at: HashMap<String, f64> = HashMap::new();
+        let mut flow_at: HashMap<&str, f64> = HashMap::new();
 
-        for nid in &kept_path {
+        for &nid in &kept_path {
             let coord = graph
                 .get_node_coord(nid)
                 .ok_or_else(|| format!("node {} not found in graph", nid))?;
@@ -719,33 +725,37 @@ impl SewerSolver {
             } else {
                 NodeType::Manhole
             };
-            let mut node = NetworkNode::new(nid.as_str(), coord.0, coord.1, z, ntype);
+            let mut node = NetworkNode::new(nid, coord.0, coord.1, z, ntype);
             node.rim_elevation = z;
             node.sump_elevation = f64::INFINITY;
-            let idx = nodes.len();
-            node_map.insert(nid.clone(), idx);
+            let pos = nodes.len();
+            node_map.insert(nid, pos);
             nodes.push(node);
             if terminal_set.contains(nid) {
                 accumulated_flow += flow_per_service;
             }
-            flow_at.insert(nid.clone(), accumulated_flow);
+            flow_at.insert(nid, accumulated_flow);
         }
 
-        // Pre-compute segment lengths (sum intermediate edges for consolidated segments)
-        let mut pipe_segments: Vec<(String, String, f64)> = Vec::new();
-        for seg in 0..sorted_kept_indices.len().saturating_sub(1) {
-            let i_start = sorted_kept_indices[seg];
-            let i_end = sorted_kept_indices[seg + 1];
-            let mut seg_len = 0.0_f64;
-            for j in i_start..i_end {
-                let c1 = graph.get_node_coord(&path[j]);
-                let c2 = graph.get_node_coord(&path[j + 1]);
-                if let (Some((x1, y1)), Some((x2, y2))) = (c1, c2) {
-                    seg_len += ((x1 - x2).powi(2) + (y1 - y2).powi(2)).sqrt();
-                }
-            }
-            pipe_segments.push((path[i_start].clone(), path[i_end].clone(), seg_len));
-        }
+        // Pre-compute segment lengths using windows(2) over sorted_kept_indices.
+        // Stores (path_start_idx, path_end_idx, seg_len) — no String clone needed.
+        let pipe_segments: Vec<(usize, usize, f64)> = sorted_kept_indices
+            .windows(2)
+            .map(|w| {
+                let i_start = w[0];
+                let i_end = w[1];
+                let seg_len = (i_start..i_end).fold(0.0_f64, |acc, j| {
+                    let c1 = graph.get_node_coord(&path[j]);
+                    let c2 = graph.get_node_coord(&path[j + 1]);
+                    if let (Some((x1, y1)), Some((x2, y2))) = (c1, c2) {
+                        acc + ((x1 - x2).powi(2) + (y1 - y2).powi(2)).sqrt()
+                    } else {
+                        acc
+                    }
+                });
+                (i_start, i_end, seg_len)
+            })
+            .collect();
 
         let roughness = material.manning_n();
         let cover = self.constraints.min_cover * params.cover_factor;
@@ -754,7 +764,9 @@ impl SewerSolver {
         let mut running_invert: Option<f64> = None;
         let mut pipes: Vec<NetworkPipe> = Vec::new();
 
-        for (i, (u, v, length)) in pipe_segments.iter().enumerate() {
+        for (i, &(i_start, i_end, length)) in pipe_segments.iter().enumerate() {
+            let u = path[i_start].as_str();
+            let v = path[i_end].as_str();
             let start_idx = match node_map.get(u) {
                 Some(&i) => i,
                 None => continue,
@@ -764,7 +776,7 @@ impl SewerSolver {
                 None => continue,
             };
 
-            if *length < 0.1 {
+            if length < 0.1 {
                 continue;
             }
 
@@ -827,7 +839,7 @@ impl SewerSolver {
                 nodes[end_idx].node_type = NodeType::Pump;
             }
 
-            let slope = if *length > 0.0 {
+            let slope = if length > 0.0 {
                 (start_invert - end_invert) / length
             } else {
                 0.0
@@ -835,10 +847,10 @@ impl SewerSolver {
 
             pipes.push(NetworkPipe {
                 id: PipeId::new(format!("Pipe - ({})", i + 1)),
-                start_node_id: NodeId::new(u.as_str()),
-                end_node_id: NodeId::new(v.as_str()),
-                length: *length,
-                effective_length: *length,
+                start_node_id: NodeId::new(u),
+                end_node_id: NodeId::new(v),
+                length,
+                effective_length: length,
                 diameter,
                 material,
                 roughness,
@@ -1043,8 +1055,8 @@ fn steiner_to_solver_graph(steiner: &hydro_terrain::SteinerTree) -> SolverGraph 
 /// Returns:
 /// - `oriented`: directed graph where each edge goes upstream → downstream
 ///   (neighbor → current; mirrors Python `directed.add_edge(neighbor, current)`).
-/// - `in_oriented`: reverse of `oriented` (current → predecessor), used by the
-///   shim that feeds `simplify_tree` in PR-B1.
+/// - `in_oriented`: reverse of `oriented` (current → predecessor), consumed by
+///   `simplify_tree_sg` to compute per-node in-degree for junction detection.
 fn bfs_build_oriented(
     undirected: &SolverGraph,
     outlet_idx: petgraph::graph::NodeIndex<u32>,
@@ -1081,68 +1093,6 @@ fn bfs_build_oriented(
     (oriented, in_oriented)
 }
 
-/// Convert a `SolverGraph` to a `HashMap<String, Vec<(String, f64)>>`.
-///
-/// Shim used in PR-B1 to feed the still-String-based `simplify_tree`.
-/// Removed in PR-B2 when `simplify_tree` is migrated to `SolverGraph`.
-#[allow(dead_code)] // TODO: remove when simplify_tree migrates in PR-B2
-fn solver_graph_to_adj(sg: &SolverGraph) -> HashMap<String, Vec<(String, f64)>> {
-    let mut adj: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-    for idx in sg.node_indices() {
-        let u = sg.node_id(idx).to_owned();
-        let succs: Vec<(String, f64)> = sg
-            .sorted_neighbors(idx)
-            .into_iter()
-            .map(|(si, w)| (sg.node_id(si).to_owned(), w))
-            .collect();
-        adj.insert(u, succs);
-    }
-    adj
-}
-
-/// Topological sort of a String-keyed directed adjacency map.
-///
-/// Retained for the post-simplify_tree `work_adj` path (the simplified HashMap).
-/// Returns nodes in topological order (leaves first, outlet last).
-fn topological_sort_adj(adj: &HashMap<String, Vec<(String, f64)>>) -> Vec<String> {
-    let mut in_degree: HashMap<String, usize> = HashMap::new();
-    for nid in adj.keys() {
-        in_degree.entry(nid.clone()).or_insert(0);
-    }
-    for succs in adj.values() {
-        for (v, _) in succs {
-            *in_degree.entry(v.clone()).or_insert(0) += 1;
-        }
-    }
-
-    let mut queue_vec: Vec<String> = in_degree
-        .iter()
-        .filter(|(_, &d)| d == 0)
-        .map(|(k, _)| k.clone())
-        .collect();
-    queue_vec.sort();
-    let mut queue: VecDeque<String> = queue_vec.into();
-
-    let mut order: Vec<String> = Vec::new();
-    while let Some(node) = queue.pop_front() {
-        order.push(node.clone());
-        let succs = adj.get(&node).cloned().unwrap_or_default();
-        let mut new_sources: Vec<String> = Vec::new();
-        for (v, _) in succs {
-            let deg = in_degree.entry(v.clone()).or_insert(0);
-            if *deg > 0 {
-                *deg -= 1;
-            }
-            if *deg == 0 {
-                new_sources.push(v);
-            }
-        }
-        new_sources.sort();
-        queue.extend(new_sources);
-    }
-
-    order
-}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -1153,11 +1103,10 @@ mod tests {
     /// Test-only helper: orient an undirected adjacency via `SolverGraph` BFS
     /// and return the topo order as `Vec<String>` (leaves-first, outlet-last).
     ///
-    /// Mirrors the internal pipeline of `build_network_from_tree`:
+    /// Mirrors the internal pipeline of `build_network_from_tree` after PR-B2:
     ///   1. Build undirected `SolverGraph` from the HashMap adjacency.
     ///   2. BFS-orient from outlet via `bfs_build_oriented`.
-    ///   3. Convert oriented SolverGraph → HashMap shim.
-    ///   4. Run `topological_sort_adj` on the shim.
+    ///   3. Run `sorted_kahn_topo_sort` (BTreeSet lex-pop) on the oriented graph.
     fn sewer_orient_and_kahn(
         undirected_adj: &HashMap<String, Vec<(String, f64)>>,
         outlet: &str,
@@ -1171,8 +1120,12 @@ mod tests {
         }
         let outlet_idx = sg.node_index(outlet).expect("outlet must be in graph");
         let (oriented, _in_oriented) = bfs_build_oriented(&sg, outlet_idx);
-        let adj = solver_graph_to_adj(&oriented);
-        topological_sort_adj(&adj)
+        oriented
+            .sorted_kahn_topo_sort()
+            .expect("acyclic oriented tree must not fail")
+            .iter()
+            .map(|&idx| oriented.node_id(idx).to_owned())
+            .collect()
     }
 
     /// RED (PR-B2) — simplify_tree_sg on SolverGraph.
@@ -1255,25 +1208,29 @@ mod tests {
         ) -> (SolverGraph, HashSet<String>) = SewerSolver::simplify_tree_sg;
     }
 
-    /// GREEN — pin topological order produced by the SolverGraph-based pipeline.
+    /// GREEN — pin topological order produced by the SolverGraph lex-Kahn pipeline.
     ///
-    /// Verifies that `sewer_orient_and_kahn` (implemented in GREEN using
-    /// `SolverGraph` BFS + `topological_sort_adj`) produces the same order as
-    /// the original `bfs_orient` + `topological_sort` pipeline.
+    /// Verifies that `sewer_orient_and_kahn` (using `SolverGraph` BFS +
+    /// `sorted_kahn_topo_sort`) produces the BTreeSet lex-pop order introduced
+    /// in PR-B2.
     ///
     /// Fixture: 5-node sewer tree, outlet at "g0":
     ///   g2 — g1 — g0 — g3 — g4
     ///
-    /// Expected topo order (leaves-first, outlet-last, FIFO queue order):
-    ///   ["g2", "g4", "g1", "g3", "g0"]
+    /// Oriented (upstream→downstream after BFS from g0):
+    ///   g2→g1→g0, g4→g3→g0
     ///
-    /// Rationale: initial seeds {g2, g4} sorted → queue = [g2, g4].
-    /// Pop g2 → g1 becomes ready → queue = [g4, g1].
-    /// Pop g4 → g3 becomes ready → queue = [g1, g3].
-    /// Pop g1 → g0 in-degree 2→1 → queue = [g3].
-    /// Pop g3 → g0 in-degree 1→0 → queue = [g0].
-    /// Pop g0. Order: [g2, g4, g1, g3, g0].
-    /// This matches the original `topological_sort` output (oracle-parity preserved).
+    /// Expected topo order (lex BTreeSet pop, leaves-first, outlet-last):
+    ///   ["g2", "g1", "g4", "g3", "g0"]
+    ///
+    /// Derivation:
+    ///   in-degrees: g2=0, g4=0, g1=1, g3=1, g0=2
+    ///   ready = {g2, g4} → pop lex "g2" → g1.in_deg=0 → ready = {g1, g4}
+    ///   pop lex "g1" → g0.in_deg=1 → ready = {g4}
+    ///   pop lex "g4" → g3.in_deg=0 → ready = {g3}
+    ///   pop lex "g3" → g0.in_deg=0 → ready = {g0}
+    ///   pop lex "g0" → done
+    ///   Order: [g2, g1, g4, g3, g0]
     #[test]
     fn sewer_topo_order_snapshot() {
         let mut undirected: HashMap<String, Vec<(String, f64)>> = HashMap::new();
@@ -1296,11 +1253,11 @@ mod tests {
 
         let order = sewer_orient_and_kahn(&undirected, "g0");
 
-        // Matches the original topological_sort FIFO-queue order (oracle-parity).
+        // BTreeSet lex-pop order (PR-B2 production pipeline).
         assert_eq!(
             order,
-            vec!["g2", "g4", "g1", "g3", "g0"],
-            "expected topo order [g2, g4, g1, g3, g0], got {:?}",
+            vec!["g2", "g1", "g4", "g3", "g0"],
+            "expected lex-Kahn order [g2, g1, g4, g3, g0], got {:?}",
             order
         );
     }
