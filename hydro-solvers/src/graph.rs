@@ -101,7 +101,10 @@ impl SolverGraph {
     ///
     /// Replaces the `.iter().map(...).collect::<Vec<(String, f64)>>()` patterns
     /// in the three solvers' BFS/DFS chains.
-    pub(crate) fn sorted_neighbors(&self, idx: NodeIndex<u32>) -> Vec<(NodeIndex<u32>, EdgeWeight)> {
+    pub(crate) fn sorted_neighbors(
+        &self,
+        idx: NodeIndex<u32>,
+    ) -> Vec<(NodeIndex<u32>, EdgeWeight)> {
         let mut neighbors: Vec<(NodeIndex<u32>, EdgeWeight)> = self
             .graph
             .edges(idx)
@@ -122,11 +125,8 @@ impl SolverGraph {
     /// silently drops cycle nodes; this function makes cycles explicit.
     pub(crate) fn sorted_kahn_topo_sort(&self) -> Result<Vec<NodeIndex<u32>>, SolverError> {
         // Step 1: compute in-degree for each node.
-        let mut in_degree: HashMap<NodeIndex<u32>, usize> = self
-            .graph
-            .node_indices()
-            .map(|n| (n, 0usize))
-            .collect();
+        let mut in_degree: HashMap<NodeIndex<u32>, usize> =
+            self.graph.node_indices().map(|n| (n, 0usize)).collect();
 
         for edge in self.graph.edge_references() {
             *in_degree.entry(edge.target()).or_insert(0) += 1;
@@ -223,12 +223,18 @@ mod tests {
         sg.add_edge("b", "d", 1.0);
         sg.add_edge("c", "d", 1.0);
 
-        let order = sg.sorted_kahn_topo_sort().expect("acyclic graph must not fail");
+        let order = sg
+            .sorted_kahn_topo_sort()
+            .expect("acyclic graph must not fail");
         assert_eq!(order.len(), 4, "all 4 nodes must appear in the output");
 
         let ids: Vec<&str> = order.iter().map(|&idx| sg.node_id(idx)).collect();
-        assert_eq!(ids, vec!["a", "b", "c", "d"],
-            "lex tie-break: b before c; expected [a, b, c, d], got {:?}", ids);
+        assert_eq!(
+            ids,
+            vec!["a", "b", "c", "d"],
+            "lex tie-break: b before c; expected [a, b, c, d], got {:?}",
+            ids
+        );
     }
 
     // ── sorted_kahn_topo_sort — cycle detection ───────────────────────────────
@@ -262,8 +268,12 @@ mod tests {
         assert_eq!(neighbors.len(), 3);
 
         let ids: Vec<&str> = neighbors.iter().map(|&(idx, _)| sg.node_id(idx)).collect();
-        assert_eq!(ids, vec!["g1", "g10", "g2"],
-            "lex order expected [g1, g10, g2], got {:?}", ids);
+        assert_eq!(
+            ids,
+            vec!["g1", "g10", "g2"],
+            "lex order expected [g1, g10, g2], got {:?}",
+            ids
+        );
     }
 
     // ── add_edge — creates missing nodes ─────────────────────────────────────

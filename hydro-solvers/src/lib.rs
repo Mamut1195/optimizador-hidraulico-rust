@@ -11,12 +11,12 @@
 pub mod conveyance;
 pub mod distribution;
 pub mod error;
+pub(crate) mod graph;
 pub mod intake;
 pub mod pump_station;
 pub mod sewer;
 pub mod solver;
 pub mod water_supply;
-pub(crate) mod graph;
 
 pub use conveyance::ConveyanceSolver;
 pub use distribution::DistributionSolver;
