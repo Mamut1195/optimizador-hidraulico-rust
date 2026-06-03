@@ -11,6 +11,7 @@
 pub mod conveyance;
 pub mod distribution;
 pub mod error;
+pub(crate) mod graph;
 pub mod intake;
 pub mod pump_station;
 pub mod sewer;

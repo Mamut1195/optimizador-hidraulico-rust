@@ -24,9 +24,11 @@ use hydro_types::{
     response::SolutionMetadata, DesignConstraints, NetworkNode, NetworkPipe, NodeId, NodeType,
     PipeId, PipeMaterial, PipeNetwork, Solution, SolutionScore,
 };
+use petgraph::graph::NodeIndex;
 use serde_json::Value;
 
 use crate::error::SolverError;
+use crate::graph::SolverGraph;
 use crate::solver::{Solver, SolverParams};
 
 // ── DistributionSolver ────────────────────────────────────────────────────────
@@ -253,7 +255,7 @@ impl DistributionSolver {
             if !alternative_errors.is_empty() {
                 let errs: Vec<Value> = alternative_errors
                     .iter()
-                    .map(|s| Value::String(s.clone()))
+                    .map(|s| Value::String(s.to_owned()))
                     .collect();
                 sol.metadata.genetic_params = serde_json::json!({
                     "alternative_errors": Value::Array(errs)
@@ -284,7 +286,7 @@ impl DistributionSolver {
         max_loops_divisor: u32,
         diameter_offset: i32,
     ) -> Result<PipeNetwork, String> {
-        let demand_set: HashSet<String> = demand_nodes.iter().cloned().collect();
+        let demand_set: HashSet<String> = demand_nodes.iter().map(|s| s.to_owned()).collect();
 
         // Step 1 — get all graph edges (in petgraph insertion order = from_grid order)
         // This is used for both MST construction (Kruskal) and loop candidate selection.
@@ -292,7 +294,7 @@ impl DistributionSolver {
 
         // All component nodes = all graph nodes (grid is fully connected)
         let all_node_ids_vec = graph.node_ids();
-        let mst_nodes: HashSet<String> = all_node_ids_vec.iter().cloned().collect();
+        let mst_nodes: HashSet<String> = all_node_ids_vec.into_iter().collect();
 
         // Step 2 — Build MST using Kruskal to match Python networkx's MST exactly.
         //
@@ -311,46 +313,34 @@ impl DistributionSolver {
         // the loop edge selection order.
 
         // Stable sort all edges by weight (preserving insertion order for ties)
-        let mut sorted_all_edges: Vec<(String, String, f64)> = all_graph_edges
+        let mut sorted_all_edges: Vec<(&str, &str, f64)> = all_graph_edges
             .iter()
-            .map(|(u, v, w, _)| (u.clone(), v.clone(), *w))
+            .map(|(u, v, w, _)| (u.as_str(), v.as_str(), *w))
             .collect();
         sorted_all_edges.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
 
-        // Kruskal MST using iterative union-find (path-halving)
+        // Kruskal MST using iterative union-find (path-halving).
+        // Using String-owned keys to avoid lifetime issues with closure-captured &str.
         let mut parent: HashMap<String, String> = HashMap::new();
 
-        let uf_find = |parent: &mut HashMap<String, String>, x: &str| -> String {
-            let mut cur = x.to_string();
-            loop {
-                let p = parent.get(&cur).cloned().unwrap_or_else(|| cur.clone());
-                if p == cur {
-                    break cur;
-                }
-                let gp = parent.get(&p).cloned().unwrap_or_else(|| p.clone());
-                parent.insert(cur.clone(), gp.clone());
-                cur = p;
-            }
-        };
-
-        let mst_edge_list: Vec<(String, String, f64)> = {
+        let mst_edge_list: Vec<(&str, &str, f64)> = {
             let mut mst_edges = Vec::new();
-            for (u, v, w) in &sorted_all_edges {
-                let ru = uf_find(&mut parent, u);
-                let rv = uf_find(&mut parent, v);
+            for &(u, v, w) in &sorted_all_edges {
+                let ru = uf_find_str(&mut parent, u);
+                let rv = uf_find_str(&mut parent, v);
                 if ru != rv {
                     parent.insert(ru, rv);
-                    mst_edges.push((u.clone(), v.clone(), *w));
+                    mst_edges.push((u, v, w));
                 }
             }
             mst_edges
         };
 
         // Build mst_edges_set (both directions) for candidate filtering
-        let mut mst_edges_set: HashSet<(String, String)> = HashSet::new();
-        for (u, v, _) in &mst_edge_list {
-            mst_edges_set.insert((u.clone(), v.clone()));
-            mst_edges_set.insert((v.clone(), u.clone()));
+        let mut mst_edges_set: HashSet<(&str, &str)> = HashSet::new();
+        for &(u, v, _) in &mst_edge_list {
+            mst_edges_set.insert((u, v));
+            mst_edges_set.insert((v, u));
         }
 
         // max_loops = max(3, len(tree_nodes) // max_loops_divisor)
@@ -359,14 +349,14 @@ impl DistributionSolver {
         // Candidates: all graph edges NOT in MST, between tree nodes, sorted by weight
         // The sort is stable: edges are already in all_graph_edges (from_grid) insertion order.
         // After filtering, we re-sort by weight (stable) to match Python's candidates.sort().
-        let mut candidates: Vec<(String, String, f64)> = all_graph_edges
+        let mut candidates: Vec<(&str, &str, f64)> = all_graph_edges
             .iter()
             .filter_map(|(u, v, w, _)| {
-                if mst_nodes.contains(u)
-                    && mst_nodes.contains(v)
-                    && !mst_edges_set.contains(&(u.clone(), v.clone()))
+                if mst_nodes.contains(u.as_str())
+                    && mst_nodes.contains(v.as_str())
+                    && !mst_edges_set.contains(&(u.as_str(), v.as_str()))
                 {
-                    Some((u.clone(), v.clone(), *w))
+                    Some((u.as_str(), v.as_str(), *w))
                 } else {
                     None
                 }
@@ -375,82 +365,83 @@ impl DistributionSolver {
         candidates.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
 
         // Take first max_loops as loop_edges
-        let loop_edges: Vec<(String, String)> = candidates
+        let loop_edges: Vec<(&str, &str)> = candidates
             .into_iter()
             .take(max_loops)
             .map(|(u, v, _)| (u, v))
             .collect();
 
-        // Step 3 — build combined graph adjacency (MST + loop edges) in networkx order.
+        // Step 3 — build combined SolverGraph (MST + loop edges) tracking insertion order.
+        //
         // Replicates networkx: nx.Graph(mst) + combined.add_edges_from(loop_edges).
         // Node insertion order = order nodes first appear in mst_edge_list (Kruskal order).
         // Neighbor insertion order = MST edges added first (Kruskal order), then loop edges.
         // combined.edges() yields (u,v) for each u in node order, for each neighbor v not yet seen.
+        //
+        // Design §5 PR-D: edges are inserted sorted by (from_id, to_id) for SolverGraph
+        // determinism. The combined_node_order is preserved for oracle-compatible edge emission.
 
-        // Build combined_adj: for each node, neighbors in insertion order.
-        // MST neighbors first (in Kruskal-sorted edge order), then loop edges.
-        let mut combined_adj: HashMap<String, Vec<String>> = HashMap::new();
-        let mut combined_node_order: Vec<String> = Vec::new();
-        let mut combined_node_set: HashSet<String> = HashSet::new();
+        let mut combined_sg = SolverGraph::new();
+        // Track insertion order of nodes (mirrors combined_node_order in pre-migration code).
+        let mut combined_node_order: Vec<NodeIndex<u32>> = Vec::new();
+        let mut combined_node_set: HashSet<NodeIndex<u32>> = HashSet::new();
 
-        // Helper to add node in order
-        let add_node = |node: &str,
-                        order: &mut Vec<String>,
-                        set: &mut HashSet<String>,
-                        adj: &mut HashMap<String, Vec<String>>| {
-            if !set.contains(node) {
-                order.push(node.to_string());
-                set.insert(node.to_string());
-                adj.entry(node.to_string()).or_default();
+        // Helper closure: add node to SolverGraph in order (idempotent)
+        let ensure_node = |sg: &mut SolverGraph,
+                           order: &mut Vec<NodeIndex<u32>>,
+                           set: &mut HashSet<NodeIndex<u32>>,
+                           id: &str| {
+            let idx = sg.add_node(id);
+            if set.insert(idx) {
+                order.push(idx);
             }
+            idx
         };
 
-        // Add MST nodes in Kruskal edge order (networkx MST node insertion order)
-        for (u, v, _) in &mst_edge_list {
-            add_node(
+        // Add MST nodes and edges in Kruskal order
+        for &(u, v, _) in &mst_edge_list {
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
                 u,
+            );
+            ensure_node(
+                &mut combined_sg,
                 &mut combined_node_order,
                 &mut combined_node_set,
-                &mut combined_adj,
-            );
-            add_node(
                 v,
-                &mut combined_node_order,
-                &mut combined_node_set,
-                &mut combined_adj,
             );
-            // Add neighbors in MST adjacency order (Kruskal order → u gets v as neighbor, v gets u)
-            combined_adj.entry(u.clone()).or_default().push(v.clone());
-            combined_adj.entry(v.clone()).or_default().push(u.clone());
+            // Bidirectional edges for undirected adjacency (like networkx Graph)
+            combined_sg.add_edge(u, v, 1.0);
+            combined_sg.add_edge(v, u, 1.0);
         }
 
-        // Add loop edges: add_edges_from(loop_edges)
-        // Nodes already in combined (since loop_edges connect tree nodes).
-        // Neighbor insertion order: loop edges are added in their sorted order.
-        for (u, v) in &loop_edges {
-            // Ensure nodes exist (they should — they're mst_nodes)
-            add_node(
+        // Add loop edges
+        for &(u, v) in &loop_edges {
+            ensure_node(
+                &mut combined_sg,
+                &mut combined_node_order,
+                &mut combined_node_set,
                 u,
+            );
+            ensure_node(
+                &mut combined_sg,
                 &mut combined_node_order,
                 &mut combined_node_set,
-                &mut combined_adj,
-            );
-            add_node(
                 v,
-                &mut combined_node_order,
-                &mut combined_node_set,
-                &mut combined_adj,
             );
-            combined_adj.entry(u.clone()).or_default().push(v.clone());
-            combined_adj.entry(v.clone()).or_default().push(u.clone());
+            combined_sg.add_edge(u, v, 1.0);
+            combined_sg.add_edge(v, u, 1.0);
         }
 
-        // Step 4 — create NetworkNodes for all nodes in combined
-        // Node order in combined (for valve/hydrant placement) = combined_node_order
+        // Step 4 — create NetworkNodes for all nodes in combined (in insertion order)
         let mut nodes: Vec<NetworkNode> = Vec::new();
-        let mut node_map: HashMap<String, usize> = HashMap::new();
+        // node_map: NodeIndex → position in nodes Vec (replaces String → usize map)
+        let mut node_map: HashMap<NodeIndex<u32>, usize> = HashMap::new();
 
-        for nid in &combined_node_order {
+        for &nidx in &combined_node_order {
+            let nid = combined_sg.node_id(nidx);
             let coord = graph
                 .get_node_coord(nid)
                 .ok_or_else(|| format!("node {nid} not found in graph"))?;
@@ -473,18 +464,22 @@ impl DistributionSolver {
             };
 
             let idx = nodes.len();
-            node_map.insert(nid.clone(), idx);
-            let mut node = NetworkNode::new(nid.as_str(), coord.0, coord.1, z, ntype);
+            node_map.insert(nidx, idx);
+            let mut node = NetworkNode::new(nid, coord.0, coord.1, z, ntype);
             node.rim_elevation = z;
             node.demand = demand;
             nodes.push(node);
         }
 
         // Step 5 — flow accumulation via single-source Dijkstra from source
-        // Build routing graph (length weights) over combined edges
+        // Build routing graph (length weights) over combined edges.
         // Python: routing_graph.add_edge(u, v, length=max(dist, 0.1))
         //         all_paths = nx.single_source_dijkstra_path(routing_graph, source_node, weight="length")
-        let routing_adj = build_routing_adj(&combined_adj, &nodes, &node_map);
+        //
+        // We rebuild a String-keyed routing adjacency from the node/pipe geometry for Dijkstra.
+        // This is a separate private concern — String keys here are fine (no hot loop clones).
+        let routing_adj =
+            build_routing_adj_sg(&combined_sg, &combined_node_order, &nodes, &node_map);
 
         let all_paths = dijkstra_all_paths(source_node, &routing_adj);
 
@@ -499,31 +494,41 @@ impl DistributionSolver {
             }
         }
 
-        // Step 6 — iterate combined.edges() in networkx order, create pipes
+        // Step 6 — iterate combined edges in networkx order (node insertion order,
+        // neighbor insertion order), create pipes.
+        //
         // networkx combined.edges() iteration:
         //   for u in combined._adj (node insertion order):
         //     for v in combined._adj[u] (neighbor insertion order):
         //       if v not in nodes_seen_so_far:
         //         yield (u, v)
         //     nodes_seen.add(u)
-        let mut available: Vec<f64> = self.constraints.available_diameters.clone();
-        available.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        //
+        // We use combined_sg and the raw petgraph edge iteration order (insertion order)
+        // for neighbor iteration — NOT sorted_neighbors — to preserve the networkx-compatible
+        // emission order exactly as before.
+        let available: Vec<f64> = {
+            let mut v = self.constraints.available_diameters.to_vec();
+            v.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            v
+        };
 
         let mut pipe_counter = 0usize;
         let mut pipes: Vec<NetworkPipe> = Vec::new();
         let mut running_total_length = 0.0_f64;
-        let mut nodes_seen: HashSet<String> = HashSet::new();
+        let mut nodes_seen: HashSet<NodeIndex<u32>> = HashSet::new();
 
-        for u in &combined_node_order {
-            let nbrs = combined_adj.get(u).cloned().unwrap_or_default();
-            for v in &nbrs {
-                if !nodes_seen.contains(v.as_str()) {
-                    // This edge (u, v) is yielded by combined.edges()
-                    let start_idx = match node_map.get(u) {
+        for &u_idx in &combined_node_order {
+            // Iterate neighbors in insertion order (petgraph edges reversed = combined_adj push order)
+            let nbrs: Vec<NodeIndex<u32>> = combined_sg.neighbors_insertion_order(u_idx);
+
+            for v_idx in nbrs {
+                if !nodes_seen.contains(&v_idx) {
+                    let start_idx = match node_map.get(&u_idx) {
                         Some(&i) => i,
                         None => continue,
                     };
-                    let end_idx = match node_map.get(v.as_str()) {
+                    let end_idx = match node_map.get(&v_idx) {
                         Some(&i) => i,
                         None => continue,
                     };
@@ -540,7 +545,9 @@ impl DistributionSolver {
 
                     pipe_counter += 1;
 
-                    let key = sorted_pair(u.as_str(), v.as_str());
+                    let u_str = combined_sg.node_id(u_idx);
+                    let v_str = combined_sg.node_id(v_idx);
+                    let key = sorted_pair(u_str, v_str);
                     let flow = edge_flow
                         .get(&key)
                         .copied()
@@ -594,8 +601,8 @@ impl DistributionSolver {
 
                     pipes.push(NetworkPipe {
                         id: PipeId::new(format!("Pipe - ({pipe_counter})")),
-                        start_node_id: NodeId::new(u.as_str()),
-                        end_node_id: NodeId::new(v.as_str()),
+                        start_node_id: NodeId::new(u_str),
+                        end_node_id: NodeId::new(v_str),
                         length,
                         effective_length: length,
                         diameter,
@@ -614,7 +621,7 @@ impl DistributionSolver {
                     });
                 }
             }
-            nodes_seen.insert(u.clone());
+            nodes_seen.insert(u_idx);
         }
 
         let mut network = PipeNetwork::new(name, nodes, pipes);
@@ -649,12 +656,12 @@ impl DistributionSolver {
             .insert("pressure_mca".to_string(), Value::from(source_head));
 
         let mut pressures: HashMap<String, f64> = HashMap::new();
-        pressures.insert(source_node.to_string(), source_head);
+        pressures.insert(source_node.to_owned(), source_head);
 
         let mut visited: HashSet<String> = HashSet::new();
-        visited.insert(source_node.to_string());
+        visited.insert(source_node.to_owned());
         let mut queue: VecDeque<String> = VecDeque::new();
-        queue.push_back(source_node.to_string());
+        queue.push_back(source_node.to_owned());
 
         while let Some(current_id_str) = queue.pop_front() {
             let current_id = NodeId::new(current_id_str.as_str());
@@ -676,7 +683,7 @@ impl DistributionSolver {
                 .unwrap_or_default();
 
             for (neighbor_id, pipe_idx) in adjacency {
-                let neighbor_id_str = neighbor_id.0.clone();
+                let neighbor_id_str = neighbor_id.0.to_owned();
                 if visited.contains(&neighbor_id_str) {
                     continue;
                 }
@@ -704,7 +711,7 @@ impl DistributionSolver {
                 let dz = neighbor_z - current_z;
                 let pressure = current_pressure - hf - dz;
 
-                pressures.insert(neighbor_id_str.clone(), pressure);
+                pressures.insert(neighbor_id_str.to_owned(), pressure);
 
                 if let Some(n_idx) = network.nodes.iter().position(|n| n.id == neighbor_id) {
                     network.nodes[n_idx]
@@ -712,7 +719,7 @@ impl DistributionSolver {
                         .insert("pressure_mca".to_string(), Value::from(pressure));
                 }
 
-                visited.insert(neighbor_id_str.clone());
+                visited.insert(neighbor_id_str.to_owned());
                 queue.push_back(neighbor_id_str);
             }
         }
@@ -752,7 +759,7 @@ impl DistributionSolver {
         for i in 0..pipe_count {
             cumulative += network.pipes[i].length;
             if cumulative >= hydrant_spacing {
-                let end_node_id = network.pipes[i].end_node_id.clone();
+                let end_node_id = network.pipes[i].end_node_id.to_owned();
                 if let Some(n) = network.nodes.iter_mut().find(|n| n.id == end_node_id) {
                     if n.node_type == NodeType::Junction {
                         n.node_type = NodeType::Hydrant;
@@ -872,6 +879,7 @@ impl Solver for DistributionSolver {
         }
 
         // Clone fields that need a borrow release before the &mut self call.
+        // Two boundary clones: acceptable per PR-C precedent (borrow-checker requirement).
         let demand_points = self.demand_points.clone();
         let network_name = self.network_name.clone();
         let source = self.source;
@@ -906,6 +914,49 @@ impl Solver for DistributionSolver {
 }
 
 // ── Private helpers ───────────────────────────────────────────────────────────
+
+/// Iterative union-find with path-halving for Kruskal MST.
+///
+/// Uses `HashMap<String, String>` (owned keys) to avoid Rust lifetime constraints on
+/// closures capturing `&str` from the sorted_all_edges slice.
+fn uf_find_str(parent: &mut HashMap<String, String>, x: &str) -> String {
+    let mut cur: String = x.to_owned();
+    loop {
+        let p: String = parent.get(&cur).cloned().unwrap_or_else(|| cur.to_owned());
+        if p == cur {
+            break cur;
+        }
+        let gp: String = parent.get(&p).cloned().unwrap_or_else(|| p.to_owned());
+        parent.insert(cur.to_owned(), gp.to_owned());
+        cur = p;
+    }
+}
+
+/// Convert a combined mesh adjacency `HashMap<String, Vec<String>>` into a `SolverGraph`.
+///
+/// Edges are inserted sorted by `(from_id, to_id)` for deterministic neighbor order
+/// in the SolverGraph, mirroring the PR-C MST sort pattern (design §5 PR-D).
+///
+/// Both directions of each undirected edge are inserted (bidirectional adjacency).
+/// Used by the test suite; not called in production code paths.
+#[allow(dead_code)]
+pub(crate) fn mesh_adj_to_solver_graph(adj: &HashMap<String, Vec<String>>) -> SolverGraph {
+    let mut sg = SolverGraph::new();
+
+    // Collect all directed pairs, deduplicate, sort by (from, to) for determinism.
+    let mut pairs: Vec<(&str, &str)> = adj
+        .iter()
+        .flat_map(|(u, nbrs)| nbrs.iter().map(move |v| (u.as_str(), v.as_str())))
+        .collect();
+    pairs.sort_unstable_by(|a, b| a.0.cmp(b.0).then(a.1.cmp(b.1)));
+    pairs.dedup();
+
+    for (u, v) in pairs {
+        sg.add_edge(u, v, 1.0);
+    }
+
+    sg
+}
 
 /// Population standard deviation (ddof=0) — mirrors Python `np.std(pressures)`.
 ///
@@ -955,24 +1006,30 @@ fn sorted_pair(a: &str, b: &str) -> (String, String) {
     }
 }
 
-/// Build routing adjacency for Dijkstra flow accumulation.
+/// Build routing adjacency for Dijkstra flow accumulation (SolverGraph variant).
 ///
 /// Edge weight = max(euclidean_distance, 0.1), mirroring Python's routing_graph.
-fn build_routing_adj(
-    combined_adj: &HashMap<String, Vec<String>>,
+fn build_routing_adj_sg(
+    sg: &SolverGraph,
+    node_order: &[NodeIndex<u32>],
     nodes: &[NetworkNode],
-    node_map: &HashMap<String, usize>,
+    node_map: &HashMap<NodeIndex<u32>, usize>,
 ) -> HashMap<String, Vec<(String, f64)>> {
     let mut routing: HashMap<String, Vec<(String, f64)>> = HashMap::new();
 
-    for (u, nbrs) in combined_adj {
-        let ui = match node_map.get(u) {
+    for &u_idx in node_order {
+        let u_str = sg.node_id(u_idx).to_owned();
+        let ui = match node_map.get(&u_idx) {
             Some(&i) => i,
             None => continue,
         };
         let un = &nodes[ui];
-        for v in nbrs {
-            let vi = match node_map.get(v.as_str()) {
+
+        // Use insertion-order iteration (not sorted) to match the pre-migration
+        // combined_adj neighbor iteration order for Dijkstra routing parity.
+        for v_idx in sg.neighbors_insertion_order(u_idx) {
+            let v_str = sg.node_id(v_idx).to_owned();
+            let vi = match node_map.get(&v_idx) {
                 Some(&i) => i,
                 None => continue,
             };
@@ -981,9 +1038,9 @@ fn build_routing_adj(
                 .sqrt()
                 .max(0.1);
             routing
-                .entry(u.clone())
+                .entry(u_str.to_owned())
                 .or_default()
-                .push((v.clone(), dist));
+                .push((v_str, dist));
         }
     }
 
@@ -1003,11 +1060,11 @@ fn dijkstra_all_paths(
     // prev[node] = predecessor node ID on shortest path
     let mut prev: HashMap<String, String> = HashMap::new();
 
-    dist.insert(source.to_string(), 0.0);
+    dist.insert(source.to_owned(), 0.0);
 
     // Min-heap: (Reverse(cost_bits), node_id)
     let mut heap: BinaryHeap<(std::cmp::Reverse<u64>, String)> = BinaryHeap::new();
-    heap.push((std::cmp::Reverse(0u64), source.to_string()));
+    heap.push((std::cmp::Reverse(0u64), source.to_owned()));
 
     while let Some((std::cmp::Reverse(cost_bits), u)) = heap.pop() {
         let u_cost = f64::from_bits(cost_bits);
@@ -1024,9 +1081,9 @@ fn dijkstra_all_paths(
                 let new_cost = u_cost + w;
                 let better = dist.get(v.as_str()).is_none_or(|&d| new_cost < d - 1e-12);
                 if better {
-                    dist.insert(v.clone(), new_cost);
-                    prev.insert(v.clone(), u.clone());
-                    heap.push((std::cmp::Reverse(new_cost.to_bits()), v.clone()));
+                    dist.insert(v.to_owned(), new_cost);
+                    prev.insert(v.to_owned(), u.to_owned());
+                    heap.push((std::cmp::Reverse(new_cost.to_bits()), v.to_owned()));
                 }
             }
         }
@@ -1034,7 +1091,7 @@ fn dijkstra_all_paths(
 
     // Reconstruct paths for all reachable nodes
     let mut paths: HashMap<String, Vec<String>> = HashMap::new();
-    paths.insert(source.to_string(), vec![source.to_string()]);
+    paths.insert(source.to_owned(), vec![source.to_owned()]);
 
     for node in dist.keys() {
         if node == source {
@@ -1043,15 +1100,93 @@ fn dijkstra_all_paths(
         let mut path: Vec<String> = Vec::new();
         let mut cur = node.as_str();
         loop {
-            path.push(cur.to_string());
+            path.push(cur.to_owned());
             match prev.get(cur) {
                 Some(p) => cur = p.as_str(),
                 None => break,
             }
         }
         path.reverse();
-        paths.insert(node.clone(), path);
+        paths.insert(node.to_owned(), path);
     }
 
     paths
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::SolverGraph;
+
+    /// RED test — D-1: pin mesh edge enumeration order via mesh_adj_to_solver_graph.
+    ///
+    /// Verifies that mesh_adj_to_solver_graph inserts combined (MST + loop) edges
+    /// sorted by (from_id, to_id), making SolverGraph neighbor order deterministic
+    /// regardless of HashMap iteration order.
+    ///
+    /// Design §5 PR-D: "Sort (from_id, to_id) before SolverGraph insertion for
+    /// determinism, mirroring the PR-C MST sort pattern."
+    ///
+    /// Fails with E0425 until mesh_adj_to_solver_graph is defined (GREEN commit).
+    #[test]
+    fn distrib_mesh_adj_to_solver_graph_sorted_neighbor_order() {
+        // Build a small 4-node combined adjacency (simulates MST + loop edges).
+        // Nodes: "a", "b", "c", "d". Edges: a-b, a-c, b-d, c-d (undirected mesh).
+        let mut combined_adj: HashMap<String, Vec<String>> = HashMap::new();
+        let edges = vec![
+            ("c", "d"),
+            ("a", "c"),
+            ("b", "d"),
+            ("a", "b"), // inserted out of lex order deliberately
+        ];
+        for (u, v) in &edges {
+            combined_adj
+                .entry(u.to_string())
+                .or_default()
+                .push(v.to_string());
+            combined_adj
+                .entry(v.to_string())
+                .or_default()
+                .push(u.to_string());
+        }
+
+        // mesh_adj_to_solver_graph does NOT exist yet — compile error E0425.
+        let sg: SolverGraph = mesh_adj_to_solver_graph(&combined_adj);
+
+        // Neighbors of "a" must be sorted lex: ["b", "c"] (both directions present).
+        let a_idx = sg.node_index("a").expect("node a must exist");
+        let neighbors: Vec<&str> = sg
+            .sorted_neighbors(a_idx)
+            .iter()
+            .map(|&(idx, _)| sg.node_id(idx))
+            .collect();
+        assert_eq!(
+            neighbors,
+            vec!["b", "c"],
+            "sorted_neighbors of 'a' must be lex-sorted: expected [b, c], got {:?}",
+            neighbors
+        );
+
+        // Neighbors of "d" must be sorted lex: ["b", "c"].
+        let d_idx = sg.node_index("d").expect("node d must exist");
+        let d_neighbors: Vec<&str> = sg
+            .sorted_neighbors(d_idx)
+            .iter()
+            .map(|&(idx, _)| sg.node_id(idx))
+            .collect();
+        assert_eq!(
+            d_neighbors,
+            vec!["b", "c"],
+            "sorted_neighbors of 'd' must be lex-sorted: expected [b, c], got {:?}",
+            d_neighbors
+        );
+
+        // Node count: 4, edge count: 8 (each undirected edge → 2 directed)
+        assert_eq!(sg.node_count(), 4, "must have 4 nodes");
+        assert_eq!(
+            sg.edge_count(),
+            8,
+            "must have 8 directed edges (4 undirected × 2)"
+        );
+    }
 }
