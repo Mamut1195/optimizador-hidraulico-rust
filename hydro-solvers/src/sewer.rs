@@ -248,7 +248,7 @@ impl SewerSolver {
     /// `kept_node_ids` is the set of kept node String ids.
     pub(crate) fn simplify_tree_sg(
         &self,
-        oriented: &SolverGraph,   // upstream → downstream
+        oriented: &SolverGraph,    // upstream → downstream
         in_oriented: &SolverGraph, // downstream → upstream (reverse of oriented)
         graph: &TerrainGraph,
         terminal_set: &HashSet<String>,
@@ -359,8 +359,10 @@ impl SewerSolver {
         }
 
         // Build the kept_node_ids set for the caller (String boundary)
-        let kept_node_ids: HashSet<String> =
-            keep.iter().map(|&idx| oriented.node_id(idx).to_owned()).collect();
+        let kept_node_ids: HashSet<String> = keep
+            .iter()
+            .map(|&idx| oriented.node_id(idx).to_owned())
+            .collect();
 
         (simplified, kept_node_ids)
     }
@@ -436,9 +438,7 @@ impl SewerSolver {
         };
 
         // Create nodes (topo sort to ensure deterministic node order for ID assignment)
-        let topo_order = work_sg
-            .sorted_kahn_topo_sort()
-            .map_err(|e| e.to_string())?;
+        let topo_order = work_sg.sorted_kahn_topo_sort().map_err(|e| e.to_string())?;
 
         let mut nodes: Vec<NetworkNode> = Vec::new();
         // node_map: String id → index into `nodes` vec (used for sump mutations)
@@ -465,8 +465,8 @@ impl SewerSolver {
             let mut node = NetworkNode::new(nid, coord.0, coord.1, z, ntype);
             node.rim_elevation = z;
             node.sump_elevation = f64::INFINITY; // Will be set during pipe processing
-            // SAFETY: `nid` borrows from `work_sg` which outlives `node_map` here.
-            // We use the raw pointer trick via stored &str pointing into the SolverGraph.
+                                                 // SAFETY: `nid` borrows from `work_sg` which outlives `node_map` here.
+                                                 // We use the raw pointer trick via stored &str pointing into the SolverGraph.
             let pos = nodes.len();
             nodes.push(node);
             // Store the id string pointer — safe since work_sg is not mutated hereafter.
@@ -702,7 +702,10 @@ impl SewerSolver {
             (0..path.len()).collect()
         };
         // kept_path borrows &str slices from path — no String clone needed.
-        let kept_path: Vec<&str> = sorted_kept_indices.iter().map(|&i| path[i].as_str()).collect();
+        let kept_path: Vec<&str> = sorted_kept_indices
+            .iter()
+            .map(|&i| path[i].as_str())
+            .collect();
 
         // Create nodes with accumulated flow.
         // node_map and flow_at borrow &str keys from kept_path — no String clone needed.
@@ -1092,7 +1095,6 @@ fn bfs_build_oriented(
 
     (oriented, in_oriented)
 }
-
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
