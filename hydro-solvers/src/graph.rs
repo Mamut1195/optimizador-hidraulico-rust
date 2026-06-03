@@ -56,31 +56,44 @@ pub(crate) struct SolverGraph {
 impl SolverGraph {
     /// Create a new, empty `SolverGraph`.
     pub(crate) fn new() -> Self {
-        todo!()
+        Self {
+            graph: DiGraph::new(),
+            id_to_idx: HashMap::new(),
+        }
     }
 
     /// Add a node by its `String` id. Idempotent: returns the existing
     /// `NodeIndex` if `id` is already in the graph.
     pub(crate) fn add_node(&mut self, id: &str) -> NodeIndex<u32> {
-        todo!()
+        if let Some(&existing) = self.id_to_idx.get(id) {
+            return existing;
+        }
+        let idx = self.graph.add_node(id.to_owned());
+        self.id_to_idx.insert(id.to_owned(), idx);
+        idx
     }
 
     /// Add a directed edge `from → to` with weight `w`. Both endpoints are
     /// inserted (idempotently) if missing.
     pub(crate) fn add_edge(&mut self, from: &str, to: &str, w: EdgeWeight) {
-        todo!()
+        let from_idx = self.add_node(from);
+        let to_idx = self.add_node(to);
+        self.graph.add_edge(from_idx, to_idx, w);
     }
 
     /// Look up `NodeIndex` for a `String` id. Returns `None` for unknown ids.
     pub(crate) fn node_index(&self, id: &str) -> Option<NodeIndex<u32>> {
-        todo!()
+        self.id_to_idx.get(id).copied()
     }
 
     /// Reverse lookup — borrow the `String` stored at `idx`.
     ///
     /// Panics if `idx` is not in this graph (should not happen in valid use).
     pub(crate) fn node_id(&self, idx: NodeIndex<u32>) -> &str {
-        todo!()
+        self.graph
+            .node_weight(idx)
+            .expect("node_id: NodeIndex not in graph")
+            .as_str()
     }
 
     /// Outgoing neighbors of `idx` as `(NodeIndex, EdgeWeight)` pairs, sorted
@@ -89,7 +102,13 @@ impl SolverGraph {
     /// Replaces the `.iter().map(...).collect::<Vec<(String, f64)>>()` patterns
     /// in the three solvers' BFS/DFS chains.
     pub(crate) fn sorted_neighbors(&self, idx: NodeIndex<u32>) -> Vec<(NodeIndex<u32>, EdgeWeight)> {
-        todo!()
+        let mut neighbors: Vec<(NodeIndex<u32>, EdgeWeight)> = self
+            .graph
+            .edges(idx)
+            .map(|e| (e.target(), *e.weight()))
+            .collect();
+        neighbors.sort_by(|&(a, _), &(b, _)| self.node_id(a).cmp(self.node_id(b)));
+        neighbors
     }
 
     /// Hand-rolled Kahn topological sort over the entire `DiGraph`, tie-breaking
@@ -102,7 +121,52 @@ impl SolverGraph {
     /// (output shorter than `node_count()`). The existing sewer.rs implementation
     /// silently drops cycle nodes; this function makes cycles explicit.
     pub(crate) fn sorted_kahn_topo_sort(&self) -> Result<Vec<NodeIndex<u32>>, SolverError> {
-        todo!()
+        // Step 1: compute in-degree for each node.
+        let mut in_degree: HashMap<NodeIndex<u32>, usize> = self
+            .graph
+            .node_indices()
+            .map(|n| (n, 0usize))
+            .collect();
+
+        for edge in self.graph.edge_references() {
+            *in_degree.entry(edge.target()).or_insert(0) += 1;
+        }
+
+        // Step 2: seed the ready set with zero-in-degree nodes.
+        // BTreeSet key = (node_id_string, NodeIndex.index()) gives
+        // ascending-by-String tie-break in O(log n).
+        let mut ready: BTreeSet<(String, u32)> = BTreeSet::new();
+        for (&n, &deg) in &in_degree {
+            if deg == 0 {
+                ready.insert((self.node_id(n).to_owned(), n.index() as u32));
+            }
+        }
+
+        // Step 3: Kahn's drain loop.
+        let mut order: Vec<NodeIndex<u32>> = Vec::with_capacity(self.graph.node_count());
+
+        while let Some((_, raw)) = ready.pop_first() {
+            let idx = NodeIndex::new(raw as usize);
+            order.push(idx);
+
+            for (succ, _w) in self.sorted_neighbors(idx) {
+                let deg = in_degree.entry(succ).or_insert(0);
+                *deg = deg.saturating_sub(1);
+                if *deg == 0 {
+                    ready.insert((self.node_id(succ).to_owned(), succ.index() as u32));
+                }
+            }
+        }
+
+        // Step 4: cycle check.
+        if order.len() < self.graph.node_count() {
+            return Err(SolverError::BuildFailed(
+                "cycle detected in SolverGraph — sorted_kahn_topo_sort cannot produce a total order"
+                    .to_owned(),
+            ));
+        }
+
+        Ok(order)
     }
 
     /// BFS from `root` over outgoing edges. Visit order at each level is
@@ -110,17 +174,34 @@ impl SolverGraph {
     ///
     /// Returns the visit order (including `root` as the first element).
     pub(crate) fn bfs_oriented(&self, root: NodeIndex<u32>) -> Vec<NodeIndex<u32>> {
-        todo!()
+        let mut visited: HashMap<NodeIndex<u32>, bool> = HashMap::new();
+        let mut queue: VecDeque<NodeIndex<u32>> = VecDeque::new();
+        let mut order: Vec<NodeIndex<u32>> = Vec::new();
+
+        visited.insert(root, true);
+        queue.push_back(root);
+
+        while let Some(cur) = queue.pop_front() {
+            order.push(cur);
+            for (nb, _w) in self.sorted_neighbors(cur) {
+                if !visited.contains_key(&nb) {
+                    visited.insert(nb, true);
+                    queue.push_back(nb);
+                }
+            }
+        }
+
+        order
     }
 
     /// Number of nodes in the graph.
     pub(crate) fn node_count(&self) -> usize {
-        todo!()
+        self.graph.node_count()
     }
 
     /// Number of edges in the graph.
     pub(crate) fn edge_count(&self) -> usize {
-        todo!()
+        self.graph.edge_count()
     }
 }
 
