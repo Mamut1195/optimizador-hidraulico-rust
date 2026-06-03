@@ -123,6 +123,9 @@ impl SolverGraph {
     /// Returns `Err(SolverError::BuildFailed(...))` if a cycle is detected
     /// (output shorter than `node_count()`). The existing sewer.rs implementation
     /// silently drops cycle nodes; this function makes cycles explicit.
+    ///
+    /// TODO: used directly by water_supply.rs and distribution.rs in PR-C / PR-D.
+    #[allow(dead_code)]
     pub(crate) fn sorted_kahn_topo_sort(&self) -> Result<Vec<NodeIndex<u32>>, SolverError> {
         // Step 1: compute in-degree for each node.
         let mut in_degree: HashMap<NodeIndex<u32>, usize> =
@@ -173,19 +176,22 @@ impl SolverGraph {
     /// determined by `sorted_neighbors`, giving deterministic orientation.
     ///
     /// Returns the visit order (including `root` as the first element).
+    ///
+    /// TODO: used by water_supply.rs and distribution.rs in PR-C / PR-D.
+    #[allow(dead_code)]
     pub(crate) fn bfs_oriented(&self, root: NodeIndex<u32>) -> Vec<NodeIndex<u32>> {
-        let mut visited: HashMap<NodeIndex<u32>, bool> = HashMap::new();
+        let mut visited: std::collections::HashSet<NodeIndex<u32>> =
+            std::collections::HashSet::new();
         let mut queue: VecDeque<NodeIndex<u32>> = VecDeque::new();
         let mut order: Vec<NodeIndex<u32>> = Vec::new();
 
-        visited.insert(root, true);
+        visited.insert(root);
         queue.push_back(root);
 
         while let Some(cur) = queue.pop_front() {
             order.push(cur);
             for (nb, _w) in self.sorted_neighbors(cur) {
-                if !visited.contains_key(&nb) {
-                    visited.insert(nb, true);
+                if visited.insert(nb) {
                     queue.push_back(nb);
                 }
             }
@@ -203,11 +209,17 @@ impl SolverGraph {
     }
 
     /// Number of nodes in the graph.
+    ///
+    /// TODO: used by solvers in PR-C / PR-D for cardinality checks.
+    #[allow(dead_code)]
     pub(crate) fn node_count(&self) -> usize {
         self.graph.node_count()
     }
 
     /// Number of edges in the graph.
+    ///
+    /// TODO: used by solvers in PR-C / PR-D for cardinality checks.
+    #[allow(dead_code)]
     pub(crate) fn edge_count(&self) -> usize {
         self.graph.edge_count()
     }
