@@ -301,6 +301,16 @@ fn xy(p: &PointXY) -> (f64, f64) {
     (p.x, p.y)
 }
 
+/// Extract a field whose presence was established by [`validate_request`].
+///
+/// Keeping the invariant as a `Result` prevents future validation/dispatch
+/// changes from turning a malformed request into a panic.
+fn required_field<'a, T>(value: Option<&'a T>, field: &'static str) -> Result<&'a T, CliError> {
+    value.ok_or(CliError::ValidationError(
+        HydroTypesError::MissingRequired { field },
+    ))
+}
+
 /// Resolve the canonical `PipeMaterial` enum from `req.material` (a pre-validated
 /// canonical String stored by the serde deserializer).
 ///
@@ -486,14 +496,12 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let service_pts: Vec<(f64, f64)> = req
-                .service_points
-                .as_ref()
-                .unwrap() // validated: Some, non-empty
-                .iter()
-                .map(xy)
-                .collect();
-            let outlet = xy(req.outlet.as_ref().unwrap()); // validated: Some
+            let service_pts: Vec<(f64, f64)> =
+                required_field(req.service_points.as_ref(), "service_points")?
+                    .iter()
+                    .map(xy)
+                    .collect();
+            let outlet = xy(required_field(req.outlet.as_ref(), "outlet")?);
 
             let solver = SewerSolver::new(
                 terrain,
@@ -525,14 +533,12 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let demand_pts: Vec<(f64, f64)> = req
-                .service_points
-                .as_ref()
-                .unwrap() // validated: Some, non-empty
-                .iter()
-                .map(xy)
-                .collect();
-            let source = xy(req.source.as_ref().unwrap()); // validated: Some
+            let demand_pts: Vec<(f64, f64)> =
+                required_field(req.service_points.as_ref(), "service_points")?
+                    .iter()
+                    .map(xy)
+                    .collect();
+            let source = xy(required_field(req.source.as_ref(), "source")?);
 
             let solver = WaterSupplySolver::new(
                 terrain,
@@ -562,8 +568,8 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let source = xy(req.source.as_ref().unwrap()); // validated: Some
-            let destination = xy(req.outlet.as_ref().unwrap()); // validated: Some (outlet = destination)
+            let source = xy(required_field(req.source.as_ref(), "source")?);
+            let destination = xy(required_field(req.outlet.as_ref(), "outlet")?);
 
             let solver = ConveyanceSolver::new(
                 terrain,
@@ -593,14 +599,12 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let demand_pts: Vec<(f64, f64)> = req
-                .service_points
-                .as_ref()
-                .unwrap() // validated: Some, len >= 2
-                .iter()
-                .map(xy)
-                .collect();
-            let source = xy(req.source.as_ref().unwrap()); // validated: Some
+            let demand_pts: Vec<(f64, f64)> =
+                required_field(req.service_points.as_ref(), "service_points")?
+                    .iter()
+                    .map(xy)
+                    .collect();
+            let source = xy(required_field(req.source.as_ref(), "source")?);
 
             let solver = DistributionSolver::new(
                 terrain,
@@ -643,8 +647,8 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let src_xy = xy(req.source.as_ref().unwrap()); // validated: Some
-            let dst_xy = xy(req.outlet.as_ref().unwrap()); // validated: Some
+            let src_xy = xy(required_field(req.source.as_ref(), "source")?);
+            let dst_xy = xy(required_field(req.outlet.as_ref(), "outlet")?);
 
             // Elevation lookup — infallible; falls back to nearest-neighbor if outside bounds.
             let suction_elevation = terrain.elevation_at(src_xy.0, src_xy.1);
@@ -711,7 +715,7 @@ pub fn run(req: DesignRequest, seed_override: Option<u64>) -> Result<DesignResul
             let constraints = req.effective_constraints();
             let material = resolve_material(&req)?;
 
-            let src_xy = xy(req.source.as_ref().unwrap()); // validated: Some
+            let src_xy = xy(required_field(req.source.as_ref(), "source")?);
 
             // Elevation lookup — infallible; falls back to nearest-neighbor if outside bounds.
             let source_elevation = terrain.elevation_at(src_xy.0, src_xy.1);
@@ -918,9 +922,29 @@ pub fn validate_request(req: &DesignRequest) -> Result<(), CliError> {
 
 #[cfg(test)]
 mod tests {
+    use super::{required_field, CliError};
+
     #[test]
     fn lib_skeleton_compiles() {
         // Verifies the crate compiles with the [lib] target present.
         // The test itself is a no-op; compilation success is the assertion.
+    }
+
+    #[test]
+    fn required_field_returns_the_validated_value() {
+        let value = 42;
+
+        assert_eq!(
+            required_field(Some(&value), "source").expect("present value should be returned"),
+            &value
+        );
+    }
+
+    #[test]
+    fn required_field_returns_a_validation_error_when_invariant_is_broken() {
+        let error = required_field::<i32>(None, "source").unwrap_err();
+
+        assert!(matches!(error, CliError::ValidationError(_)));
+        assert_eq!(error.exit_code(), 1);
     }
 }
