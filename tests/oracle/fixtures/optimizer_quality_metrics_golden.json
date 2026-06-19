@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "fixture_name": "optimizer_quality_metrics_golden",
+  "description": "Exact five-objective metric parity generated with DEAP HV and independent Python IGD+.",
+  "approximation_front": [
+    [
+      1.0,
+      4.0,
+      2.0,
+      5.0,
+      3.0
+    ],
+    [
+      2.0,
+      2.5,
+      3.0,
+      3.0,
+      2.0
+    ],
+    [
+      4.0,
+      1.0,
+      4.0,
+      2.0,
+      1.0
+    ]
+  ],
+  "reference_front": [
+    [
+      0.8,
+      3.8,
+      1.8,
+      4.8,
+      2.8
+    ],
+    [
+      1.8,
+      2.3,
+      2.8,
+      2.8,
+      1.8
+    ],
+    [
+      3.8,
+      0.8,
+      3.8,
+      1.8,
+      0.8
+    ],
+    [
+      2.5,
+      1.7,
+      2.4,
+      2.2,
+      1.4
+    ]
+  ],
+  "reference_point": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+  ],
+  "oracle_hypervolume": 784.0,
+  "oracle_igd_plus": 0.6889635872182424,
+  "absolute_tolerance": 1e-12
+}

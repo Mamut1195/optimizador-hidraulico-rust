@@ -10,3 +10,12 @@
 - For the canonical blocking square, the Python oracle returns buffered waypoints `(6.9, 1.9)` and `(13.1, 1.9)` and total length `21.328780519261954`.
 - Rust visibility nodes currently use the original polygon vertices while positive-clearance validation rejects edges incident to those vertices. A* can therefore return no path and the smoother silently falls back to the blocked direct segment of length `20.0`.
 - The existing Rust obstacle test misses this defect because it checks only that returned waypoints are outside the polygon; the direct fallback endpoints satisfy that weak assertion.
+- Rust exposes the full five-objective front through `ParetoResults::comparison_table()`, so the remaining parity gate can use production optimizer output rather than a test-only public API.
+- Python's optimizer requires `population_size >= 20` and `generations >= 10`; a parity fixture must use those common lower bounds rather than the cheaper Rust smoke-test budget of 8/3.
+- DEAP's exact N-dimensional hypervolume implementation is available in the Python oracle environment, while Rust currently returns zero for every non-2-D front.
+- Even the compact Python sewer optimizer is too slow for on-demand CI generation. The committed JSON must remain an offline golden artifact; Rust tests should never launch the Python optimizer.
+- The Rust optimizer scores the first solver solution through the production five-objective `ObjectiveFunction`; a fast solver fixture can exercise NSGA-III quality without the sewer solver's terrain/Steiner runtime dominating the gate.
+- Python optimizer runtime is dominated by repeated objective/solver evaluation even for pump stations; oracle generation must be an explicit offline maintenance task, while the committed Rust parity test remains fast.
+- The minimum 4/1 pump-station run still exceeded ten minutes on one CPU. Treating that as a normal parity test would make CI unusable and encourage developers to skip the gate.
+- The viable contract is exact differential parity for the five-dimensional HV/IGD+ algorithms against a committed DEAP-generated fixture; full optimizer-quality comparison belongs in the benchmark/regression suite, where long runtimes are explicit.
+- Fixture generation exposed a sign error in IGD+: minimization distance is `max(approximation - reference, 0)`, not `max(reference - approximation, 0)`.

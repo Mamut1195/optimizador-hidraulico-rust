@@ -3,30 +3,22 @@
 //! # Algorithms
 //!
 //! ## Hypervolume (HV)
-//! Computes the dominated hypervolume for **2-D fronts** using a sorted sweep:
-//! 1. Sort front points by objective-0 ascending.
-//! 2. Walk right-to-left, accumulating the rectangular strips between consecutive
-//!    x-values and the reference point's y-value minus the current point's y-value.
-//!
-//! For M != 2 this function returns `0.0`. A WFG or inclusion-exclusion
-//! implementation for M > 2 is deferred to Phase 7. The parity test (REQ-016)
-//! on the `sewer_basic` fixture (5 objectives) will drive that implementation
-//! when the fixture lands.
+//! Computes exact dominated hypervolume for arbitrary-dimensional minimization
+//! fronts by recursively slicing the union of point-to-reference hyperrectangles.
 //!
 //! ## IGD+ (Inverted Generational Distance Plus)
 //! Implements the Ishibuchi 2015 IGD+ formula:
 //!   `IGD+(A, R) = (1/|R|) · Σ_{r∈R} min_{a∈A} d+(a, r)`
-//! where `d+(a, r)_j = max(0, r_j - a_j)` for each objective j.
-//! This is the Pareto-respecting version: only the component where the reference
-//! point is better than the approximation point contributes to distance.
+//! where `d+(a, r)_j = max(0, a_j - r_j)` for each objective j.
+//! This is the Pareto-respecting version: only components where the approximation
+//! point is worse than the reference point contribute to distance.
 
-// Used by internal unit tests and by the REQ-016 parity test (pr8f_parity_skeleton.rs
-// mirrors this logic locally until the public surface question is resolved in Phase 7).
+// Used by internal unit tests and the committed Python-oracle metric fixture.
 #[allow(dead_code)]
 /// Compute the hypervolume dominated by `front` relative to `reference_point`.
 ///
-/// - For 2-D fronts: exact sorted-sweep algorithm.
-/// - For M != 2: returns `0.0` (full HV for higher dimensions deferred, see module docs).
+/// Supports arbitrary objective counts. Points outside the reference box,
+/// non-finite points, and points with the wrong dimensionality are ignored.
 ///
 /// All objectives are assumed to be **minimized**. The reference point MUST
 /// dominate (be strictly worse than) every front point on all objectives for
@@ -36,52 +28,65 @@
 /// * `front`           – Slice of objective vectors (each has the same length M).
 /// * `reference_point` – Reference point of length M.
 pub(crate) fn hypervolume(front: &[Vec<f64>], reference_point: &[f64]) -> f64 {
-    if front.is_empty() {
-        return 0.0;
-    }
-    let m = reference_point.len();
-    if m != 2 {
-        // Full HV for M != 2 is deferred (WFG / inclusion-exclusion).
-        // REQ-016 parity test will drive this implementation when the fixture lands.
+    let dimensions = reference_point.len();
+    if front.is_empty() || dimensions == 0 || reference_point.iter().any(|value| !value.is_finite())
+    {
         return 0.0;
     }
 
-    // 2-D sorted sweep
-    let mut pts: Vec<(f64, f64)> = front
+    let points: Vec<Vec<f64>> = front
         .iter()
-        .filter_map(|v| {
-            if v.len() >= 2 {
-                Some((v[0], v[1]))
-            } else {
-                None
-            }
+        .filter(|point| {
+            point.len() == dimensions
+                && point.iter().all(|value| value.is_finite())
+                && point
+                    .iter()
+                    .zip(reference_point)
+                    .all(|(value, reference)| value < reference)
         })
+        .cloned()
         .collect();
 
-    if pts.is_empty() {
+    hypervolume_slices(&points, reference_point)
+}
+
+fn hypervolume_slices(points: &[Vec<f64>], reference_point: &[f64]) -> f64 {
+    if points.is_empty() {
         return 0.0;
     }
 
-    // Sort by x ascending
-    pts.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-    let ref_x = reference_point[0];
-    let ref_y = reference_point[1];
-
-    let mut hv = 0.0_f64;
-    let mut prev_x = ref_x;
-
-    // Walk from right to left (largest x first)
-    for (x, y) in pts.iter().rev() {
-        let width = prev_x - x;
-        let height = ref_y - y;
-        if width > 0.0 && height > 0.0 {
-            hv += width * height;
-        }
-        prev_x = *x;
+    if reference_point.len() == 1 {
+        let minimum = points
+            .iter()
+            .map(|point| point[0])
+            .fold(reference_point[0], f64::min);
+        return (reference_point[0] - minimum).max(0.0);
     }
 
-    hv
+    let axis = reference_point.len() - 1;
+    let mut levels: Vec<f64> = points.iter().map(|point| point[axis]).collect();
+    levels.sort_by(|a, b| a.total_cmp(b));
+    levels.dedup_by(|a, b| a.total_cmp(b).is_eq());
+    levels.push(reference_point[axis]);
+
+    let mut volume = 0.0;
+    for bounds in levels.windows(2) {
+        let lower = bounds[0];
+        let upper = bounds[1];
+        if upper <= lower {
+            continue;
+        }
+
+        let active: Vec<Vec<f64>> = points
+            .iter()
+            .filter(|point| point[axis] <= lower)
+            .map(|point| point[..axis].to_vec())
+            .collect();
+        let slice = hypervolume_slices(&active, &reference_point[..axis]);
+        volume += slice * (upper - lower);
+    }
+
+    volume
 }
 
 // Same justification as hypervolume above.
@@ -92,7 +97,7 @@ pub(crate) fn hypervolume(front: &[Vec<f64>], reference_point: &[f64]) -> f64 {
 /// Uses the Ishibuchi 2015 formula:
 ///   `IGD+(A, R) = (1/|R|) · Σ_{r∈R} min_{a∈A} d+(a, r)`
 ///
-/// where `d+(a, r) = sqrt(Σ_j max(0, r_j - a_j)²)`.
+/// where `d+(a, r) = sqrt(Σ_j max(0, a_j - r_j)²)`.
 ///
 /// All objectives are minimized. Returns `f64::INFINITY` if either front is empty.
 ///
@@ -114,7 +119,7 @@ pub(crate) fn igd_plus(front: &[Vec<f64>], reference_front: &[Vec<f64>]) -> f64 
                     .iter()
                     .zip(a.iter())
                     .map(|(&rj, &aj)| {
-                        let diff = rj - aj; // positive when r is better (lower)
+                        let diff = aj - rj; // positive when approximation is worse (higher)
                         if diff > 0.0 {
                             diff * diff
                         } else {
@@ -135,6 +140,17 @@ pub(crate) fn igd_plus(front: &[Vec<f64>], reference_front: &[Vec<f64>]) -> f64 
 #[cfg(test)]
 mod tests {
     use super::{hypervolume, igd_plus};
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct QualityMetricsFixture {
+        approximation_front: Vec<Vec<f64>>,
+        reference_front: Vec<Vec<f64>>,
+        reference_point: Vec<f64>,
+        oracle_hypervolume: f64,
+        oracle_igd_plus: f64,
+        absolute_tolerance: f64,
+    }
 
     // ── Hypervolume tests ─────────────────────────────────────────────────────
 
@@ -161,6 +177,26 @@ mod tests {
         assert!((hv - 5.0).abs() < 1e-12, "expected 5.0, got {hv}");
     }
 
+    #[test]
+    fn test_hv_single_point_5d() {
+        let front = vec![vec![1.0; 5]];
+        let reference = vec![3.0; 5];
+
+        let hv = hypervolume(&front, &reference);
+
+        assert!((hv - 32.0).abs() < 1e-12, "expected 32.0, got {hv}");
+    }
+
+    #[test]
+    fn test_hv_two_points_3d_union() {
+        let front = vec![vec![1.0, 1.0, 2.0], vec![2.0, 1.0, 1.0]];
+        let reference = vec![3.0, 3.0, 3.0];
+
+        let hv = hypervolume(&front, &reference);
+
+        assert!((hv - 6.0).abs() < 1e-12, "expected 6.0, got {hv}");
+    }
+
     /// Empty front → HV = 0.
     #[test]
     fn test_hv_empty_front() {
@@ -182,17 +218,25 @@ mod tests {
         );
     }
 
-    /// Front is better (lower) than reference → d+(a,r) for each dim = max(0, r-a) > 0.
+    /// Reference is better (lower) than approximation, so every dimension contributes.
     #[test]
-    fn test_igdplus_front_better_than_reference() {
-        // a=(0,0) vs r=(1,1): d+([0,0],[1,1]) = sqrt((1-0)^2 + (1-0)^2) = sqrt(2)
-        let front = vec![vec![0.0, 0.0]];
-        let reference = vec![vec![1.0, 1.0]];
+    fn test_igdplus_reference_better_than_front() {
+        let front = vec![vec![1.0, 1.0]];
+        let reference = vec![vec![0.0, 0.0]];
         let igd = igd_plus(&front, &reference);
         assert!(
             (igd - 2.0_f64.sqrt()).abs() < 1e-12,
             "expected sqrt(2), got {igd}"
         );
+    }
+
+    #[test]
+    fn test_igdplus_front_better_than_reference_is_zero() {
+        let front = vec![vec![0.0, 0.0]];
+        let reference = vec![vec![1.0, 1.0]];
+        let igd = igd_plus(&front, &reference);
+
+        assert!(igd.abs() < 1e-12, "expected zero, got {igd}");
     }
 
     /// Empty front → IGD+ = infinity.
@@ -207,5 +251,27 @@ mod tests {
     fn test_igdplus_empty_reference() {
         let igd = igd_plus(&[vec![1.0, 1.0]], &[]);
         assert!(igd.is_infinite());
+    }
+
+    #[test]
+    fn test_five_objective_metrics_match_python_oracle() {
+        let fixture: QualityMetricsFixture = serde_json::from_str(include_str!(
+            "../../tests/oracle/fixtures/optimizer_quality_metrics_golden.json"
+        ))
+        .expect("optimizer quality metric fixture must be valid JSON");
+
+        let hypervolume = hypervolume(&fixture.approximation_front, &fixture.reference_point);
+        let igd_plus = igd_plus(&fixture.approximation_front, &fixture.reference_front);
+
+        assert!(
+            (hypervolume - fixture.oracle_hypervolume).abs() <= fixture.absolute_tolerance,
+            "hypervolume parity failed: rust={hypervolume}, oracle={}",
+            fixture.oracle_hypervolume
+        );
+        assert!(
+            (igd_plus - fixture.oracle_igd_plus).abs() <= fixture.absolute_tolerance,
+            "IGD+ parity failed: rust={igd_plus}, oracle={}",
+            fixture.oracle_igd_plus
+        );
     }
 }
