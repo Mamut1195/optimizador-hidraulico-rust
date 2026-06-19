@@ -12,3 +12,5 @@
 - crates.io reported Criterion `0.8.2`; the benchmark target compiles with that release.
 - `cargo test -p hydro-cli --all-targets` executes all four Criterion functions once in test mode, which is a fast functional gate without unstable timing assertions.
 - Full sampled benchmarks need a dedicated CI/reporting step; absolute local timings should not become portable pass/fail budgets because runner hardware differs.
+- Local Criterion slope baselines were approximately 10.0 µs for graph construction, 6.7 µs for pump solving, 299 µs for the 8x3 optimizer, and 5.7 µs for validate-only JSON.
+- CI ceilings are intentionally 10x-17x above those local baselines to detect catastrophic regressions without turning normal runner variance into flakes.

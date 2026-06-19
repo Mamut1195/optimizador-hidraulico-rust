@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "metric": "criterion.slope.point_estimate",
+  "unit": "nanoseconds",
+  "policy": "Conservative absolute ceilings detect catastrophic regressions across heterogeneous CI hardware.",
+  "budgets_ns": {
+    "terrain_graph_from_grid": 100000,
+    "pump_station_solver": 100000,
+    "pump_station_optimizer_8x3": 5000000,
+    "validate_only_json": 100000
+  }
+}

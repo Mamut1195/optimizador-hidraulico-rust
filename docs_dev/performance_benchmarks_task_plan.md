@@ -9,7 +9,7 @@ Add reproducible Rust benchmarks for terrain graph construction, solver executio
 - [x] Phase 3: Confirm the benchmark target is absent before implementation
 - [x] Phase 4: Implement benchmark targets by reviewable work unit
 - [x] Phase 5: Run benchmark compilation, focused execution, fmt, Clippy, and tests
-- [ ] Phase 6: Add CI regression-budget tracking and retained benchmark reports
+- [x] Phase 6: Add CI regression-budget tracking and retained benchmark reports
 
 ## Decisions
 | Decision | Rationale | Date |
@@ -17,6 +17,7 @@ Add reproducible Rust benchmarks for terrain graph construction, solver executio
 | Prefer Criterion benchmark targets over timing assertions in unit tests | Wall-clock assertions are flaky; Criterion provides reproducible sampling and baselines | 2026-06-19 |
 | Host one benchmark target in `hydro-cli` | The integration crate already depends on terrain, solvers, optimizer, and validation APIs; one target avoids benchmark-only dependency spread | 2026-06-19 |
 | Use pump-station fixtures for solver and optimizer benchmarks | Pump station isolates solver cost from terrain construction and has deterministic golden inputs | 2026-06-19 |
+| Enforce conservative absolute CI ceilings | Wide ceilings tolerate heterogeneous runners while still catching order-of-magnitude regressions; Criterion reports remain available for finer analysis | 2026-06-19 |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
@@ -27,3 +28,6 @@ Add reproducible Rust benchmarks for terrain graph construction, solver executio
 | Official web lookup for the current Criterion release returned HTTP 403 | Dependency verification | Query the crates.io index with `cargo search criterion --limit 1` instead of guessing a stale version |
 | Escalated full Criterion sampling remained pending without launching a process | Baseline measurement | Verify the target through release compilation, `cargo test --all-targets`, benchmark enumeration, fmt, and Clippy; defer sampled baseline capture to the CI-budget work unit |
 | Sandbox compilation under the OneDrive workspace could not replace Rust object files | Final verification attempt | Run Cargo test and Clippy outside the sandbox using approved command prefixes |
+| The unittest module import did not include `scripts/` as a top-level path | CI budget checker GREEN attempt | Import through the repository namespace as `scripts.check_benchmark_budgets` |
+| The sandbox denied nested writes under both system temp and the OneDrive workspace | Budget checker test retries | Mock `Path` reads in unit tests; this isolates budget logic and removes filesystem-permission noise |
+| Mocked bound `Path.is_file` side effect expected an argument that `MagicMock` did not pass | Budget checker test retry | Use deterministic `[True, False]` side effects matching the ordered budget evaluation |

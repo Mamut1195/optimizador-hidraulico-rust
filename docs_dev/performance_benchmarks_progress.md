@@ -11,3 +11,6 @@
 - Verified the full hydro-cli target set, including one-pass benchmark execution; all tests passed with zero failures or ignored tests.
 - Verified `cargo fmt --all -- --check` and strict Clippy for every hydro-cli target.
 - Left CI regression-budget tracking as the next independent work unit instead of committing machine-specific local timing thresholds.
+- Captured a full local Criterion baseline for all four workloads.
+- Added strict-TDD coverage for budget evaluation, conservative nanosecond ceilings, a dedicated Ubuntu CI performance job, and retained Criterion artifacts.
+- Confirmed the budget-checker tests pass and the real local Criterion estimates remain within every configured ceiling.
