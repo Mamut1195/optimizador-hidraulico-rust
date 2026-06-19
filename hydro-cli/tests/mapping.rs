@@ -163,6 +163,91 @@ fn test_build_optimization_config_maps_max_time() {
     );
 }
 
+/// Reliability: parallel-worker requests must be preserved in the optimizer config.
+#[test]
+fn test_build_optimization_config_maps_num_workers() {
+    let mut req = make_sewer_request();
+    req.nsga_num_workers = Some(2);
+
+    let cfg = build_optimization_config(&req, None);
+
+    assert_eq!(
+        cfg.num_workers,
+        Some(2),
+        "nsga_num_workers must carry into OptimizationConfig::num_workers"
+    );
+}
+
+/// Reliability: norm policy must reach the optimizer config.
+#[test]
+fn test_build_optimization_config_maps_norm_policy() {
+    let mut req = make_sewer_request();
+    req.norm = "EPA_US".to_string();
+    req.strict_norm_compliance = true;
+
+    let cfg = build_optimization_config(&req, None);
+
+    assert_eq!(
+        cfg.norm_profile.as_deref(),
+        Some("EPA_US"),
+        "request norm must carry into OptimizationConfig::norm_profile"
+    );
+    assert!(
+        cfg.strict_norm_compliance,
+        "strict_norm_compliance must carry into OptimizationConfig"
+    );
+}
+
+/// Reliability: forbidden zones and mandatory routes must reach the optimizer config.
+#[test]
+fn test_build_optimization_config_maps_spatial_constraints() {
+    let req: DesignRequest = serde_json::from_value(serde_json::json!({
+        "project_type": "sewer",
+        "project_name": "test_sewer_spatial_constraints",
+        "terrain_points": [
+            {"x": 0.0, "y": 0.0, "z": 10.0},
+            {"x": 100.0, "y": 0.0, "z": 12.0},
+            {"x": 0.0, "y": 100.0, "z": 11.0},
+            {"x": 100.0, "y": 100.0, "z": 13.0}
+        ],
+        "outlet": {"x": 0.0, "y": 0.0},
+        "service_points": [{"x": 100.0, "y": 100.0}],
+        "forbidden_zones": [{
+            "coords": [
+                {"x": 10.0, "y": 10.0},
+                {"x": 20.0, "y": 10.0},
+                {"x": 20.0, "y": 20.0}
+            ],
+            "buffer": 2.5
+        }],
+        "mandatory_routes": [{
+            "coords": [
+                {"x": 0.0, "y": 0.0},
+                {"x": 50.0, "y": 50.0}
+            ],
+            "corridor_width": 6.0
+        }],
+        "nsga_population_size": 20,
+        "nsga_generations": 10,
+        "nsga_max_time_seconds": 30
+    }))
+    .expect("fixture must deserialize");
+
+    let cfg = build_optimization_config(&req, None);
+
+    assert_eq!(cfg.forbidden_zones.len(), 1);
+    assert_eq!(
+        cfg.forbidden_zones[0].vertices,
+        vec![[10.0, 10.0], [20.0, 10.0], [20.0, 20.0]]
+    );
+    assert_eq!(cfg.mandatory_routes.len(), 1);
+    assert_eq!(
+        cfg.mandatory_routes[0].waypoints,
+        vec![[0.0, 0.0], [50.0, 50.0]]
+    );
+    assert!((cfg.mandatory_routes[0].corridor_width - 6.0).abs() < 1e-12);
+}
+
 // ── build_solver_params tests ─────────────────────────────────────────────────
 
 /// design_flow is populated from req.flow_per_service.

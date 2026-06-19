@@ -219,6 +219,30 @@ impl Default for OptimizationConfig {
 }
 
 impl OptimizationConfig {
+    /// Replace request-provided spatial constraints without exposing internal
+    /// config helper types across crate boundaries.
+    pub fn set_spatial_constraints(
+        &mut self,
+        forbidden_zones: Vec<Vec<[f64; 2]>>,
+        mandatory_routes: Vec<(Vec<[f64; 2]>, f64)>,
+    ) {
+        self.forbidden_zones = forbidden_zones
+            .into_iter()
+            .map(|vertices| ForbiddenZone {
+                vertices,
+                label: None,
+            })
+            .collect();
+        self.mandatory_routes = mandatory_routes
+            .into_iter()
+            .map(|(waypoints, corridor_width)| MandatoryRoute {
+                waypoints,
+                corridor_width,
+                label: None,
+            })
+            .collect();
+    }
+
     /// Validate that the config's values are internally consistent.
     ///
     /// Called by `GeneticOptimizer::new`. Returns `Err(InvalidConfig)` on the

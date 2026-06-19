@@ -228,7 +228,7 @@ pub fn build_optimization_config(
 ) -> OptimizationConfig {
     let effective_seed = seed_override.unwrap_or_else(|| req.seed.unwrap_or(42));
 
-    OptimizationConfig {
+    let mut config = OptimizationConfig {
         population_size: req.nsga_population_size,
         generations: req.nsga_generations,
         max_time_seconds: req.nsga_max_time_seconds as f64,
@@ -246,9 +246,30 @@ pub fn build_optimization_config(
         weight_pumping: req.weight_pumping,
         weight_interference: req.weight_interference,
         weight_resilience: req.weight_resilience,
+        norm_profile: Some(req.norm.clone()),
+        strict_norm_compliance: req.strict_norm_compliance,
         // All other fields use oracle defaults.
         ..OptimizationConfig::default()
-    }
+    };
+
+    let forbidden_zones = req
+        .forbidden_zones
+        .iter()
+        .map(|zone| zone.coords.iter().map(|p| [p.x, p.y]).collect())
+        .collect();
+    let mandatory_routes = req
+        .mandatory_routes
+        .iter()
+        .map(|route| {
+            (
+                route.coords.iter().map(|p| [p.x, p.y]).collect(),
+                route.corridor_width.unwrap_or(0.0),
+            )
+        })
+        .collect();
+    config.set_spatial_constraints(forbidden_zones, mandatory_routes);
+
+    config
 }
 
 /// Build a `SolverParams` from a `DesignRequest`.
