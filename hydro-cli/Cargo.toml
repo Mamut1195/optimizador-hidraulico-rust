@@ -27,3 +27,8 @@ sha2 = { workspace = true }
 [dev-dependencies]
 approx = { workspace = true }
 oracle = { path = "../tests/oracle" }
+criterion = { workspace = true }
+
+[[bench]]
+name = "performance"
+harness = false
