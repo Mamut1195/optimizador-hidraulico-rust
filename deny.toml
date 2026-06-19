@@ -1,0 +1,47 @@
+# cargo-deny policy for the hydraulic optimizer workspace.
+#
+# Purpose:
+# - fail CI on known RustSec advisories,
+# - fail CI on unknown dependency sources,
+# - enforce a small allow-list of permissive, OSI-compatible licenses,
+# - surface duplicate dependency versions as warnings until dependency cleanup.
+
+[graph]
+all-features = false
+
+[advisories]
+ignore = []
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+    "Unlicense",
+    "Zlib",
+]
+confidence-threshold = 0.8
+
+[licenses.private]
+ignore = false
+
+[bans]
+# Duplicates are currently known through dev/transitive dependencies
+# (for example rand/getrandom via proptest/insta). Keep this visible without
+# blocking CI until the dependency hygiene slice intentionally resolves them.
+multiple-versions = "warn"
+# cargo-deny treats workspace path dependencies without an explicit version as
+# wildcard dependencies. That is normal for this monorepo, so keep this allowed;
+# external dependency versions remain locked by Cargo.lock in CI.
+wildcards = "allow"
+workspace-default-features = "allow"
+external-default-features = "allow"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
