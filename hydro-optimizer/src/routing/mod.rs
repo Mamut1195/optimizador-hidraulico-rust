@@ -125,6 +125,18 @@ impl PathSmoother {
 mod tests {
     use super::*;
     use crate::config::ForbiddenZone;
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct PathSmoothingFixture {
+        start: [f64; 2],
+        end: [f64; 2],
+        forbidden_zones: Vec<Vec<[f64; 2]>>,
+        clearance_distance: f64,
+        rdp_epsilon: f64,
+        oracle_length: f64,
+        relative_tolerance: f64,
+    }
 
     fn square_zone(cx: f64, cy: f64, half: f64) -> ForbiddenZone {
         ForbiddenZone {
@@ -168,6 +180,33 @@ mod tests {
                 "waypoint {wp:?} is inside the obstacle"
             );
         }
+    }
+
+    /// Python oracle parity for the canonical blocking-square fixture.
+    #[test]
+    fn test_path_length_matches_python_oracle_within_two_percent() {
+        let fixture: PathSmoothingFixture = serde_json::from_str(include_str!(
+            "../../../tests/oracle/fixtures/path_smoothing_golden.json"
+        ))
+        .expect("path smoothing oracle fixture must be valid JSON");
+        let zones: Vec<ForbiddenZone> = fixture
+            .forbidden_zones
+            .into_iter()
+            .map(|vertices| ForbiddenZone {
+                vertices,
+                label: None,
+            })
+            .collect();
+        let smoother = PathSmoother::new(fixture.clearance_distance, fixture.rdp_epsilon);
+        let path = smoother.smooth(fixture.start, fixture.end, &zones);
+        let rust_length = PathSmoother::path_length(&path);
+        let relative_error = (rust_length - fixture.oracle_length).abs() / fixture.oracle_length;
+
+        assert!(
+            relative_error <= fixture.relative_tolerance,
+            "path length parity failed: rust={rust_length:.6}, oracle={:.6}, relative_error={relative_error:.4}",
+            fixture.oracle_length
+        );
     }
 
     /// No obstacles: straight path is returned (length = Euclidean distance).

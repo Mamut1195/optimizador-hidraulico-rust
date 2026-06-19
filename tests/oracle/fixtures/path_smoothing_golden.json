@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "fixture_name": "path_smoothing_golden",
+  "description": "Blocking-square PathSmoother parity fixture.",
+  "start": [
+    0.0,
+    5.0
+  ],
+  "end": [
+    20.0,
+    5.0
+  ],
+  "forbidden_zones": [
+    [
+      [
+        7.0,
+        2.0
+      ],
+      [
+        13.0,
+        2.0
+      ],
+      [
+        13.0,
+        8.0
+      ],
+      [
+        7.0,
+        8.0
+      ]
+    ]
+  ],
+  "clearance_distance": 0.1,
+  "rdp_epsilon": 0.5,
+  "oracle_waypoints": [
+    [
+      6.9,
+      1.9
+    ],
+    [
+      13.1,
+      1.9
+    ]
+  ],
+  "oracle_length": 21.328780519261954,
+  "relative_tolerance": 0.02
+}

@@ -51,10 +51,23 @@ pub(crate) fn build_visibility_graph(
     // Collect polygon vertex arrays for intersection tests
     let polygons: Vec<Vec<[f64; 2]>> = forbidden.iter().map(|z| z.vertices.clone()).collect();
 
-    // Add polygon vertices as nodes
+    // Add clearance-offset polygon vertices as nodes. Using the original
+    // boundary vertices makes every incident edge fail the positive-clearance
+    // check, leaving A* disconnected and forcing the blocked direct fallback.
     for z in forbidden {
-        for &v in &z.vertices {
-            nodes.push(VNode { pos: v });
+        let vertices = &z.vertices;
+        let vertex_count = vertices.len();
+        let ccw = signed_area(vertices) >= 0.0;
+
+        for (index, &vertex) in vertices.iter().enumerate() {
+            let pos = if clearance > 0.0 && vertex_count >= 3 {
+                let previous = vertices[(index + vertex_count - 1) % vertex_count];
+                let next = vertices[(index + 1) % vertex_count];
+                offset_vertex(previous, vertex, next, clearance, ccw)
+            } else {
+                vertex
+            };
+            nodes.push(VNode { pos });
         }
     }
 
@@ -75,6 +88,72 @@ pub(crate) fn build_visibility_graph(
     }
 
     (nodes, edges)
+}
+
+/// Signed shoelace area. Non-negative values denote counter-clockwise order.
+fn signed_area(vertices: &[[f64; 2]]) -> f64 {
+    if vertices.len() < 3 {
+        return 0.0;
+    }
+
+    vertices
+        .iter()
+        .zip(vertices.iter().cycle().skip(1))
+        .take(vertices.len())
+        .map(|(a, b)| a[0] * b[1] - b[0] * a[1])
+        .sum::<f64>()
+        * 0.5
+}
+
+/// Offset a polygon vertex along the miter formed by its adjacent outward
+/// normals. The miter length is capped to avoid extreme spikes at acute angles.
+fn offset_vertex(
+    previous: [f64; 2],
+    vertex: [f64; 2],
+    next: [f64; 2],
+    clearance: f64,
+    ccw: bool,
+) -> [f64; 2] {
+    let previous_direction = unit([vertex[0] - previous[0], vertex[1] - previous[1]]);
+    let next_direction = unit([next[0] - vertex[0], next[1] - vertex[1]]);
+    let previous_normal = outward_normal(previous_direction, ccw);
+    let next_normal = outward_normal(next_direction, ccw);
+    let miter = unit([
+        previous_normal[0] + next_normal[0],
+        previous_normal[1] + next_normal[1],
+    ]);
+    let denominator = miter[0] * previous_normal[0] + miter[1] * previous_normal[1];
+
+    if denominator.abs() < 1e-12 {
+        return [
+            vertex[0] + previous_normal[0] * clearance,
+            vertex[1] + previous_normal[1] * clearance,
+        ];
+    }
+
+    let miter_length = (clearance / denominator).abs().min(clearance * 5.0);
+    let epsilon = clearance.max(1.0) * 1e-9;
+    [
+        vertex[0] + miter[0] * (miter_length + epsilon),
+        vertex[1] + miter[1] * (miter_length + epsilon),
+    ]
+}
+
+fn unit(vector: [f64; 2]) -> [f64; 2] {
+    let length = (vector[0] * vector[0] + vector[1] * vector[1]).sqrt();
+    if length < 1e-12 {
+        [0.0, 0.0]
+    } else {
+        [vector[0] / length, vector[1] / length]
+    }
+}
+
+fn outward_normal(direction: [f64; 2], ccw: bool) -> [f64; 2] {
+    if ccw {
+        [direction[1], -direction[0]]
+    } else {
+        [-direction[1], direction[0]]
+    }
 }
 
 /// Return `true` iff the segment `a→b` is a valid visibility edge:
@@ -319,6 +398,21 @@ mod tests {
         let (nodes, _edges) = build_visibility_graph(start, end, &[zone], 0.1);
         // 2 (start/end) + 4 (square vertices) = 6
         assert_eq!(nodes.len(), 6, "zone vertices must be added to graph");
+        assert!((nodes[2].pos[0] - 6.9).abs() < 1e-8);
+        assert!((nodes[2].pos[1] - 1.9).abs() < 1e-8);
+    }
+
+    #[test]
+    fn test_visibility_graph_offsets_clockwise_vertices_outward() {
+        let start = [0.0, 5.0];
+        let end = [20.0, 5.0];
+        let mut zone = square_zone(10.0, 5.0, 3.0);
+        zone.vertices.reverse();
+
+        let (nodes, _) = build_visibility_graph(start, end, &[zone], 0.1);
+
+        assert!((nodes[2].pos[0] - 6.9).abs() < 1e-8);
+        assert!((nodes[2].pos[1] - 8.1).abs() < 1e-8);
     }
 
     /// No edge through the obstacle interior should exist.
