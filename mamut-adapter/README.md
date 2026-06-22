@@ -13,7 +13,9 @@ Civil3D). Es la pieza que el agente MAMUT descubre y consume.
   (atomico tmp+replace), **puerto dinamico** (`bind 127.0.0.1:0`), heartbeat 30s.
 - Sirve `GET /health` -> `{"status":"ok"}` y `GET /manifest` (forma `features`).
 - Al recibir una design feature, **corre el binario Rust por subprocess**
-  (`DesignRequest` por stdin -> `Solution` por stdout) y mapea los exit codes a HTTP.
+  (`DesignRequest` por stdin -> `DesignResult` por stdout) y mapea los exit codes a HTTP.
+- **Traduce** el `DesignResult` a `mcp_instructions` para Civil 3D y las adjunta a
+  la respuesta (el binario emite geometria cruda; spec S-23). Ver `mcp_translate.py`.
 - Tier `proprietary`: `validate_license()` corre **ANTES** de abrir el socket.
 
 ## Features
@@ -60,28 +62,36 @@ Si no compilaste el binario: `cargo build --release` en la raiz del repo.
 
 ## Licencia (tier proprietary)
 
-El motor NO arranca sin licencia. Variables de entorno:
+El motor NO arranca sin licencia. El contrato es **EdDSA (Ed25519)**, alineado al
+backend autoritativo (`motor-optimizacion-hidraulico/licensing-backend`). Claims:
+`iss=mamut-licensing-v1` + `sub/iat/exp/jti/source/transaction_id/max_machines` +
+`product=motor-hidraulico`. El binding por maquina lo hace la **activacion**
+(`max_machines` + tabla del backend), NO un claim `machine_id` en el JWT.
 
-- `MAMUT_LICENSE_TOKEN` — token JWT (RS256) emitido por el backend, ligado al
-  `machine_id` de esta maquina.
+Variables de entorno:
+
+- `MAMUT_LICENSE_TOKEN` — token JWT **EdDSA** emitido por el backend de licencias.
 - `MAMUT_LICENSE_PUBKEY` — (opcional) ruta a un `.pem` con la clave publica.
-  Si falta, usa la `PUBLIC_KEY` embebida (placeholder de dev).
+  Si falta, usa la `PUBLIC_KEY` real embebida (la de `keys/beta/public.pem`).
 - `MAMUT_LICENSE_DEV=1` — modo desarrollo: arranca SIN token. **No usar en produccion.**
 
-Para conocer el `machine_id` de esta maquina:
+Emitir un token (beta), desde el repo del backend:
+
+```sh
+cd ../../motor-optimizacion-hidraulico/licensing-backend
+npm run issue:beta -- <email> --key-file ../keys/beta/private.pem [--days 365]
+```
+
+Para conocer el `machine_id` de esta maquina (diagnostico / activacion):
 
 ```sh
 python license_guard.py        # imprime el payload e incluye machine_id
 ```
 
-> El `PUBLIC_KEY` embebido es un placeholder. Sin la clave privada del backend
-> no se puede emitir un token RS256 valido. En desarrollo local usar
-> `MAMUT_LICENSE_DEV=1`.
-
 ## Arranque
 
 ```sh
-pip install -r requirements.txt        # solo PyJWT (el core es stdlib)
+pip install -r requirements.txt        # pyjwt[crypto] (EdDSA); el core es stdlib
 # desarrollo:
 MAMUT_LICENSE_DEV=1 python server.py
 # produccion:
@@ -105,7 +115,12 @@ curl -X POST http://127.0.0.1:$PORT/api/hydro_engine/design \
 ## Estado / siguiente paso
 
 El contrato MAMUT del adapter (anuncio + `/health` + `/manifest` + subprocess +
-license gate) esta completo y verificado. La traduccion del `Solution` Rust a
-**instrucciones MCP para Civil 3D** (feature `execute` de la referencia Python)
-queda como siguiente paso: hoy el adapter devuelve el `DesignResult` crudo del
-motor.
+license gate EdDSA + traduccion `DesignResult` -> `mcp_instructions`) esta
+**completo y verificado** (18 tests + end-to-end con el binario real). El contrato
+de las instrucciones MCP esta verificado contra el plugin C# de Civil3D
+(`PipeNetworkHandlers.cs`, body camelCase).
+
+Pendiente operativo: emitir el `MAMUT_LICENSE_TOKEN` por maquina y, si se quiere el
+cap real por maquina, cablear el flujo de activacion cliente->backend. Limitacion
+conocida: los `waypoints` del tramo no se dibujan (el `add-pipe` del plugin solo
+hace recta start->end); para la polilinea exacta usar `/api/drawing/polyline`.
