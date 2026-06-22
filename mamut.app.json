@@ -1,0 +1,32 @@
+{
+  "name": "hydro_engine",
+  "display_name": "Motor Hidráulico (Rust)",
+  "role": "engine",
+  "stack": "rust",
+  "tier": "proprietary",
+  "status": "ok",
+  "status_note": "El binario CLI (NSGA-III, 6 solvers) ya tiene su capa MAMUT en mamut-adapter/ (Python): escribe el anuncio en MAMUT/plugins/hydro_engine.json (puerto dinámico 127.0.0.1:0), sirve /health y /manifest (forma 'features': sewer/water_supply/conveyance/distribution/pump_station/intake + solvers) y al recibir una feature corre el binario por subprocess (DesignRequest stdin -> Solution stdout, exit codes mapeados a HTTP). Gate de licencia REAL (license_guard.py: JWT EdDSA/Ed25519, alineado al backend autoritativo licensing-backend; clave pública real embebida; valida iss=mamut-licensing-v1 + product=motor-hidraulico + exp; machine_id defensivo opcional) que corre ANTES de abrir el socket — tier proprietary. El binario emite geometría cruda (spec S-23: sin instrucciones MCP); la capa MAMUT traduce DesignResult -> mcp_instructions de Civil3D (mcp_translate.py, contrato camelCase verificado contra el plugin C# PipeNetworkHandlers.cs) y las adjunta a la respuesta. Verificado (2026-06-22): token Ed25519 real emitido validado OK + negativos rechazados; traductor probado contra geometría real del motor (7 nodos/6 tramos -> 26 instrucciones); 18/18 tests; binario corre end-to-end (exit 0, 5 soluciones).",
+  "union_point": "mamut-adapter",
+  "portable_server": null,
+  "program_bridge": null,
+  "in_process_plugin": null,
+  "contracts": ["mamut-plugin-http", "civil3d-peer"],
+  "programa": { "tipo": "none" },
+  "pending": [
+    "Por máquina/cliente: emitir el MAMUT_LICENSE_TOKEN real desde licensing-backend (npm run issue:beta -- <email> --key-file keys/beta/private.pem) y exportarlo. El gate EdDSA y la clave pública real YA están en license_guard.py (no más placeholder).",
+    "Binding por máquina: el backend lo enforce por activación (max_machines + tabla D1 al POST /api/licenses/activate), NO por claim machine_id en el JWT. Falta cablear el flujo de activación cliente->backend si se quiere el cap real por máquina.",
+    "pip install -r mamut-adapter/requirements.txt (pyjwt[crypto] -> trae cryptography para EdDSA) en la máquina donde corra el adapter.",
+    "cargo build --release del binario en la máquina de producción (o exportar HYDRO_CLI_BIN). Hoy hay binario debug+release del 19-jun.",
+    "[Solution->MCP] waypoints: add-pipe del plugin C# solo dibuja segmento recto start->end; la forma intermedia (waypoints) no se representa. Si se quiere la polilínea exacta, usar /api/drawing/polyline además.",
+    "[hallazgo, NO de este repo] BUG latente en Civil3D-MCP: su proxy FastMCP pipe_networks/tools.py manda snake_case (start_x/pipe_name) a un plugin C# que lee camelCase (startX/pipeName). El traductor del adapter ya emite camelCase (correcto); arreglar el proxy de Civil3D-MCP aparte.",
+    "[opcional] Reforzar el cleanup del anuncio con atexit + signal.SIGTERM (el finally no corre en kill duro de Windows)."
+  ],
+  "canvas": {
+    "id": "m2",
+    "zone": "client",
+    "color": "bone",
+    "label": "Hydro (Rust)",
+    "sub": "NSGA-III · binario + adapter",
+    "edges": [{ "to": "agent", "type": "http" }, { "to": "m1", "type": "peer" }]
+  }
+}

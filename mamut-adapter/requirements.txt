@@ -1,0 +1,4 @@
+# Capa MAMUT del optimizador (server.py) = stdlib puro, zero-dep.
+# El unico dependiente externo es el gate de licencia (license_guard.py).
+# EdDSA (Ed25519) requiere el extra `crypto` -> trae `cryptography`.
+pyjwt[crypto]>=2.4

@@ -1,0 +1,14 @@
+[project]
+name = "hydro-engine-mamut-adapter"
+version = "0.1.0"
+description = "Capa MAMUT (adapter Python) del optimizador hidraulico Rust: /health + /manifest + anuncio + subprocess al binario + license gate"
+requires-python = ">=3.9"
+# El core (server.py) es stdlib puro. Solo el gate de licencia necesita PyJWT
+# con el extra `crypto` (EdDSA/Ed25519 -> trae cryptography).
+dependencies = ["pyjwt[crypto]>=2.4"]
+
+[tool.hydro-engine-mamut-adapter]
+# El binario Rust se resuelve en este orden (ver server.py::_candidate_binaries):
+#   1. env HYDRO_CLI_BIN
+#   2. ../target/release/hydro-cli.exe
+#   3. ../target/debug/hydro-cli.exe
