@@ -61,6 +61,6 @@
     "no dibuja: emite geometría cruda, y la traducción a instrucciones de Civil 3D la hace su capa MAMUT, no el binario",
     "no elige por vos: NSGA-III devuelve un frente de alternativas no dominadas y la selección es del ingeniero",
     "no persiste nada ni consulta ningún servicio externo, y no toma ningún parámetro de un modelo de lenguaje",
-    "DEUDA DECLARADA contra la regla 1 del contrato: el crate hydro-norms lleva adentro 15 perfiles de norma por país y las operaciones toman `norm` como argumento. Deberían salir de codes/ por factors. Es MAM-140 y todavía no está hecho: hoy este motor tiene norma adentro"
+    "sus 15 perfiles de norma por país (hydro-norms) declaran paridad exacta y NO traen cita: el número es auditable contra el motor pero no hasta el artículo de la norma"
   ]
 }
