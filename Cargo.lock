@@ -684,6 +684,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hydro-kernels"
+version = "0.1.0"
+dependencies = [
+ "hydro-hydraulics",
+ "serde_json",
+]
+
+[[package]]
 name = "hydro-norms"
 version = "0.1.0"
 dependencies = [

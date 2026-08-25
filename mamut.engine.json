@@ -49,18 +49,69 @@
       "summary": "Diseña una obra de toma para captación superficial o subterránea, optimizada por NSGA-III, y devuelve la geometría de la estructura. Su tirante interno se resuelve por barrido de 200 puntos, no por convergencia: es un preliminar.",
       "factors": {},
       "read_only": true
+    },
+    {
+      "name": "hidraulica.canal_rectangular",
+      "call": "rectangular_channel_flow",
+      "summary": "Flujo uniforme en canal rectangular por Manning: area, perimetro mojado, radio hidraulico, velocidad media, caudal, numero de Froude y regimen (subcritico, critico o supercritico). Verifica una seccion dada; no la disena ni resuelve el tirante.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.perdida_carga_darcy",
+      "call": "darcy_head_loss",
+      "summary": "Perdida de carga por friccion en tuberia a presion por Darcy-Weisbach, con el factor de friccion por Swamee-Jain. El Reynolds lo deriva la propia funcion desde la velocidad y no se devuelve. Solo friccion: no incluye perdidas locales.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.factor_friccion_darcy",
+      "call": "darcy_friction_factor",
+      "summary": "Factor de friccion de Darcy-Weisbach por la aproximacion de Swamee-Jain. El numero de Reynolds es un dato que aporta quien llama: este motor no lo calcula ni decide que hacer en la zona critica de transicion.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.perdida_carga_hazen_williams",
+      "call": "hazen_williams_head_loss",
+      "summary": "Perdida de carga por friccion en tuberia a presion por Hazen-Williams. El coeficiente C es un dato: tomalo de hidraulica.coeficiente_hazen_williams o de la norma que declaro la obra, no de una estimacion. Solo friccion.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.velocidad_en_tuberia",
+      "call": "hazen_williams_velocity",
+      "summary": "Velocidad media en una tuberia circular a seccion llena, a partir del caudal y el diametro interno. Devuelve cero cuando el diametro es cero, en vez de levantar.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.coeficiente_hazen_williams",
+      "call": "hazen_williams_coefficient",
+      "summary": "Coeficiente C de Hazen-Williams de la tabla propia del motor para un material de tuberia, con la tabla entera en la respuesta. Un material que la tabla no reconoce devuelve 150.0 sin avisar: hay que comparar contra known_materials.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diametro_por_presion_disponible",
+      "call": "hazen_williams_required_diameter",
+      "summary": "El menor diametro de una lista de comerciales cuya perdida por Hazen-Williams no supera la carga disponible. Si ninguno cumple devuelve el mayor de la lista sin decir que no cumple: es una preseleccion, no una verificacion.",
+      "factors": {},
+      "read_only": true
     }
   ],
   "does_not": [
     "no verifica redes existentes: diseña desde cero sobre el terreno que se le declara, no chequea una red que ya está construida",
     "no calcula tirante normal ni tirante crítico: manning.rs resuelve el caudal dado el tirante, nunca la inversa — el hueco más caro del mapa de motores",
     "no hace secciones no rectangulares: rectangular_channel_flow es lo único que trae, sin trapecial ni triangular",
-    "no hace resalto hidráulico, ni tirantes conjugados, ni clasificación por Froude entrante",
+    "no hace resalto hidráulico ni tirantes conjugados: clasifica el régimen de un flujo uniforme por Froude, pero no resuelve el salto ni los tirantes conjugados",
     "no calcula pérdidas locales por accesorios (K): solo pérdida por fricción",
     "no toma una decisión explícita sobre la zona crítica de Reynolds: hay que volver a tomarla del lado del motor",
     "no dibuja: emite geometría cruda, y la traducción a instrucciones de Civil 3D la hace su capa MAMUT, no el binario",
     "no elige por vos: NSGA-III devuelve un frente de alternativas no dominadas y la selección es del ingeniero",
     "no persiste nada ni consulta ningún servicio externo, y no toma ningún parámetro de un modelo de lenguaje",
-    "sus 15 perfiles de norma por país (hydro-norms) declaran paridad exacta y NO traen cita: el número es auditable contra el motor pero no hasta el artículo de la norma"
+    "sus 15 perfiles de norma por país (hydro-norms) declaran paridad exacta y NO traen cita: el número es auditable contra el motor pero no hasta el artículo de la norma",
+    "no distingue un material que su tabla de coeficientes C de Hazen-Williams no reconoce: devuelve 150.0 sin avisar, y por eso la respuesta trae la tabla entera para poder compararlo",
+    "no avisa cuando ningún diámetro comercial cumple la carga disponible: devuelve el mayor de la lista, que es una preselección y no una verificación"
   ]
 }

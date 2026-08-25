@@ -1,0 +1,14 @@
+[package]
+name = "hydro-kernels"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "hydro-kernels"
+path = "src/main.rs"
+
+[dependencies]
+hydro-hydraulics = { path = "../hydro-hydraulics" }
+serde_json = { workspace = true }

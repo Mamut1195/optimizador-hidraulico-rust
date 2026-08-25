@@ -51,9 +51,20 @@ DISPLAY = "Motor de Optimizacion Hidraulica (Rust)"
 DESIGN_ENDPOINT = "/api/hydro_engine/design"
 SOLVERS_ENDPOINT = "/api/hydro_engine/solvers"
 
+# Un endpoint POR kernel, no uno solo. El binding `mamut-http` del harness resuelve la
+# URL desde el nombre de la feature y despues postea SOLO los argumentos: el nombre no
+# viaja en el cuerpo. Con una ruta compartida los siete kernels llegarian
+# indistinguibles, asi que el nombre va en la ruta y el handler lo lee de ahi.
+KERNEL_ENDPOINT_PREFIX = "/api/hydro_engine/kernel/"
+
 # Timeout (s) para una corrida de optimizacion NSGA-III. Generoso (matches el
 # timeout=600 del manifest de referencia).
 ENGINE_TIMEOUT = 600
+
+# Los kernels de verificacion son una llamada a funcion, no una corrida NSGA-III: el
+# costo entero es arrancar el proceso. Un timeout de 600 s aca convertiria un binario
+# colgado en diez minutos de espera por un numero que tarda milisegundos.
+KERNEL_TIMEOUT = 30
 
 # project_type validos (espejo de hydro-types/src/request.rs ProjectTypeStr::VALID).
 VALID_PROJECT_TYPES = (
@@ -131,6 +142,29 @@ def _design_feature(name: str, project_type: str, description: str) -> dict:
     }
 
 
+# Nombres de kernel que publica el binario `hydro-kernels` (espejo de su tabla
+# KERNELS). La feature se llama igual que el kernel a proposito: el campo `call`
+# del descriptor nombra la feature, y un segundo vocabulario en el medio seria un
+# lugar mas donde desincronizarse.
+def _kernel_feature(name: str, description: str, params: list[tuple]) -> dict:
+    return {
+        "name": name,
+        "endpoint": KERNEL_ENDPOINT_PREFIX + name,
+        "method": "POST",
+        "description": description,
+        "params": [
+            {
+                "name": pname,
+                "type": ptype,
+                "description": pdesc,
+                "required": True,
+            }
+            for pname, ptype, pdesc in params
+        ],
+        "timeout": KERNEL_TIMEOUT,
+    }
+
+
 FEATURES = [
     _design_feature(
         "sewer_design",
@@ -175,6 +209,94 @@ FEATURES = [
          "subterranea) optimizada con NSGA-III. Retorna geometria de la "
          "estructura e instrucciones MCP para Civil 3D."),
     ),
+    # --- kernels de verificacion (hydro-hydraulics) ---------------------------
+    # NO son diseno: no corren NSGA-III, no eligen nada y no escriben. Son las
+    # funciones de libreria del crate `hydro-hydraulics` -- Manning en canal
+    # rectangular, Darcy-Weisbach, Hazen-Williams -- que ya estaban escritas y no
+    # salian por ningun lado porque el binario `hydro-cli` solo entiende un
+    # DesignRequest. Las sirve el binario `hydro-kernels`, que es un shell JSON
+    # sobre esas mismas funciones y no calcula nada por su cuenta.
+    _kernel_feature(
+        "rectangular_channel_flow",
+        ("Flujo uniforme en un canal rectangular por Manning: area, perimetro "
+         "mojado, radio hidraulico, velocidad media, caudal, numero de Froude y "
+         "regimen (subcritico / critico / supercritico). Verificacion, no diseno."),
+        [
+            ("width_m", "number", "Ancho de fondo b del canal (m)"),
+            ("depth_m", "number", "Tirante de escurrimiento y (m)"),
+            ("slope", "number", "Pendiente de fondo S (m/m); el signo se ignora"),
+            ("roughness_n", "number", "Coeficiente n de Manning"),
+        ],
+    ),
+    _kernel_feature(
+        "darcy_head_loss",
+        ("Perdida de carga por friccion segun Darcy-Weisbach, con el factor de "
+         "friccion por la aproximacion de Swamee-Jain. El Reynolds lo deriva la "
+         "propia funcion desde la velocidad y no se devuelve."),
+        [
+            ("velocity_m_s", "number", "Velocidad de flujo V (m/s)"),
+            ("diameter_m", "number", "Diametro interno de la tuberia D (m)"),
+            ("length_m", "number", "Longitud de la tuberia L (m)"),
+            ("roughness_mm", "number", "Rugosidad absoluta epsilon (mm)"),
+        ],
+    ),
+    _kernel_feature(
+        "darcy_friction_factor",
+        ("Factor de friccion de Darcy-Weisbach por la aproximacion de "
+         "Swamee-Jain. El Reynolds es un DATO que aporta quien llama: este motor "
+         "no lo calcula ni decide que hacer en la zona critica."),
+        [
+            ("reynolds", "number", "Numero de Reynolds (adimensional)"),
+            ("roughness_mm", "number", "Rugosidad absoluta epsilon (mm)"),
+            ("diameter_m", "number", "Diametro interno de la tuberia D (m)"),
+        ],
+    ),
+    _kernel_feature(
+        "hazen_williams_head_loss",
+        ("Perdida de carga por friccion segun Hazen-Williams en tuberia a "
+         "presion. El coeficiente C es un dato: sacalo de "
+         "hazen_williams_coefficient o de la norma que declaro la obra."),
+        [
+            ("flow_m3s", "number", "Caudal Q (m3/s)"),
+            ("diameter_m", "number", "Diametro interno de la tuberia D (m)"),
+            ("length_m", "number", "Longitud de la tuberia L (m)"),
+            ("c", "number", "Coeficiente C de Hazen-Williams (adimensional)"),
+        ],
+    ),
+    _kernel_feature(
+        "hazen_williams_velocity",
+        ("Velocidad media en una tuberia circular llena, a partir del caudal y "
+         "el diametro. Devuelve 0 cuando el diametro es cero."),
+        [
+            ("flow_m3s", "number", "Caudal Q (m3/s)"),
+            ("diameter_m", "number", "Diametro interno de la tuberia D (m)"),
+        ],
+    ),
+    _kernel_feature(
+        "hazen_williams_coefficient",
+        ("Coeficiente C de la tabla del motor para un material de tuberia, con "
+         "la tabla entera en la respuesta. OJO: un nombre que no esta en la "
+         "tabla devuelve 150.0 sin avisar -- compara contra known_materials."),
+        [
+            ("material", "string",
+             "Nombre del material: PVC, PEAD, Acero, Fierro fundido, Concreto, "
+             "Asbesto cemento (o STEEL, CONCRETE, CAST_IRON, HDPE)"),
+        ],
+    ),
+    _kernel_feature(
+        "hazen_williams_required_diameter",
+        ("El menor diametro comercial de la lista cuya perdida de carga por "
+         "Hazen-Williams no supera la carga disponible. Si ninguno cumple "
+         "devuelve el mayor de la lista, sin avisar que no cumple."),
+        [
+            ("flow_m3s", "number", "Caudal de diseno Q (m3/s)"),
+            ("length_m", "number", "Longitud de la tuberia L (m)"),
+            ("available_head_m", "number", "Carga disponible (m)"),
+            ("c", "number", "Coeficiente C de Hazen-Williams (adimensional)"),
+            ("available_diameters_m", "list[number]",
+             "Diametros comerciales candidatos (m), lista no vacia"),
+        ],
+    ),
     {
         "name": "solvers",
         "endpoint": SOLVERS_ENDPOINT,
@@ -200,18 +322,23 @@ def manifest() -> dict:
 
 # --- localizacion del binario Rust ----------------------------------------------
 
-def _candidate_binaries() -> list[Path]:
-    """Rutas candidatas al binario hydro-cli, en orden de preferencia.
+def _candidate_binaries(stem: str = "hydro-cli", env_var: str = "HYDRO_CLI_BIN") -> list[Path]:
+    """Rutas candidatas a un binario del workspace, en orden de preferencia.
 
-    1. env HYDRO_CLI_BIN (ruta explicita)
-    2. <repo>/target/release/hydro-cli.exe
-    3. <repo>/target/debug/hydro-cli.exe
+    1. la variable de entorno (ruta explicita)
+    2. <repo>/target/release/<stem>.exe
+    3. <repo>/target/debug/<stem>.exe
+
+    Parametrizado por `stem` desde que el repo publica DOS binarios: `hydro-cli`
+    corre el optimizador NSGA-III y `hydro-kernels` expone las funciones de
+    verificacion de `hydro-hydraulics`. Buscarlos con la misma escalera evita que
+    uno se encuentre y el otro no por un motivo distinto en cada maquina.
     """
     here = Path(__file__).resolve().parent          # .../mamut-adapter/
     repo = here.parent                              # .../optimizador-hidraulico-rust/
-    exe = "hydro-cli.exe" if os.name == "nt" else "hydro-cli"
+    exe = f"{stem}.exe" if os.name == "nt" else stem
     cands: list[Path] = []
-    env_bin = os.environ.get("HYDRO_CLI_BIN")
+    env_bin = os.environ.get(env_var)
     if env_bin:
         cands.append(Path(env_bin))
     cands.append(repo / "target" / "release" / exe)
@@ -219,8 +346,8 @@ def _candidate_binaries() -> list[Path]:
     return cands
 
 
-def _resolve_binary() -> Path | None:
-    for c in _candidate_binaries():
+def _resolve_binary(stem: str = "hydro-cli", env_var: str = "HYDRO_CLI_BIN") -> Path | None:
+    for c in _candidate_binaries(stem, env_var):
         if c.is_file():
             return c
     return None
@@ -284,6 +411,76 @@ def _run_engine(design_request: dict) -> tuple[int, bytes]:
         proc.stdout.decode("utf-8", "ignore").strip()
     body = {
         "error": "el motor reporto un fallo",
+        "engine_exit_code": proc.returncode,
+        "detail": detail,
+    }
+    return http, json.dumps(body).encode()
+
+
+KERNEL_NAMES = frozenset(
+    feature["name"]
+    for feature in FEATURES
+    if feature["endpoint"].startswith(KERNEL_ENDPOINT_PREFIX)
+)
+"""Los kernels que este adapter acepta, derivados del manifest y no escritos al lado.
+
+Una segunda lista literal se desincronizaria del manifest en el primer agregado, y el
+sintoma seria una feature publicada que devuelve 404 -- el peor de los dos errores,
+porque el harness ya la anuncio como disponible.
+"""
+
+
+def _run_kernel(kernel: str, arguments: dict) -> tuple[int, bytes]:
+    """Corre el binario hydro-kernels: {"kernel", ...args} por stdin -> JSON por stdout.
+
+    El nombre del kernel viaja en la RUTA (el binding postea solo los argumentos) y se
+    inyecta aca en el cuerpo que lee el binario. Un argumento que el modelo ya haya
+    mandado con la clave `kernel` se descarta: la ruta es la autoridad, y dejar que el
+    cuerpo la contradiga seria una feature que ejecuta otra cosa que la que se pidio.
+    """
+    binary = _resolve_binary("hydro-kernels", "HYDRO_KERNELS_BIN")
+    if binary is None:
+        body = {
+            "error": "binario hydro-kernels no encontrado",
+            "detail": ("compila el motor con `cargo build --release` o exporta "
+                       "HYDRO_KERNELS_BIN apuntando al ejecutable"),
+            "searched": [
+                str(c) for c in _candidate_binaries("hydro-kernels", "HYDRO_KERNELS_BIN")
+            ],
+        }
+        return 503, json.dumps(body).encode()
+
+    request = {k: v for k, v in arguments.items() if k != "kernel"}
+    request["kernel"] = kernel
+    try:
+        payload = json.dumps(request).encode("utf-8")
+    except (TypeError, ValueError) as e:
+        return 400, json.dumps({"error": f"argumentos no serializables: {e}"}).encode()
+
+    try:
+        proc = subprocess.run(
+            [str(binary)],
+            input=payload,
+            capture_output=True,
+            timeout=KERNEL_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return 504, json.dumps(
+            {"error": f"el kernel excedio {KERNEL_TIMEOUT}s y fue abortado"}
+        ).encode()
+    except OSError as e:
+        return 500, json.dumps({"error": f"no se pudo ejecutar el binario: {e}"}).encode()
+
+    if proc.returncode == 0:
+        # Sin traduccion a MCP: un kernel de verificacion devuelve numeros, no
+        # geometria que dibujar. Adjuntar `mcp_instructions` vacias aca haria creer
+        # que hay algo que mandar a Civil 3D.
+        return 200, proc.stdout
+
+    http = _EXIT_TO_HTTP.get(proc.returncode, 500)
+    detail = proc.stderr.decode("utf-8", "ignore").strip() or         proc.stdout.decode("utf-8", "ignore").strip()
+    body = {
+        "error": f"el kernel '{kernel}' rechazo la llamada",
         "engine_exit_code": proc.returncode,
         "detail": detail,
     }
@@ -356,19 +553,41 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, _solvers_payload())
         self._send(404, json.dumps({"error": f"ruta no encontrada: {self.path}"}).encode())
 
-    def do_POST(self):
-        if self.path != DESIGN_ENDPOINT:
-            return self._send(
-                404, json.dumps({"error": f"ruta no encontrada: {self.path}"}).encode()
-            )
+    def _body(self) -> dict | None:
+        """El cuerpo POST como objeto, o None si ya se contesto el error."""
         n = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(n) if n else b""
         try:
             req = json.loads(raw) if raw else {}
         except json.JSONDecodeError as e:
-            return self._send(400, json.dumps({"error": f"body no es JSON: {e}"}).encode())
+            self._send(400, json.dumps({"error": f"body no es JSON: {e}"}).encode())
+            return None
         if not isinstance(req, dict):
-            return self._send(400, json.dumps({"error": "body debe ser un objeto JSON"}).encode())
+            self._send(400, json.dumps({"error": "body debe ser un objeto JSON"}).encode())
+            return None
+        return req
+
+    def do_POST(self):
+        if self.path.startswith(KERNEL_ENDPOINT_PREFIX):
+            kernel = self.path[len(KERNEL_ENDPOINT_PREFIX):]
+            if kernel not in KERNEL_NAMES:
+                return self._send(404, json.dumps({
+                    "error": f"kernel no publicado: {kernel!r}",
+                    "valid": sorted(KERNEL_NAMES),
+                }).encode())
+            req = self._body()
+            if req is None:
+                return None
+            code, body = _run_kernel(kernel, req)
+            return self._send(code, body)
+
+        if self.path != DESIGN_ENDPOINT:
+            return self._send(
+                404, json.dumps({"error": f"ruta no encontrada: {self.path}"}).encode()
+            )
+        req = self._body()
+        if req is None:
+            return None
 
         pt = req.get("project_type")
         if pt not in VALID_PROJECT_TYPES:
