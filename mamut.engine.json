@@ -1,0 +1,66 @@
+{
+  "contract": "mamut-engine/v1",
+  "name": "optimizador-hidraulico-rust",
+  "display_name": "Motor de Optimización Hidráulica",
+  "discipline": "hidraulica",
+  "stack": "rust",
+  "license": "Apache-2.0",
+  "binding": "mamut-http",
+  "announce_as": "hydro_engine",
+  "operations": [
+    {
+      "name": "hidraulica.diseno_alcantarillado",
+      "call": "sewer_design",
+      "summary": "Diseña una red de alcantarillado sanitario o pluvial optimizada por NSGA-III sobre puntos de terreno y de servicio: traza, diámetros, pendientes, velocidades y capacidad por Manning. Devuelve varias alternativas no dominadas, no una sola respuesta.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diseno_agua_potable",
+      "call": "water_supply_design",
+      "summary": "Diseña una red de agua potable optimizada por NSGA-III desde una fuente o tanque: diámetros y presiones por Hazen-Williams, con la geometría de la red resultante. Devuelve alternativas, no una sola.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diseno_conduccion",
+      "call": "conveyance_design",
+      "summary": "Diseña una línea de conducción por gravedad o bombeo optimizada por NSGA-III: trazado, diámetros y pendientes entre dos puntos sobre el terreno declarado.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diseno_distribucion",
+      "call": "distribution_design",
+      "summary": "Diseña una red de distribución con varios nodos de consumo —mallas o ramales— optimizada por NSGA-III: diámetros y presiones en cada nodo de servicio declarado.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diseno_estacion_bombeo",
+      "call": "pump_station_design",
+      "summary": "Diseña una estación de bombeo optimizada por NSGA-III: selección de bomba, curva, potencia, eficiencia y costo de operación a lo largo del ciclo de vida.",
+      "factors": {},
+      "read_only": true
+    },
+    {
+      "name": "hidraulica.diseno_obra_toma",
+      "call": "intake_design",
+      "summary": "Diseña una obra de toma para captación superficial o subterránea, optimizada por NSGA-III, y devuelve la geometría de la estructura. Su tirante interno se resuelve por barrido de 200 puntos, no por convergencia: es un preliminar.",
+      "factors": {},
+      "read_only": true
+    }
+  ],
+  "does_not": [
+    "no verifica redes existentes: diseña desde cero sobre el terreno que se le declara, no chequea una red que ya está construida",
+    "no calcula tirante normal ni tirante crítico: manning.rs resuelve el caudal dado el tirante, nunca la inversa — el hueco más caro del mapa de motores",
+    "no hace secciones no rectangulares: rectangular_channel_flow es lo único que trae, sin trapecial ni triangular",
+    "no hace resalto hidráulico, ni tirantes conjugados, ni clasificación por Froude entrante",
+    "no calcula pérdidas locales por accesorios (K): solo pérdida por fricción",
+    "no toma una decisión explícita sobre la zona crítica de Reynolds: hay que volver a tomarla del lado del motor",
+    "no dibuja: emite geometría cruda, y la traducción a instrucciones de Civil 3D la hace su capa MAMUT, no el binario",
+    "no elige por vos: NSGA-III devuelve un frente de alternativas no dominadas y la selección es del ingeniero",
+    "no persiste nada ni consulta ningún servicio externo, y no toma ningún parámetro de un modelo de lenguaje",
+    "DEUDA DECLARADA contra la regla 1 del contrato: el crate hydro-norms lleva adentro 15 perfiles de norma por país y las operaciones toman `norm` como argumento. Deberían salir de codes/ por factors. Es MAM-140 y todavía no está hecho: hoy este motor tiene norma adentro"
+  ]
+}

@@ -16,7 +16,10 @@ Civil3D). Es la pieza que el agente MAMUT descubre y consume.
   (`DesignRequest` por stdin -> `DesignResult` por stdout) y mapea los exit codes a HTTP.
 - **Traduce** el `DesignResult` a `mcp_instructions` para Civil 3D y las adjunta a
   la respuesta (el binario emite geometria cruda; spec S-23). Ver `mcp_translate.py`.
-- Tier `proprietary`: `validate_license()` corre **ANTES** de abrir el socket.
+- Tier `open`: **el gate de licencia se retiro** (MAM-236, 2026-08-25). `validate_license()`
+  corria antes de abrir el socket; contradecia la Apache-2.0 del repo y, peor, dejaba al
+  harness **sin poder descubrir el motor** en una PC sin `MAMUT_LICENSE_TOKEN` -- no fallaba
+  al llamarlo, no existia. `license_guard.py` sigue aca, sin invocarse.
 
 ## Features
 

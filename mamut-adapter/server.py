@@ -14,9 +14,17 @@ Civil3D + scaffolder --kind motor):
 
 Principio MAMUT (seccion 18): la capa MAMUT/MCP va en Python (reusable); el
 motor pesado (Rust) es solo el ejecutor. Se hablan por subprocess. Zero-dep en
-el core (stdlib); el unico import externo es license_guard (PyJWT).
+el core (stdlib), y desde que el gate de licencia se retiro NO hay ningun import
+externo: este adapter es stdlib puro.
 
-Tier 'proprietary': validate_license() corre ANTES de abrir el socket.
+GATE DE LICENCIA RETIRADO (MAM-236, 2026-08-25). `validate_license()` corria
+ANTES de abrir el socket, con tier 'proprietary'. Los motores MAMUT son open
+source (Apache-2.0) y lo que se cobra es el gateway, no el motor -- asi que el
+gate contradecia la licencia del propio repo. Y tenia un efecto que ningun
+ingeniero podia diagnosticar: sin MAMUT_LICENSE_TOKEN el socket no abria, el
+anuncio no se escribia, y el harness no podia DESCUBRIR el motor. No fallaba al
+llamarlo: no existia. `license_guard.py` sigue en el repo, sin invocarse, por si
+el gateway lo reusa.
 
 Arranque:  python server.py     (desde mamut-adapter/)
            o:  python -m server
@@ -34,7 +42,6 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from license_guard import validate_license
 from mcp_translate import design_result_to_mcp
 
 NAME = "hydro_engine"
@@ -378,9 +385,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    # GATE: tier 'proprietary' — la IP no arranca sin licencia valida.
-    validate_license()
-
     port = free_port()
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     write_announcement(port)
