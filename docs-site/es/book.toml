@@ -1,0 +1,39 @@
+[book]
+title = "hydro-cli — Manual del motor"
+description = "Motor de optimización hidráulica JSON-in / JSON-out. Referencia completa del contrato v1."
+authors = ["Mamut Systems"]
+language = "es"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/Mamut1195/optimizador-hidraulico-rust"
+edit-url-template = "https://github.com/Mamut1195/optimizador-hidraulico-rust/edit/main/docs-site/es/{path}"
+site-url = "/es/"
+no-section-label = false
+mathjax-support = false
+additional-css = []
+
+[output.html.print]
+enable = true
+page-break = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3

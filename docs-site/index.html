@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>hydro-cli — Engine Manual</title>
+  <meta name="description" content="JSON-in / JSON-out hydraulic optimization engine. Full v1 contract reference.">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fafafa;
+      --fg: #1f1f1f;
+      --muted: #5f5f5f;
+      --accent: #2b6cb0;
+      --card-bg: #ffffff;
+      --card-border: #e4e4e4;
+      --hover-bg: #f0f4fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161923;
+        --fg: #e6e6e6;
+        --muted: #9aa1ad;
+        --accent: #8ab4f8;
+        --card-bg: #1e2230;
+        --card-border: #2d3242;
+        --hover-bg: #252a3a;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+    header { margin-bottom: 3rem; }
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 0.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h1 code {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 1.6rem;
+      background: var(--card-bg);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+    }
+    .tagline {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin: 0 0 0.25rem;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+    }
+    .lang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 2rem 0 3rem;
+    }
+    @media (max-width: 540px) {
+      .lang-grid { grid-template-columns: 1fr; }
+    }
+    .lang-card {
+      display: block;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: inherit;
+      transition: background 120ms, transform 120ms, border-color 120ms;
+    }
+    .lang-card:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .lang-card .flag {
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .lang-card .name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    .lang-card .sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--card-border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1><code>hydro-cli</code> — Engine Manual</h1>
+      <p class="tagline">JSON-in / JSON-out hydraulic optimization engine</p>
+      <p class="meta">v1 contract reference · main @ 203c5c1</p>
+    </header>
+
+    <section>
+      <div class="lang-grid">
+        <a class="lang-card" href="./en/book/index.html" lang="en">
+          <div class="flag">EN</div>
+          <div class="name">English manual</div>
+          <div class="sub">Read the v1 engine contract in English.</div>
+        </a>
+        <a class="lang-card" href="./es/book/index.html" lang="es">
+          <div class="flag">ES</div>
+          <div class="name">Manual en español</div>
+          <div class="sub">Leé el contrato de v1 del motor en español.</div>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      Source on
+      <a href="https://github.com/Mamut1195/optimizador-hidraulico-rust">GitHub</a>.
+      Built with <a href="https://rust-lang.github.io/mdBook/">mdBook</a>.
+    </footer>
+  </main>
+</body>
+</html>
